@@ -1,23 +1,67 @@
 import { Layout } from "@/components/layout";
 import { HomeHealth } from "@/components/home-health";
 import { MaintenanceCard } from "@/components/maintenance-card";
-import { HOME_PROFILE, MAINTENANCE_TASKS } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowRight } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { getHome, getTasks } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 export default function Dashboard() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
+
+  const { data: home, isLoading: homeLoading } = useQuery({
+    queryKey: ["home"],
+    queryFn: getHome,
+    enabled: isAuthenticated,
+  });
+
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ["tasks", home?.id],
+    queryFn: () => getTasks(home!.id),
+    enabled: !!home?.id,
+  });
+
+  useEffect(() => {
+    if (!authLoading && !homeLoading && !home) {
+      navigate("/onboarding");
+    }
+  }, [authLoading, homeLoading, home, navigate]);
+
+  if (authLoading || homeLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading your home...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!home) {
+    return null;
+  }
+
+  const activeTasks = tasks.filter(t => t.status === "pending" || t.status === "scheduled");
+  const highPriorityTasks = tasks.filter(t => t.urgency === "now" || t.urgency === "soon");
+
   return (
     <Layout>
       <div className="space-y-8">
         <header className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground">Overview</h1>
+            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Overview</h1>
             <p className="text-muted-foreground mt-1">Good Morning. Here's your home's status.</p>
           </div>
           <Link href="/chat">
-            <Button size="lg" className="shadow-lg shadow-primary/20">
+            <Button size="lg" className="shadow-lg shadow-primary/20" data-testid="button-chat">
               Ask Assistant <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -26,7 +70,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Health Score */}
           <div className="md:col-span-1">
-            <HomeHealth score={HOME_PROFILE.healthScore} />
+            <HomeHealth score={home.healthScore || 0} />
           </div>
 
           {/* Quick Stats */}
@@ -36,17 +80,32 @@ export default function Dashboard() {
                  <CardTitle className="text-sm font-medium text-muted-foreground">Next Service</CardTitle>
                </CardHeader>
                <CardContent>
-                 <div className="text-2xl font-bold text-foreground">HVAC Tune-up</div>
-                 <p className="text-sm text-muted-foreground mt-1">In 3 weeks</p>
+                 {tasks.length > 0 ? (
+                   <>
+                     <div className="text-2xl font-bold text-foreground" data-testid="text-next-service">{tasks[0].title}</div>
+                     <p className="text-sm text-muted-foreground mt-1">
+                       {tasks[0].dueDate ? new Date(tasks[0].dueDate).toLocaleDateString() : "Not scheduled"}
+                     </p>
+                   </>
+                 ) : (
+                   <>
+                     <div className="text-2xl font-bold text-foreground" data-testid="text-next-service">None scheduled</div>
+                     <p className="text-sm text-muted-foreground mt-1">All caught up!</p>
+                   </>
+                 )}
                </CardContent>
              </Card>
              <Card>
                <CardHeader className="pb-2">
-                 <CardTitle className="text-sm font-medium text-muted-foreground">YTD Spending</CardTitle>
+                 <CardTitle className="text-sm font-medium text-muted-foreground">Home Age</CardTitle>
                </CardHeader>
                <CardContent>
-                 <div className="text-2xl font-bold text-foreground">$450</div>
-                 <p className="text-sm text-green-600 mt-1">-12% vs last year</p>
+                 <div className="text-2xl font-bold text-foreground" data-testid="text-home-age">
+                   {home.builtYear ? new Date().getFullYear() - home.builtYear : "N/A"}
+                 </div>
+                 <p className="text-sm text-muted-foreground mt-1">
+                   {home.builtYear ? `Built ${home.builtYear}` : "Year not set"}
+                 </p>
                </CardContent>
              </Card>
              <Card>
@@ -54,11 +113,11 @@ export default function Dashboard() {
                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Tasks</CardTitle>
                </CardHeader>
                <CardContent>
-                 <div className="text-2xl font-bold text-foreground">4</div>
-                 <p className="text-sm text-orange-600 mt-1">2 High Priority</p>
+                 <div className="text-2xl font-bold text-foreground" data-testid="text-active-tasks">{activeTasks.length}</div>
+                 <p className="text-sm text-orange-600 mt-1">{highPriorityTasks.length} High Priority</p>
                </CardContent>
              </Card>
-             <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 transition-colors">
+             <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 transition-colors" data-testid="card-add-system">
                <div className="flex flex-col items-center gap-2 text-muted-foreground">
                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                    <Plus className="h-6 w-6" />
@@ -76,31 +135,50 @@ export default function Dashboard() {
               <h2 className="text-xl font-heading font-semibold">Your Maintenance Plan</h2>
               <p className="text-sm text-muted-foreground">Prioritized by urgency and safety.</p>
             </div>
-            <Button variant="ghost">View Full Plan</Button>
+            <Button variant="ghost" data-testid="button-view-plan">View Full Plan</Button>
           </div>
           
-          {["now", "soon", "later", "monitor"].map((urgency) => {
-            const tasks = MAINTENANCE_TASKS.filter(t => t.urgency === urgency);
-            if (tasks.length === 0) return null;
-
-            return (
-              <div key={urgency} className="space-y-3">
-                <h3 className="uppercase text-xs font-bold tracking-widest text-muted-foreground flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${
-                    urgency === 'now' ? 'bg-destructive' : 
-                    urgency === 'soon' ? 'bg-orange-500' : 
-                    urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'
-                  }`} />
-                  {urgency}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {tasks.map((task) => (
-                    <MaintenanceCard key={task.id} task={task} />
-                  ))}
+          {tasks.length === 0 ? (
+            <Card className="p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Plus className="h-8 w-8 text-primary" />
                 </div>
+                <h3 className="text-lg font-semibold mb-2">No maintenance tasks yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Start by adding your home systems or chatting with the assistant to create a maintenance plan.
+                </p>
+                <Link href="/chat">
+                  <Button data-testid="button-start-chat">
+                    Chat with Assistant
+                  </Button>
+                </Link>
               </div>
-            );
-          })}
+            </Card>
+          ) : (
+            ["now", "soon", "later", "monitor"].map((urgency) => {
+              const urgencyTasks = tasks.filter(t => t.urgency === urgency);
+              if (urgencyTasks.length === 0) return null;
+
+              return (
+                <div key={urgency} className="space-y-3">
+                  <h3 className="uppercase text-xs font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${
+                      urgency === 'now' ? 'bg-destructive' : 
+                      urgency === 'soon' ? 'bg-orange-500' : 
+                      urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'
+                    }`} />
+                    {urgency}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {urgencyTasks.map((task) => (
+                      <MaintenanceCard key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </Layout>

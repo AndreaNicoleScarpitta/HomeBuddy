@@ -6,18 +6,47 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Home, Search } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { createHome } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState("");
+  const [builtYear, setBuiltYear] = useState("");
+  const [sqFt, setSqFt] = useState("");
+
+  const createHomeMutation = useMutation({
+    mutationFn: createHome,
+    onSuccess: () => {
+      toast({
+        title: "Home profile created!",
+        description: "Your home maintenance plan is ready.",
+      });
+      setLocation("/dashboard");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create home profile",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleNext = () => {
     if (step === 1 && address) {
       setStep(2);
-    } else {
-      setLocation("/dashboard");
+    } else if (step === 2) {
+      createHomeMutation.mutate({
+        address,
+        builtYear: builtYear ? parseInt(builtYear) : undefined,
+        sqFt: sqFt ? parseInt(sqFt) : undefined,
+        type: "Single Family Home",
+      });
     }
   };
 
@@ -35,8 +64,8 @@ export default function Onboarding() {
         className="w-full max-w-md z-10"
       >
         <div className="text-center mb-8">
-          <img src={logoImage} alt="HomeWise" className="w-20 h-20 mx-auto rounded-2xl shadow-xl mb-6" />
-          <h1 className="text-3xl font-heading font-bold text-foreground mb-2">Welcome to Home Buddy</h1>
+          <img src={logoImage} alt="Home Buddy" className="w-20 h-20 mx-auto rounded-2xl shadow-xl mb-6" />
+          <h1 className="text-3xl font-heading font-bold text-foreground mb-2" data-testid="text-welcome">Welcome to Home Buddy</h1>
           <p className="text-muted-foreground">Your personal AI home maintenance expert.</p>
         </div>
 
@@ -58,6 +87,7 @@ export default function Onboarding() {
                       className="pl-9 h-12 text-lg"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
+                      data-testid="input-address"
                     />
                   </div>
                 </div>
@@ -65,24 +95,56 @@ export default function Onboarding() {
                   className="w-full h-12 text-lg" 
                   onClick={handleNext}
                   disabled={!address}
+                  data-testid="button-continue"
                 >
                   Continue <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <div className="space-y-6">
-                 <div className="text-center py-6">
-                   <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                     <Home className="h-8 w-8" />
-                   </div>
-                   <h3 className="text-xl font-heading font-semibold mb-2">Found it!</h3>
-                   <p className="text-muted-foreground text-sm">
-                     1985 Single Family Home<br/>
-                     2,400 sq ft • 4 Bed / 3 Bath
-                   </p>
-                 </div>
-                 <Button className="w-full h-12 text-lg" onClick={handleNext}>
-                  Create My Plan
+                <div className="space-y-4">
+                  <div className="text-center py-2">
+                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Home className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-xl font-heading font-semibold mb-2">Tell us more</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Help us create a personalized maintenance plan
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="year">Year Built (Optional)</Label>
+                    <Input 
+                      id="year"
+                      type="number"
+                      placeholder="e.g., 1985"
+                      value={builtYear}
+                      onChange={(e) => setBuiltYear(e.target.value)}
+                      data-testid="input-year"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="sqft">Square Footage (Optional)</Label>
+                    <Input 
+                      id="sqft"
+                      type="number"
+                      placeholder="e.g., 2400"
+                      value={sqFt}
+                      onChange={(e) => setSqFt(e.target.value)}
+                      data-testid="input-sqft"
+                    />
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full h-12 text-lg" 
+                  onClick={handleNext}
+                  disabled={createHomeMutation.isPending}
+                  data-testid="button-create-plan"
+                >
+                  {createHomeMutation.isPending ? "Creating..." : "Create My Plan"}
                 </Button>
               </div>
             )}

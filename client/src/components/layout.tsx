@@ -1,13 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Home, MessageSquare, User, Wrench, Menu } from "lucide-react";
+import { Home, MessageSquare, User, Wrench, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Home" },
@@ -16,17 +18,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/profile", icon: User, label: "Profile" },
   ];
 
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 border-b bg-card z-50 sticky top-0">
         <div className="flex items-center gap-2">
-           <img src={logoImage} alt="HomeWise Logo" className="w-8 h-8 rounded-lg" />
+           <img src={logoImage} alt="Home Buddy Logo" className="w-8 h-8 rounded-lg" />
            <span className="font-heading font-bold text-lg text-primary">Home Buddy</span>
         </div>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" data-testid="button-menu">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
@@ -36,6 +42,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                  <img src={logoImage} alt="Home Buddy Logo" className="w-10 h-10 rounded-lg" />
                  <span className="font-heading font-bold text-xl text-primary">Home Buddy</span>
                </div>
+               {user && (
+                 <div className="text-sm">
+                   <p className="font-medium text-foreground">{user.email || "User"}</p>
+                 </div>
+               )}
             </div>
             <nav className="flex flex-col p-4 gap-2">
               {navItems.map((item) => (
@@ -53,6 +64,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </a>
                 </Link>
               ))}
+              <Button 
+                variant="ghost" 
+                onClick={handleLogout}
+                className="justify-start px-4 py-3 text-muted-foreground hover:bg-muted hover:text-foreground"
+                data-testid="button-logout-mobile"
+              >
+                <LogOut className="h-5 w-5 mr-3" />
+                Logout
+              </Button>
             </nav>
           </SheetContent>
         </Sheet>
@@ -82,11 +102,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t">
-          <div className="bg-secondary/50 p-4 rounded-xl">
-            <p className="text-xs font-medium text-secondary-foreground mb-1">Status</p>
-            <p className="text-sm font-semibold text-foreground">All Systems Good</p>
-          </div>
+        <div className="p-4 border-t space-y-3">
+          {user && (
+            <div className="px-3 py-2 text-sm">
+              <p className="font-medium text-foreground truncate">{user.email || "User"}</p>
+            </div>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="w-full justify-start"
+            data-testid="button-logout"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </aside>
 

@@ -3,26 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { MaintenanceTask } from "@shared/schema";
 
 interface TaskProps {
-  task: {
-    id: number;
-    title: string;
-    category: string;
-    dueDate: string;
-    urgency: string;
-    diyLevel: string;
-    status: string;
-    estimatedCost: string;
-    difficulty: string;
-    safetyWarning?: string | null;
-  };
+  task: MaintenanceTask;
 }
 
 export function MaintenanceCard({ task }: TaskProps) {
   const isNow = task.urgency === "now";
   
-  const getDiyBadgeColor = (level: string) => {
+  const getDiyBadgeColor = (level: string | null) => {
     switch (level) {
       case "DIY-Safe": return "bg-green-100 text-green-700 hover:bg-green-200 border-green-200";
       case "Caution": return "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200";
@@ -41,18 +31,20 @@ export function MaintenanceCard({ task }: TaskProps) {
         <div className="flex justify-between items-start mb-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs font-normal uppercase tracking-wider text-muted-foreground">
-                {task.category}
-              </Badge>
+              {task.category && (
+                <Badge variant="outline" className="text-xs font-normal uppercase tracking-wider text-muted-foreground">
+                  {task.category}
+                </Badge>
+              )}
               <Badge className={`text-xs border ${getDiyBadgeColor(task.diyLevel)} shadow-none`}>
-                {task.diyLevel}
+                {task.diyLevel || "Unknown"}
               </Badge>
             </div>
             <h3 className="font-heading font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
               {task.title}
             </h3>
           </div>
-          <Button variant="ghost" size="icon" className="text-muted-foreground group-hover:text-primary">
+          <Button variant="ghost" size="icon" className="text-muted-foreground group-hover:text-primary" data-testid={`button-task-${task.id}`}>
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
@@ -68,11 +60,11 @@ export function MaintenanceCard({ task }: TaskProps) {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
             <span className={isNow ? "text-destructive font-medium" : ""}>
-              {new Date(task.dueDate).toLocaleDateString()}
+              {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Not scheduled"}
             </span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground justify-end">
-             <span className="font-semibold text-foreground">{task.estimatedCost}</span>
+             <span className="font-semibold text-foreground">{task.estimatedCost || "TBD"}</span>
           </div>
         </div>
       </CardContent>
