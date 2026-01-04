@@ -36,7 +36,7 @@ export default function Onboarding() {
       >
         <div className="text-center mb-8">
           <img src={logoImage} alt="HomeWise" className="w-20 h-20 mx-auto rounded-2xl shadow-xl mb-6" />
-          <h1 className="text-3xl font-heading font-bold text-foreground mb-2">Welcome to HomeWise</h1>
+          <h1 className="text-3xl font-heading font-bold text-foreground mb-2">Welcome to Home Buddy</h1>
           <p className="text-muted-foreground">Your personal AI home maintenance expert.</p>
         </div>
 

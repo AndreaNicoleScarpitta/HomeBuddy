@@ -68,7 +68,7 @@ export default function Chat() {
                   
                   <div className={`flex flex-col gap-1 max-w-[80%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
                     <span className="text-xs text-muted-foreground font-medium mb-1">
-                      {msg.role === "assistant" ? "HomeWise" : "You"}
+                      {msg.role === "assistant" ? "Home Buddy" : "You"}
                     </span>
                     <div
                       className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed ${

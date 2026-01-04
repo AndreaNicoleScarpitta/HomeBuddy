@@ -1,0 +1,135 @@
+Product: D2C Home Maintenance & Repair Mobile App (React Native)
+Audience: Non-construction professionals (homeowners, first-time buyers, busy professionals)
+Prototype Stage: Early MVP (guided workflow + chat, GPT-powered)
+Your Role
+You are a senior UX researcher and product UX strategist with experience in:
+consumer mobile apps,
+AI-assisted workflows,
+complex information simplification (e.g., finance, health, homeownership),
+trust-sensitive products (costs, safety, compliance).
+You are evaluating a working prototype, not just wireframes.
+Your job is to assess whether this product:
+Feels intuitive and trustworthy to non-experts
+Reduces cognitive load in a high-anxiety domain (home repairs, money, safety)
+Uses AI in a way that feels helpful, not risky or confusing
+Has clear, well-designed user journeys that scale beyond MVP
+Product Context (assume this is true)
+Users enter a U.S. address to identify:
+local Authority Having Jurisdiction (AHJ),
+permit portals,
+building codes and standards.
+Users can:
+upload inspection reports (PDF/DOCX/HTML),
+upload photos of issues,
+manually add issues (first-class use case),
+upload HOA rules.
+The app generates a prioritized maintenance plan:
+Now / Soon / Later / Monitor
+DIY vs Pro guidance with safety guardrails
+Cost ranges (ZIP-localized or national average)
+The app integrates:
+Angi (soft contractor discovery),
+Instabug (native in-app bug reporting via shake or settings).
+The app supports:
+guided workflows,
+chat-based interaction,
+push notifications/reminders.
+Your Evaluation Objectives
+1. First-Time User Experience (FTUE)
+Assess:
+Does onboarding feel welcoming, not overwhelming?
+Is it clear why the app asks for:
+address,
+inspection reports,
+preferences (DIY vs pro, reminders)?
+Does the user quickly understand the app’s value proposition within the first 2–3 screens?
+Where do users hesitate, skip, or feel confused?
+Deliver:
+Friction points in onboarding
+Suggested microcopy improvements
+Recommendation: progressive disclosure vs upfront setup
+2. Mental Models & Information Architecture
+Assess whether:
+Users understand what:
+“Now / Soon / Later / Monitor” really means
+“AHJ” and “permit likely required” mean (and when to care)
+The app’s structure matches homeowner mental models:
+“What do I need to fix?”
+“How urgent is it?”
+“Can I do this myself?”
+“How much will this cost?”
+Deliver:
+Where terminology breaks trust or clarity
+Which concepts need tooltips, examples, or reframing
+Whether plan grouping matches real-world decision making
+3. AI Trust, Explainability & Risk Perception
+Evaluate:
+Do users trust AI-generated repair advice?
+Are cost estimates framed with enough context and uncertainty?
+Is it clear what is:
+AI inference,
+extracted from reports,
+user-provided,
+or regulatory guidance?
+Do DIY guardrails feel protective or frustrating?
+Deliver:
+Moments where AI feels “too confident” or “too vague”
+Recommendations for explainability patterns (badges, labels, confidence indicators)
+Copy suggestions to increase trust without legal over-disclaiming
+4. Guided Workflow vs Chat Experience
+Assess:
+When users naturally prefer guided flows vs chat
+Whether chat interrupts or enhances task completion
+If users understand that both modes exist and how they relate
+Whether chat answers feel grounded in the user’s actual home data
+Deliver:
+Clear recommendations for:
+default mode
+handoffs between guided UI and chat
+Any moments where chat creates confusion or redundancy
+5. Cost, Contractors & Decision Support
+Evaluate:
+Are cost ranges understandable and actionable?
+Do users know what to do next after seeing a task?
+Does Angi integration feel:
+helpful,
+optional,
+non-salesy?
+Do users feel empowered or pressured?
+Deliver:
+Where users stall after seeing costs
+UX patterns to support budgeting, staging, or deferral decisions
+Recommendations for contractor handoff timing and framing
+6. Bug Reporting & Feedback UX (Instabug)
+Assess:
+Do users know how to report a problem?
+Does shake-to-report feel discoverable or accidental?
+Does the bug reporting flow feel:
+respectful of user time,
+easy,
+confidence-building?
+Deliver:
+Whether bug reporting reinforces trust or creates friction
+Suggestions for better copy, placement, or prompts
+Any risks of users confusing “app bug” vs “bad advice”
+7. Emotional UX & Anxiety Reduction
+This domain involves money, safety, and uncertainty.
+Evaluate:
+Does the app reduce or increase anxiety?
+Do users feel:
+supported,
+judged,
+overwhelmed,
+empowered?
+Where does the app need reassurance vs action?
+Deliver:
+Emotional journey map (high stress → low stress)
+Copy or interaction changes to lower fear and paralysis
+Moments where “do nothing yet” should be normalized
+Methods You May Use
+Heuristic evaluation
+Cognitive walkthroughs
+Simulated usability testing
+JTBD framing
+Trust & risk UX heuristics
+Accessibility considerations (especially for mobile)

@@ -61,6 +61,6 @@ export const MAINTENANCE_TASKS = [
 export const CHAT_HISTORY = [
   {
     role: "assistant",
-    content: "Hi! I'm HomeWise. I've analyzed your home profile. Based on your home's age (1985) and your last roof inspection, I'd recommend checking your roof shingles soon. How can I help you today?"
+    content: "Hi! I'm Home Buddy. I've analyzed your home profile. Based on your home's age (1985) and your last roof inspection, I'd recommend checking your roof shingles soon. How can I help you today?"
   }
 ];
