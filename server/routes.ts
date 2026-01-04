@@ -84,8 +84,9 @@ export async function registerRoutes(
   app.patch("/api/home/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const home = await storage.updateHome(id, req.body);
-      logInfo("home.update", "Home updated successfully", { homeId: id });
+      const userId = req.user.claims.sub;
+      const home = await storage.updateHome(id, userId, req.body);
+      logInfo("home.update", "Home updated successfully", { homeId: id, userId });
       res.json(home);
     } catch (error) {
       return handleApiError(res, "home.update", error);
@@ -146,9 +147,13 @@ export async function registerRoutes(
   });
   
   // System routes
-  app.get("/api/home/:homeId/systems", isAuthenticated, async (req, res) => {
+  app.get("/api/home/:homeId/systems", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const systems = await storage.getSystemsByHomeId(homeId);
       res.json(systems);
     } catch (error) {
@@ -156,9 +161,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/home/:homeId/systems", isAuthenticated, async (req, res) => {
+  app.post("/api/home/:homeId/systems", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const systemData = insertSystemSchema.parse({ ...req.body, homeId });
       const system = await storage.createSystem(systemData);
       logInfo("systems.create", "System created successfully", { systemId: system.id, homeId });
@@ -169,9 +178,13 @@ export async function registerRoutes(
   });
   
   // Maintenance task routes
-  app.get("/api/home/:homeId/tasks", isAuthenticated, async (req, res) => {
+  app.get("/api/home/:homeId/tasks", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const tasks = await storage.getTasksByHomeId(homeId);
       res.json(tasks);
     } catch (error) {
@@ -179,9 +192,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/home/:homeId/tasks", isAuthenticated, async (req, res) => {
+  app.post("/api/home/:homeId/tasks", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const taskData = insertMaintenanceTaskSchema.parse({ ...req.body, homeId });
       const task = await storage.createTask(taskData);
       logInfo("tasks.create", "Task created successfully", { taskId: task.id, homeId });
@@ -191,9 +208,13 @@ export async function registerRoutes(
     }
   });
   
-  app.patch("/api/tasks/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyTaskOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const task = await storage.updateTask(id, req.body);
       logInfo("tasks.update", "Task updated successfully", { taskId: id });
       res.json(task);
@@ -202,9 +223,13 @@ export async function registerRoutes(
     }
   });
   
-  app.delete("/api/tasks/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyTaskOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       await storage.deleteTask(id);
       logInfo("tasks.delete", "Task deleted successfully", { taskId: id });
       res.json({ message: "Task deleted successfully" });
@@ -214,9 +239,13 @@ export async function registerRoutes(
   });
   
   // Chat message routes
-  app.get("/api/home/:homeId/chat", isAuthenticated, async (req, res) => {
+  app.get("/api/home/:homeId/chat", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const messages = await storage.getChatMessagesByHomeId(homeId);
       res.json(messages);
     } catch (error) {
@@ -224,9 +253,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/home/:homeId/chat", isAuthenticated, async (req, res) => {
+  app.post("/api/home/:homeId/chat", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const messageData = insertChatMessageSchema.parse({ ...req.body, homeId });
       const message = await storage.createChatMessage(messageData);
       res.json(message);
@@ -236,9 +269,13 @@ export async function registerRoutes(
   });
   
   // Fund routes
-  app.get("/api/home/:homeId/funds", isAuthenticated, async (req, res) => {
+  app.get("/api/home/:homeId/funds", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const fundsList = await storage.getFundsByHomeId(homeId);
       res.json(fundsList);
     } catch (error) {
@@ -246,9 +283,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/home/:homeId/funds", isAuthenticated, async (req, res) => {
+  app.post("/api/home/:homeId/funds", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const fundData = insertFundSchema.parse({ ...req.body, homeId });
       const fund = await storage.createFund(fundData);
       logInfo("funds.create", "Fund created successfully", { fundId: fund.id, homeId });
@@ -258,9 +299,13 @@ export async function registerRoutes(
     }
   });
   
-  app.patch("/api/funds/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/funds/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const fund = await storage.updateFund(id, req.body);
       logInfo("funds.update", "Fund updated successfully", { fundId: id });
       res.json(fund);
@@ -269,9 +314,13 @@ export async function registerRoutes(
     }
   });
   
-  app.delete("/api/funds/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/funds/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       await storage.deleteFund(id);
       logInfo("funds.delete", "Fund deleted successfully", { fundId: id });
       res.json({ message: "Fund deleted successfully" });
@@ -281,9 +330,13 @@ export async function registerRoutes(
   });
   
   // Fund allocation routes
-  app.get("/api/funds/:fundId/allocations", isAuthenticated, async (req, res) => {
+  app.get("/api/funds/:fundId/allocations", isAuthenticated, async (req: any, res) => {
     try {
       const fundId = parseInt(req.params.fundId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(fundId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const allocations = await storage.getAllocationsByFundId(fundId);
       res.json(allocations);
     } catch (error) {
@@ -291,9 +344,13 @@ export async function registerRoutes(
     }
   });
   
-  app.get("/api/tasks/:taskId/allocations", isAuthenticated, async (req, res) => {
+  app.get("/api/tasks/:taskId/allocations", isAuthenticated, async (req: any, res) => {
     try {
       const taskId = parseInt(req.params.taskId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyTaskOwnership(taskId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const allocations = await storage.getAllocationsByTaskId(taskId);
       res.json(allocations);
     } catch (error) {
@@ -301,9 +358,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/allocations", isAuthenticated, async (req, res) => {
+  app.post("/api/allocations", isAuthenticated, async (req: any, res) => {
     try {
       const allocationData = insertFundAllocationSchema.parse(req.body);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(allocationData.fundId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const allocation = await storage.createAllocation(allocationData);
       logInfo("allocations.create", "Allocation created successfully", { allocationId: allocation.id });
       res.json(allocation);
@@ -312,9 +373,13 @@ export async function registerRoutes(
     }
   });
   
-  app.patch("/api/allocations/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/allocations/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyAllocationOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const allocation = await storage.updateAllocation(id, req.body);
       logInfo("allocations.update", "Allocation updated successfully", { allocationId: id });
       res.json(allocation);
@@ -323,9 +388,13 @@ export async function registerRoutes(
     }
   });
   
-  app.delete("/api/allocations/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/allocations/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyAllocationOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       await storage.deleteAllocation(id);
       logInfo("allocations.delete", "Allocation deleted successfully", { allocationId: id });
       res.json({ message: "Allocation deleted successfully" });
@@ -335,9 +404,13 @@ export async function registerRoutes(
   });
   
   // Expense routes
-  app.get("/api/home/:homeId/expenses", isAuthenticated, async (req, res) => {
+  app.get("/api/home/:homeId/expenses", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const expensesList = await storage.getExpensesByHomeId(homeId);
       res.json(expensesList);
     } catch (error) {
@@ -345,9 +418,13 @@ export async function registerRoutes(
     }
   });
   
-  app.get("/api/funds/:fundId/expenses", isAuthenticated, async (req, res) => {
+  app.get("/api/funds/:fundId/expenses", isAuthenticated, async (req: any, res) => {
     try {
       const fundId = parseInt(req.params.fundId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(fundId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const expensesList = await storage.getExpensesByFundId(fundId);
       res.json(expensesList);
     } catch (error) {
@@ -355,9 +432,13 @@ export async function registerRoutes(
     }
   });
   
-  app.post("/api/expenses", isAuthenticated, async (req, res) => {
+  app.post("/api/expenses", isAuthenticated, async (req: any, res) => {
     try {
       const expenseData = insertExpenseSchema.parse(req.body);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyFundOwnership(expenseData.fundId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const expense = await storage.createExpense(expenseData);
       logInfo("expenses.create", "Expense created successfully", { expenseId: expense.id });
       res.json(expense);
@@ -366,9 +447,13 @@ export async function registerRoutes(
     }
   });
   
-  app.patch("/api/expenses/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/expenses/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyExpenseOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       const expense = await storage.updateExpense(id, req.body);
       logInfo("expenses.update", "Expense updated successfully", { expenseId: id });
       res.json(expense);
@@ -377,9 +462,13 @@ export async function registerRoutes(
     }
   });
   
-  app.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/expenses/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyExpenseOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
       await storage.deleteExpense(id);
       logInfo("expenses.delete", "Expense deleted successfully", { id });
       res.json({ message: "Expense deleted successfully" });

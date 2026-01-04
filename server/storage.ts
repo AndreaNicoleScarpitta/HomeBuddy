@@ -30,8 +30,9 @@ import { eq, and, desc, sql } from "drizzle-orm";
 export interface IStorage {
   // Homes
   getHome(userId: string): Promise<Home | undefined>;
+  getHomeById(id: number): Promise<Home | undefined>;
   createHome(home: InsertHome): Promise<Home>;
-  updateHome(id: number, data: Partial<InsertHome>): Promise<Home>;
+  updateHome(id: number, userId: string, data: Partial<InsertHome>): Promise<Home>;
   
   // Systems
   getSystemsByHomeId(homeId: number): Promise<System[]>;
@@ -41,6 +42,7 @@ export interface IStorage {
   
   // Maintenance Tasks
   getTasksByHomeId(homeId: number): Promise<MaintenanceTask[]>;
+  getTask(id: number): Promise<MaintenanceTask | undefined>;
   createTask(task: InsertMaintenanceTask): Promise<MaintenanceTask>;
   updateTask(id: number, data: Partial<InsertMaintenanceTask>): Promise<MaintenanceTask>;
   deleteTask(id: number): Promise<void>;
@@ -59,6 +61,7 @@ export interface IStorage {
   // Fund Allocations
   getAllocationsByFundId(fundId: number): Promise<FundAllocation[]>;
   getAllocationsByTaskId(taskId: number): Promise<FundAllocation[]>;
+  getAllocation(id: number): Promise<FundAllocation | undefined>;
   createAllocation(allocation: InsertFundAllocation): Promise<FundAllocation>;
   updateAllocation(id: number, data: Partial<InsertFundAllocation>): Promise<FundAllocation>;
   deleteAllocation(id: number): Promise<void>;
@@ -66,9 +69,17 @@ export interface IStorage {
   // Expenses
   getExpensesByFundId(fundId: number): Promise<Expense[]>;
   getExpensesByHomeId(homeId: number): Promise<Expense[]>;
+  getExpense(id: number): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense>;
   deleteExpense(id: number): Promise<void>;
+  
+  // Authorization helpers
+  verifyHomeOwnership(homeId: number, userId: string): Promise<boolean>;
+  verifyTaskOwnership(taskId: number, userId: string): Promise<boolean>;
+  verifyFundOwnership(fundId: number, userId: string): Promise<boolean>;
+  verifyAllocationOwnership(allocationId: number, userId: string): Promise<boolean>;
+  verifyExpenseOwnership(expenseId: number, userId: string): Promise<boolean>;
   
   // Contact Messages
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
@@ -82,17 +93,25 @@ export class DatabaseStorage implements IStorage {
     return home;
   }
   
+  async getHomeById(id: number): Promise<Home | undefined> {
+    const [home] = await db.select().from(homes).where(eq(homes.id, id));
+    return home;
+  }
+  
   async createHome(homeData: InsertHome): Promise<Home> {
     const [home] = await db.insert(homes).values(homeData).returning();
     return home;
   }
   
-  async updateHome(id: number, data: Partial<InsertHome>): Promise<Home> {
+  async updateHome(id: number, userId: string, data: Partial<InsertHome>): Promise<Home> {
     const [home] = await db
       .update(homes)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(homes.id, id))
+      .where(and(eq(homes.id, id), eq(homes.userId, userId)))
       .returning();
+    if (!home) {
+      throw new Error("Home not found or access denied");
+    }
     return home;
   }
   
@@ -126,6 +145,11 @@ export class DatabaseStorage implements IStorage {
       .from(maintenanceTasks)
       .where(eq(maintenanceTasks.homeId, homeId))
       .orderBy(maintenanceTasks.dueDate);
+  }
+  
+  async getTask(id: number): Promise<MaintenanceTask | undefined> {
+    const [task] = await db.select().from(maintenanceTasks).where(eq(maintenanceTasks.id, id));
+    return task;
   }
   
   async createTask(taskData: InsertMaintenanceTask): Promise<MaintenanceTask> {
@@ -203,6 +227,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fundAllocations.taskId, taskId));
   }
   
+  async getAllocation(id: number): Promise<FundAllocation | undefined> {
+    const [allocation] = await db.select().from(fundAllocations).where(eq(fundAllocations.id, id));
+    return allocation;
+  }
+  
   async createAllocation(allocationData: InsertFundAllocation): Promise<FundAllocation> {
     const [allocation] = await db.insert(fundAllocations).values(allocationData).returning();
     return allocation;
@@ -240,6 +269,11 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows.map(r => r.expenses));
   }
   
+  async getExpense(id: number): Promise<Expense | undefined> {
+    const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
+    return expense;
+  }
+  
   async createExpense(expenseData: InsertExpense): Promise<Expense> {
     const [expense] = await db.insert(expenses).values(expenseData).returning();
     return expense;
@@ -269,6 +303,36 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(contactMessages)
       .orderBy(desc(contactMessages.createdAt));
+  }
+  
+  // Authorization helpers
+  async verifyHomeOwnership(homeId: number, userId: string): Promise<boolean> {
+    const home = await this.getHomeById(homeId);
+    return home?.userId === userId;
+  }
+  
+  async verifyTaskOwnership(taskId: number, userId: string): Promise<boolean> {
+    const task = await this.getTask(taskId);
+    if (!task) return false;
+    return this.verifyHomeOwnership(task.homeId, userId);
+  }
+  
+  async verifyFundOwnership(fundId: number, userId: string): Promise<boolean> {
+    const fund = await this.getFund(fundId);
+    if (!fund) return false;
+    return this.verifyHomeOwnership(fund.homeId, userId);
+  }
+  
+  async verifyAllocationOwnership(allocationId: number, userId: string): Promise<boolean> {
+    const allocation = await this.getAllocation(allocationId);
+    if (!allocation) return false;
+    return this.verifyFundOwnership(allocation.fundId, userId);
+  }
+  
+  async verifyExpenseOwnership(expenseId: number, userId: string): Promise<boolean> {
+    const expense = await this.getExpense(expenseId);
+    if (!expense) return false;
+    return this.verifyFundOwnership(expense.fundId, userId);
   }
 }
 
