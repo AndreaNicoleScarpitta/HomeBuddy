@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Plus, ArrowRight, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { getHome, getTasks } from "@/lib/api";
+import { getHome, getTasks, getSystems } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 
@@ -24,6 +24,12 @@ export default function Dashboard() {
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["tasks", home?.id],
     queryFn: () => getTasks(home!.id),
+    enabled: !!home?.id,
+  });
+
+  const { data: systems = [] } = useQuery({
+    queryKey: ["systems", home?.id],
+    queryFn: () => getSystems(home!.id),
     enabled: !!home?.id,
   });
 
@@ -59,7 +65,7 @@ export default function Dashboard() {
         <header className="flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Overview</h1>
-            <p className="text-muted-foreground mt-1">Good Morning. Here's your home's status.</p>
+            <p className="text-muted-foreground mt-1">Here's what needs your attention.</p>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -74,9 +80,13 @@ export default function Dashboard() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Health Score */}
+          {/* Home Status */}
           <div className="md:col-span-1">
-            <HomeHealth score={home.healthScore || 0} />
+            <HomeHealth 
+              score={home.healthScore || 0} 
+              systemsCount={systems.length}
+              tasksCount={activeTasks.length}
+            />
           </div>
 
           {/* Quick Stats */}
@@ -161,14 +171,24 @@ export default function Dashboard() {
                   <Plus className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">No maintenance tasks yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start by adding your home systems or chatting with the assistant to create a maintenance plan.
+                <p className="text-muted-foreground mb-4">
+                  Upload an inspection report to get personalized recommendations, or ask the assistant to help create a plan.
                 </p>
-                <Link href="/chat">
-                  <Button data-testid="button-start-chat">
-                    Chat with Assistant
-                  </Button>
-                </Link>
+                <p className="text-sm text-muted-foreground mb-6">
+                  We'll help you understand what needs attention now versus what can wait.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link href="/inspections">
+                    <Button variant="outline" data-testid="button-upload-inspection">
+                      Upload Inspection
+                    </Button>
+                  </Link>
+                  <Link href="/chat">
+                    <Button data-testid="button-start-chat">
+                      Ask Assistant
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </Card>
           ) : (

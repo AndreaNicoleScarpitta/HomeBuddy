@@ -213,7 +213,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
             <Label htmlFor="fund-name">Fund Name</Label>
             <Input
               id="fund-name"
-              placeholder="e.g., Home Repair Fund, Emergency Savings"
+              placeholder="e.g., Roof Reserve, HVAC Fund, General Repairs"
               value={name}
               onChange={(e) => setName(e.target.value)}
               data-testid="input-fund-name"
@@ -221,19 +221,20 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="fund-balance">Current Balance</Label>
+            <Label htmlFor="fund-balance">How much have you set aside?</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="fund-balance"
                 type="number"
-                placeholder="0"
+                placeholder="500"
                 className="pl-9"
                 value={balance}
                 onChange={(e) => setBalance(e.target.value)}
                 data-testid="input-fund-balance"
               />
             </div>
+            <p className="text-xs text-muted-foreground">This can be money in savings, a checking account, or anywhere you keep it</p>
           </div>
           
           <div className="space-y-2">
@@ -243,42 +244,42 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
               <Input
                 id="fund-contribution"
                 type="number"
-                placeholder="0"
+                placeholder="100"
                 className="pl-9"
                 value={monthlyContribution}
                 onChange={(e) => setMonthlyContribution(e.target.value)}
                 data-testid="input-fund-contribution"
               />
             </div>
-            <p className="text-xs text-muted-foreground">How much you plan to add each month</p>
+            <p className="text-xs text-muted-foreground">If you're saving monthly, we'll help you project when you'll be ready for bigger repairs</p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="fund-type">Fund Type</Label>
+            <Label htmlFor="fund-type">Fund Purpose</Label>
             <Select value={fundType} onValueChange={setFundType}>
               <SelectTrigger data-testid="select-fund-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">General - For any home repairs</SelectItem>
-                <SelectItem value="dedicated">Dedicated - For specific projects</SelectItem>
-                <SelectItem value="emergency">Emergency Only - Last resort funds</SelectItem>
+                <SelectItem value="general">General repairs (can use anytime)</SelectItem>
+                <SelectItem value="dedicated">Specific project (e.g., new roof, HVAC)</SelectItem>
+                <SelectItem value="emergency">Emergency buffer (try not to touch)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="fund-label">Personal Note (Optional)</Label>
+            <Label htmlFor="fund-label">Note to Yourself (Optional)</Label>
             <Textarea
               id="fund-label"
-              placeholder="e.g., 'Only touch for major repairs' or 'Save for roof replacement'"
+              placeholder="e.g., 'For the roof when it's time' or 'Don't touch unless critical'"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               className="resize-none"
               rows={2}
               data-testid="input-fund-label"
             />
-            <p className="text-xs text-muted-foreground">A reminder to yourself about this fund's purpose</p>
+            <p className="text-xs text-muted-foreground">A mental label to help you stay on track</p>
           </div>
         </div>
         
@@ -365,56 +366,70 @@ export default function Budget() {
           <AddFundDialog homeId={home.id} onSuccess={handleRefresh} />
         </header>
 
-        {/* Quick Answer Section */}
+        {/* Repair Readiness Section */}
         <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-              At a Glance
+              <Shield className="h-5 w-5 text-primary" />
+              Your Repair Readiness
             </CardTitle>
-            <CardDescription>Your home repair budget summary</CardDescription>
+            <CardDescription>How prepared you are for upcoming home repairs</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Funds</p>
-                <p className="text-2xl font-bold text-foreground" data-testid="text-total-funds">
-                  {formatCurrency(totalBalance)}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-center p-4 bg-white rounded-lg shadow-sm cursor-help">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Available</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ready to Use</p>
                     <p className="text-2xl font-bold text-green-600" data-testid="text-available">
                       {formatCurrency(availableForRepairs)}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">For planned repairs</p>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Total funds minus emergency reserves - money you can spend on repairs</p>
+                  <p>Money available for repairs (excluding emergency buffer)</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-center p-4 bg-white rounded-lg shadow-sm cursor-help">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Emergency Reserve</p>
-                    <p className="text-2xl font-bold text-red-600" data-testid="text-emergency">
-                      {formatCurrency(emergencyFunds)}
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Emergency Buffer</p>
+                    <p className={`text-2xl font-bold ${emergencyFunds > 0 ? 'text-foreground' : 'text-muted-foreground'}`} data-testid="text-emergency">
+                      {emergencyFunds > 0 ? formatCurrency(emergencyFunds) : '—'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {emergencyFunds > 0 ? 'Last resort only' : 'Not set yet'}
                     </p>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Reserved for unexpected emergencies - try not to touch unless absolutely necessary</p>
+                  <p>{emergencyFunds > 0 ? 'Set aside for unexpected emergencies—try not to touch unless critical' : 'Consider setting up an emergency fund for unexpected repairs'}</p>
                 </TooltipContent>
               </Tooltip>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Spent YTD</p>
-                <p className="text-2xl font-bold text-muted-foreground" data-testid="text-spent">
-                  {formatCurrency(totalSpent)}
+              <div className="text-center p-4 bg-white rounded-lg shadow-sm col-span-2 md:col-span-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Saved</p>
+                <p className="text-2xl font-bold text-foreground" data-testid="text-total-funds">
+                  {formatCurrency(totalBalance)}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">Across all funds</p>
               </div>
             </div>
+            
+            {priorityTasks.length > 0 && (
+              <div className="mt-4 p-3 bg-white/60 rounded-lg border border-muted">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Coverage:</span>{' '}
+                  {(() => {
+                    const affordableCount = priorityTasks.filter(t => {
+                      const cost = t.estimatedCost ? parseInt(t.estimatedCost.replace(/[^0-9]/g, '')) * 100 : 0;
+                      return cost <= availableForRepairs;
+                    }).length;
+                    return `You're prepared for ${affordableCount} of ${priorityTasks.length} upcoming repairs.`;
+                  })()}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -437,29 +452,51 @@ export default function Budget() {
                   className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                   data-testid={`task-affordability-${task.id}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full ${
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
                       task.urgency === 'now' ? 'bg-destructive' : 
                       task.urgency === 'soon' ? 'bg-orange-500' : 'bg-green-500'
                     }`} />
-                    <div>
-                      <p className="font-medium text-foreground">{task.title}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{task.title}</p>
                       <p className="text-sm text-muted-foreground">
                         {task.estimatedCost || "Cost TBD"} • {task.diyLevel}
                       </p>
                     </div>
                   </div>
-                  <AffordabilityIndicator task={task} totalAvailable={availableForRepairs} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <AffordabilityIndicator task={task} totalAvailable={availableForRepairs} />
+                    {task.diyLevel === 'Pro-Only' && (
+                      <a
+                        href={`https://www.angi.com/search/${encodeURIComponent((task.category || 'home') + ' repair')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors hidden md:inline-flex items-center gap-1"
+                        data-testid={`link-find-pro-${task.id}`}
+                      >
+                        Find pro
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
               
               {/* Supportive messaging */}
               <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/10">
                 <p className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">Remember:</strong> Spending on preventive maintenance often saves money in the long run. 
-                  It's okay to use your funds for important repairs—that's what they're for!
+                  <span className="font-medium text-foreground">Remember:</span> Spending on preventive maintenance often saves money in the long run. 
+                  It's okay to use your funds for important repairs—that's what they're for.
                 </p>
               </div>
+              
+              {/* Provider research note for pro-only tasks */}
+              {priorityTasks.some(t => t.diyLevel === 'Pro-Only') && (
+                <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-muted text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Need a contractor?</span> For tasks marked Pro-Only, you can research vetted local providers via Angi. 
+                  We don't receive payment based on your choice.
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

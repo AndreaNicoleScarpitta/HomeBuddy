@@ -128,13 +128,36 @@ export default function Chat() {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-center max-w-md">
+                <div className="text-center max-w-md px-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Bot className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Ask me about maintenance tasks, safety concerns, cost estimates, or any home-related questions!
+                  <h3 className="text-lg font-semibold mb-3">How can I help?</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    I can help you understand repairs, estimate costs, or figure out what can wait. What's on your mind?
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <button 
+                      onClick={() => setInput("What repairs should I prioritize?")}
+                      className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                    >
+                      What should I fix first?
+                    </button>
+                    <button 
+                      onClick={() => setInput("How much should I budget for home repairs?")}
+                      className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                    >
+                      Help me plan costs
+                    </button>
+                    <button 
+                      onClick={() => setInput("What can I safely do myself vs hire a pro?")}
+                      className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                    >
+                      DIY or hire a pro?
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-6 italic">
+                    Estimates are general ranges, not quotes. You're always in control.
                   </p>
                 </div>
               </div>

@@ -16,6 +16,15 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - PWA with service worker and manifest for installability
 
 ## Recent Changes
+- 2026-01-04: Major UX overhaul implementing comprehensive audit findings:
+  - Replaced numeric Home Health Score with tier-based status (Healthy/Watch/Needs Attention)
+  - De-templated Budget page to focus on "Repair Readiness" and coverage
+  - Toned down Assistant with calm, professional, anxiety-centered greeting
+  - Enhanced Inspections with "Why this matters" expandable explanations
+  - Grouped findings by Fix Now / Plan Soon / Address Later
+  - Added Angi provider research integration points (optional, non-pushy)
+  - Improved navigation with emotional sublabels (What needs attention, etc.)
+  - Better empty states with value props and reassurance messaging
 - 2026-01-04: Added PWA manifest, service worker, app icons, and Play Store submission guide
 - 2026-01-04: Added AI chat with streaming, environment validation, email notifications, authorization tests, fixed nested anchor tag hydration errors
 
@@ -56,8 +65,11 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 ## User Preferences
 - Design: "Modern Utility" aesthetic with construction orange (#f97316)
 - Typography: Plus Jakarta Sans (headings), Inter (UI)
-- UX: Emotional design, no-shame budgeting approach
+- UX: Emotional design, no-shame budgeting approach, anxiety-aware
 - Style: Minimalist, no cards, split-hero layouts, pill-style components
+- Tone: Calm professional, not "friendly startup" - empathetic but grounded
+- AI Messaging: Always include disclaimers that estimates are ranges, user is in control
+- Provider Integration: Angi for contractor research, opt-in only, never pushy
 
 ## Running Tests
 ```bash

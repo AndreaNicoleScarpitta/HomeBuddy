@@ -12,11 +12,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Home" },
-    { href: "/budget", icon: Wallet, label: "Budget" },
-    { href: "/inspections", icon: FileText, label: "Inspections" },
-    { href: "/chat", icon: MessageSquare, label: "Assistant" },
-    { href: "/contact", icon: Mail, label: "Contact" },
+    { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention" },
+    { href: "/budget", icon: Wallet, label: "Budget", sublabel: "What you can afford" },
+    { href: "/inspections", icon: FileText, label: "Inspections", sublabel: "What's wrong" },
+    { href: "/chat", icon: MessageSquare, label: "Assistant", sublabel: "Get guidance" },
+    { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us" },
   ];
 
   const handleLogout = () => {
@@ -49,7 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                  </div>
                )}
             </div>
-            <nav className="flex flex-col p-4 gap-2">
+            <nav className="flex flex-col p-4 gap-1">
               {navItems.map((item) => (
                 <Link 
                   key={item.href} 
@@ -57,12 +57,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                     location === item.href 
-                      ? "bg-primary text-primary-foreground font-medium" 
+                      ? "bg-primary text-primary-foreground" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">{item.label}</span>
+                    <span className={`text-[10px] leading-tight ${location === item.href ? 'text-primary-foreground/70' : 'text-muted-foreground/70'}`}>
+                      {item.sublabel}
+                    </span>
+                  </div>
                 </Link>
               ))}
               <Button 
@@ -87,19 +92,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
              <span className="font-heading font-bold text-xl text-primary">Home Buddy</span>
            </div>
         </div>
-        <nav className="flex-1 p-4 gap-2 flex flex-col">
+        <nav className="flex-1 p-4 gap-1 flex flex-col">
           {navItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 location === item.href 
-                  ? "bg-primary text-primary-foreground font-medium shadow-sm translate-x-1" 
+                  ? "bg-primary text-primary-foreground shadow-sm translate-x-1" 
                   : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              {item.label}
+              <item.icon className="h-5 w-5 shrink-0" />
+              <div className="flex flex-col">
+                <span className="font-medium text-sm">{item.label}</span>
+                <span className={`text-[10px] leading-tight ${location === item.href ? 'text-primary-foreground/70' : 'text-muted-foreground/70'}`}>
+                  {item.sublabel}
+                </span>
+              </div>
             </Link>
           ))}
         </nav>

@@ -45,14 +45,14 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const statusConfig = {
+  const statusConfig: Record<string, { icon: typeof Clock; color: string; label: string; spin?: boolean }> = {
     pending: { icon: Clock, color: "text-muted-foreground", label: "Pending Analysis" },
     analyzing: { icon: Loader2, color: "text-primary", label: "Analyzing...", spin: true },
     analyzed: { icon: CheckCircle2, color: "text-green-600", label: "Analyzed" },
     error: { icon: AlertTriangle, color: "text-red-600", label: "Error" },
   };
   
-  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  const config = statusConfig[status] || statusConfig.pending;
   const Icon = config.icon;
   
   return (
@@ -63,33 +63,69 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function getWhyThisMatters(category: string | null, severity: string | null): string {
+  const impacts: Record<string, Record<string, string>> = {
+    Plumbing: {
+      critical: "Active leaks can cause major water damage to floors, walls, and foundations within days.",
+      major: "Plumbing issues often worsen quickly and can lead to mold or structural damage if left untreated.",
+      moderate: "Small leaks can damage cabinets and flooring over time if not addressed.",
+      minor: "Minor plumbing issues are easy to fix now but can become larger problems if ignored."
+    },
+    Roof: {
+      critical: "Roof failures can cause extensive interior damage and may require emergency repairs.",
+      major: "Roof issues left unaddressed often lead to leaks, insulation damage, and higher repair costs.",
+      moderate: "Addressing roof wear early prevents more costly repairs and protects your home's interior.",
+      minor: "Regular roof maintenance extends its lifespan and prevents surprise expenses."
+    },
+    HVAC: {
+      critical: "HVAC failures can affect air quality and comfort, especially in extreme weather.",
+      major: "Inefficient HVAC systems increase utility costs and may fail when you need them most.",
+      moderate: "Regular HVAC maintenance improves efficiency and extends equipment life.",
+      minor: "Small HVAC issues are inexpensive to fix now but can compound over time."
+    },
+    Electrical: {
+      critical: "Electrical hazards pose fire and safety risks that require immediate professional attention.",
+      major: "Electrical issues can be safety hazards and may not meet code requirements.",
+      moderate: "Addressing electrical concerns prevents potential hazards and improves home safety.",
+      minor: "Minor electrical updates improve convenience and help maintain your home's value."
+    },
+    default: {
+      critical: "This issue needs prompt attention to prevent further damage or safety concerns.",
+      major: "Addressing this soon helps prevent more extensive repairs later.",
+      moderate: "Fixing this in the near term protects your home and avoids escalating costs.",
+      minor: "This is a low priority but worth keeping on your radar for future planning."
+    }
+  };
+  
+  const categoryImpacts = impacts[category || "default"] || impacts.default;
+  return categoryImpacts[severity || "minor"] || categoryImpacts.minor;
+}
+
 function FindingCard({ finding }: { finding: InspectionFinding }) {
+  const [showWhy, setShowWhy] = useState(false);
+  const whyText = getWhyThisMatters(finding.category, finding.severity);
+  
   return (
-    <div className="p-4 rounded-lg bg-secondary/30 border border-border/50 space-y-2">
+    <div className="p-4 rounded-lg bg-secondary/30 border border-border/50 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h4 className="font-medium text-foreground">{finding.title}</h4>
-          <p className="text-sm text-muted-foreground">{finding.location}</p>
+          {finding.location && (
+            <p className="text-sm text-muted-foreground">{finding.location}</p>
+          )}
         </div>
         <SeverityBadge severity={finding.severity || "minor"} />
       </div>
+      
       {finding.description && (
-        <p className="text-sm text-muted-foreground">{finding.description}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{finding.description}</p>
       )}
-      <div className="flex flex-wrap gap-4 pt-2 text-sm">
+      
+      <div className="flex flex-wrap gap-4 text-sm">
         {finding.estimatedCost && (
           <div>
             <span className="text-muted-foreground">Est. Cost: </span>
             <span className="font-medium text-foreground">{finding.estimatedCost}</span>
-          </div>
-        )}
-        {finding.urgency && (
-          <div>
-            <span className="text-muted-foreground">Urgency: </span>
-            <span className={`font-medium capitalize ${
-              finding.urgency === 'now' ? 'text-red-600' : 
-              finding.urgency === 'soon' ? 'text-orange-600' : 'text-foreground'
-            }`}>{finding.urgency}</span>
           </div>
         )}
         {finding.diyLevel && (
@@ -102,6 +138,36 @@ function FindingCard({ finding }: { finding: InspectionFinding }) {
           </div>
         )}
       </div>
+      
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => setShowWhy(!showWhy)}
+          className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+          data-testid="button-why-matters"
+        >
+          <ChevronRight className={`h-3.5 w-3.5 transition-transform ${showWhy ? 'rotate-90' : ''}`} />
+          Why this matters
+        </button>
+        
+        {finding.diyLevel === 'Pro-Only' && (
+          <a
+            href={`https://www.angi.com/search/${encodeURIComponent((finding.category || 'home') + ' repair')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="link-find-pro"
+          >
+            Find a pro
+            <span className="text-[10px] text-muted-foreground">(via Angi)</span>
+          </a>
+        )}
+      </div>
+      
+      {showWhy && (
+        <div className="p-3 bg-white/60 rounded border border-muted text-sm text-muted-foreground leading-relaxed">
+          {whyText}
+        </div>
+      )}
     </div>
   );
 }
@@ -113,7 +179,7 @@ function ReportDetail({ reportId, onBack }: { reportId: number; onBack: () => vo
   const { data: report, isLoading, refetch } = useQuery({
     queryKey: ["report", reportId],
     queryFn: () => getInspectionReport(reportId),
-    refetchInterval: (data) => data?.status === "analyzing" ? 2000 : false,
+    refetchInterval: (query) => query.state.data?.status === "analyzing" ? 2000 : false,
   });
   
   const analyzeMutation = useMutation({
@@ -218,14 +284,74 @@ function ReportDetail({ reportId, onBack }: { reportId: number; onBack: () => vo
       )}
       
       {report.findings && report.findings.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            Findings ({report.findings.length})
-          </h3>
-          <div className="space-y-3">
-            {report.findings.map((finding) => (
-              <FindingCard key={finding.id} finding={finding} />
-            ))}
+        <div className="space-y-6">
+          {/* Group findings by urgency */}
+          {(() => {
+            const fixNow = report.findings.filter(f => f.urgency === 'now' || f.severity === 'critical');
+            const planSoon = report.findings.filter(f => (f.urgency === 'soon' || f.severity === 'major') && f.urgency !== 'now' && f.severity !== 'critical');
+            const addressLater = report.findings.filter(f => f.urgency !== 'now' && f.urgency !== 'soon' && f.severity !== 'critical' && f.severity !== 'major');
+            
+            return (
+              <>
+                {fixNow.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                      Fix Now ({fixNow.length})
+                    </h3>
+                    <p className="text-sm text-muted-foreground -mt-1">
+                      These should be addressed promptly to prevent further damage.
+                    </p>
+                    <div className="space-y-3">
+                      {fixNow.map((finding) => (
+                        <FindingCard key={finding.id} finding={finding} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {planSoon.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-orange-500" />
+                      Plan for Soon ({planSoon.length})
+                    </h3>
+                    <p className="text-sm text-muted-foreground -mt-1">
+                      Worth scheduling in the coming months—not emergencies, but don't ignore.
+                    </p>
+                    <div className="space-y-3">
+                      {planSoon.map((finding) => (
+                        <FindingCard key={finding.id} finding={finding} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {addressLater.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      Address When Ready ({addressLater.length})
+                    </h3>
+                    <p className="text-sm text-muted-foreground -mt-1">
+                      Low priority—tackle these when convenient or as part of larger projects.
+                    </p>
+                    <div className="space-y-3">
+                      {addressLater.map((finding) => (
+                        <FindingCard key={finding.id} finding={finding} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+          
+          <div className="p-4 bg-muted/30 rounded-lg border border-muted">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Note:</span> Cost estimates are typical ranges for this type of repair. 
+              Actual costs vary by location, contractor, and specific conditions. Get quotes before committing.
+            </p>
           </div>
         </div>
       )}
@@ -338,7 +464,7 @@ export default function Inspections() {
               Inspection Reports
             </h1>
             <p className="text-muted-foreground mt-1">
-              Upload and analyze your home inspection reports
+              Understand what needs attention and what can wait
             </p>
           </div>
           <Tooltip>
@@ -363,14 +489,16 @@ export default function Inspections() {
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <FileText className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">No reports yet</h2>
-            <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-              Upload your home inspection report and our AI will analyze it to identify issues, 
-              estimated costs, and recommended actions.
+            <h2 className="text-xl font-semibold text-foreground">Upload Your Inspection Report</h2>
+            <p className="text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+              We'll summarize issues, estimate costs, and help you decide what to fix now versus later.
             </p>
-            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Info className="h-4 w-4" />
-              <span>Supports PDF, PNG, JPG up to 20MB</span>
+            <p className="text-sm text-muted-foreground mt-4 max-w-sm mx-auto">
+              Estimates are ranges, not quotes. You stay in control of every decision.
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-full px-4 py-2 w-fit mx-auto">
+              <Info className="h-3.5 w-3.5" />
+              <span>Accepts PDF, PNG, JPG up to 20MB</span>
             </div>
           </div>
         ) : (

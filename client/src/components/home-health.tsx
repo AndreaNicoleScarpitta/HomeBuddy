@@ -1,71 +1,142 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Info, ShieldCheck, AlertTriangle, AlertCircle, HelpCircle } from "lucide-react";
 
 interface HomeHealthProps {
   score: number;
+  systemsCount?: number;
+  tasksCount?: number;
 }
 
-export function HomeHealth({ score }: HomeHealthProps) {
-  const data = [
-    { name: 'Score', value: score },
-    { name: 'Remaining', value: 100 - score },
-  ];
+type HealthTier = "healthy" | "watch" | "needs-attention" | "unknown";
 
-  // Determine color based on score
-  let color = "hsl(var(--primary))";
-  if (score < 60) color = "hsl(var(--destructive))";
-  else if (score < 80) color = "#f59e0b"; // Amber/Orange
-  else color = "hsl(150, 60%, 45%)"; // Green
+function getHealthTier(score: number, systemsCount: number): { tier: HealthTier; label: string; description: string } {
+  if (systemsCount === 0) {
+    return {
+      tier: "unknown",
+      label: "Getting Started",
+      description: "Add your home systems to see your health status"
+    };
+  }
+  
+  if (score >= 80) {
+    return {
+      tier: "healthy",
+      label: "Healthy",
+      description: "Your home is well-maintained with no urgent concerns"
+    };
+  }
+  
+  if (score >= 50) {
+    return {
+      tier: "watch",
+      label: "Watch List",
+      description: "A few items need attention soon, but nothing critical"
+    };
+  }
+  
+  return {
+    tier: "needs-attention",
+    label: "Needs Attention",
+    description: "Some repairs should be addressed to protect your home"
+  };
+}
+
+function getTierStyles(tier: HealthTier) {
+  switch (tier) {
+    case "healthy":
+      return {
+        icon: ShieldCheck,
+        iconColor: "text-green-600",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        badgeClass: "bg-green-100 text-green-700 border-green-200"
+      };
+    case "watch":
+      return {
+        icon: AlertTriangle,
+        iconColor: "text-amber-600",
+        bgColor: "bg-amber-50",
+        borderColor: "border-amber-200",
+        badgeClass: "bg-amber-100 text-amber-700 border-amber-200"
+      };
+    case "needs-attention":
+      return {
+        icon: AlertCircle,
+        iconColor: "text-orange-600",
+        bgColor: "bg-orange-50",
+        borderColor: "border-orange-200",
+        badgeClass: "bg-orange-100 text-orange-700 border-orange-200"
+      };
+    default:
+      return {
+        icon: HelpCircle,
+        iconColor: "text-muted-foreground",
+        bgColor: "bg-muted/30",
+        borderColor: "border-muted",
+        badgeClass: "bg-muted text-muted-foreground border-muted"
+      };
+  }
+}
+
+export function HomeHealth({ score, systemsCount = 0, tasksCount = 0 }: HomeHealthProps) {
+  const { tier, label, description } = getHealthTier(score, systemsCount);
+  const styles = getTierStyles(tier);
+  const TierIcon = styles.icon;
 
   return (
-    <Card className="h-full border-none shadow-sm bg-gradient-to-br from-card to-secondary/20">
-      <CardHeader>
+    <Card className={`h-full border shadow-sm ${styles.bgColor} ${styles.borderColor}`}>
+      <CardHeader className="pb-3">
         <CardTitle className="text-lg font-heading flex items-center gap-2">
-          Home Health Score
+          Home Status
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="h-4 w-4 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              <p>Your home health score is based on the age of your systems, pending maintenance tasks, and completed repairs. Higher is better!</p>
+              <p className="font-medium mb-1">How is this calculated?</p>
+              <p className="text-sm">Your status is based on the age and condition of your home systems, pending maintenance tasks, and completed repairs. It improves as we learn more about your home.</p>
             </TooltipContent>
           </Tooltip>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[200px] w-full relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                startAngle={90}
-                endAngle={-270}
-                dataKey="value"
-                stroke="none"
-              >
-                <Cell key="score" fill={color} />
-                <Cell key="remaining" fill="hsl(var(--muted))" />
-                <Label
-                  value={score}
-                  position="center"
-                  className="fill-foreground text-4xl font-bold font-heading"
-                />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-8 text-sm text-muted-foreground font-medium">
-            / 100
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div className={`h-16 w-16 rounded-full ${styles.bgColor} border-2 ${styles.borderColor} flex items-center justify-center`}>
+            <TierIcon className={`h-8 w-8 ${styles.iconColor}`} />
+          </div>
+          <div className="flex-1">
+            <Badge variant="outline" className={`text-sm font-medium px-3 py-1 ${styles.badgeClass}`}>
+              {label}
+            </Badge>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              {description}
+            </p>
           </div>
         </div>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Your home is in <span className="font-semibold text-foreground">Good Condition</span>, but needs attention on <span className="font-semibold text-foreground">Roofing</span>.
-        </p>
+
+        {tier === "unknown" && (
+          <div className="p-3 rounded-lg bg-white/60 border border-muted">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Tip:</span> Add your HVAC, roof, plumbing, and other systems to get a personalized home health assessment.
+            </p>
+          </div>
+        )}
+
+        {tier !== "unknown" && (
+          <div className="p-3 rounded-lg bg-white/60 border border-muted">
+            <p className="text-xs text-muted-foreground">
+              {systemsCount > 0 && `Tracking ${systemsCount} system${systemsCount > 1 ? 's' : ''}`}
+              {systemsCount > 0 && tasksCount > 0 && ' • '}
+              {tasksCount > 0 && `${tasksCount} active task${tasksCount > 1 ? 's' : ''}`}
+              {systemsCount === 0 && tasksCount === 0 && 'Add systems to improve accuracy'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              Most homes your age have similar maintenance needs—you're not behind.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
