@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { logEnvironmentStatus } from "./lib/env-validation";
 
 const app = express();
 const httpServer = createServer(app);
@@ -61,6 +62,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  logEnvironmentStatus();
+  
   // Setup auth BEFORE registering other routes
   await setupAuth(app);
   registerAuthRoutes(app);

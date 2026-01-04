@@ -50,18 +50,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <nav className="flex flex-col p-4 gap-2">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <a 
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                      location === item.href 
-                        ? "bg-primary text-primary-foreground font-medium" 
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </a>
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+                    location === item.href 
+                      ? "bg-primary text-primary-foreground font-medium" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
                 </Link>
               ))}
               <Button 
@@ -88,17 +88,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 p-4 gap-2 flex flex-col">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <a 
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  location === item.href 
-                    ? "bg-primary text-primary-foreground font-medium shadow-sm translate-x-1" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
-                }`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </a>
+            <Link 
+              key={item.href} 
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                location === item.href 
+                  ? "bg-primary text-primary-foreground font-medium shadow-sm translate-x-1" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
             </Link>
           ))}
         </nav>

@@ -5,6 +5,7 @@ import { isAuthenticated } from "./replit_integrations/auth";
 import { logInfo, logError, logWarn } from "./lib/logger";
 import { verifyAddress, isUSPSConfigured } from "./lib/usps";
 import { streamAIResponse } from "./lib/ai-chat";
+import { sendContactFormNotification } from "./lib/email";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
@@ -520,6 +521,12 @@ export async function registerRoutes(
         email: messageData.email,
         subject: messageData.subject 
       });
+      
+      sendContactFormNotification(
+        messageData.name,
+        messageData.email,
+        `Subject: ${messageData.subject || "No subject"}\n\n${messageData.message}`
+      ).catch(() => {});
       
       res.json({ 
         message: "Thank you for reaching out! We'll get back to you soon.",
