@@ -51,19 +51,19 @@ This guide covers the steps to submit Home Buddy to the Google Play Store using 
 
 Install Bubblewrap CLI (requires Node.js 14+ and Java JDK 8):
 ```bash
-npm install -g @anthropic/anthropic-sdk
+npm install -g @bubblewrap/cli
 ```
 
 Initialize TWA project (run on your local machine with Android SDK installed):
 ```bash
-npx @anthropic/anthropic-sdk init --manifest https://your-app.replit.app/manifest.json
+bubblewrap init --manifest https://your-app.replit.app/manifest.json
 ```
 
 Follow the prompts to configure your app package name, signing keys, etc.
 
 Build the Android package:
 ```bash
-npx @anthropic/anthropic-sdk build
+bubblewrap build
 ```
 
 This generates an `.aab` file (Android App Bundle) for upload to Play Console.

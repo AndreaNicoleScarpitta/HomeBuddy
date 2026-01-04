@@ -1,7 +1,7 @@
 # Home Buddy - Home Maintenance Assistant
 
 ## Overview
-Home Buddy is a home maintenance assistant web application with OAuth authentication, home profile management, AI-powered maintenance task tracking, chat assistant interface, and comprehensive budget/funds tracking.
+Home Buddy is a home maintenance assistant web application with OAuth authentication, home profile management, AI-powered maintenance task tracking, chat assistant interface, and comprehensive budget/funds tracking. Now configured as a Progressive Web App (PWA) ready for browser installation and potential Google Play Store submission.
 
 ## Current State
 - Full authentication system with Replit Auth
@@ -13,8 +13,10 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Contact form with email notifications (Resend)
 - Environment validation at startup (fail-fast on missing required vars)
 - Unit tests with Vitest (36 passing tests)
+- PWA with service worker and manifest for installability
 
 ## Recent Changes
+- 2026-01-04: Added PWA manifest, service worker, app icons, and Play Store submission guide
 - 2026-01-04: Added AI chat with streaming, environment validation, email notifications, authorization tests, fixed nested anchor tag hydration errors
 
 ## Architecture
