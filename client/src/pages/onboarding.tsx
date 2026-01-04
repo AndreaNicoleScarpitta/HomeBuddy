@@ -153,6 +153,7 @@ export default function Onboarding() {
                 type="button"
                 onClick={() => setStep(1)}
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="button-back"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back

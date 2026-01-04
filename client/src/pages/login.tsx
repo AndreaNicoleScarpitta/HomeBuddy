@@ -129,6 +129,7 @@ export default function Login() {
                 type="button"
                 onClick={() => setShowOtp(false)}
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+                data-testid="button-back"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -158,16 +159,16 @@ export default function Login() {
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 Didn't receive it?{" "}
-                <button type="button" className="text-primary hover:underline">Resend</button>
+                <button type="button" className="text-primary hover:underline" data-testid="button-resend">Resend</button>
               </p>
             </motion.form>
           )}
 
           <p className="text-center text-xs text-muted-foreground leading-relaxed">
             By continuing, you agree to our{" "}
-            <a href="#" className="underline hover:text-foreground">Terms</a>
+            <a href="#" className="underline hover:text-foreground" data-testid="link-terms">Terms</a>
             {" "}and{" "}
-            <a href="#" className="underline hover:text-foreground">Privacy Policy</a>
+            <a href="#" className="underline hover:text-foreground" data-testid="link-privacy">Privacy Policy</a>
           </p>
         </motion.div>
       </div>
