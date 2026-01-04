@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Buddy - Technical Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #fff;
+    }
+    
+    @media print {
+      body { padding: 20px; font-size: 11px; }
+      .no-print { display: none; }
+      h2 { page-break-before: always; }
+      h2:first-of-type { page-break-before: avoid; }
+      pre { font-size: 10px; }
+      table { font-size: 10px; }
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 3px solid #f97316;
+    }
+    
+    .logo { font-size: 48px; margin-bottom: 10px; }
+    
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f97316;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle { font-size: 16px; color: #666; }
+    
+    .version {
+      display: inline-block;
+      background: #f97316;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    
+    .updated { font-size: 12px; color: #999; margin-top: 8px; }
+    
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 40px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin: 25px 0 12px;
+    }
+    
+    p { margin-bottom: 12px; }
+    
+    .card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .feature {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: #f97316;
+      margin-bottom: 5px;
+    }
+    
+    .feature-desc { font-size: 14px; color: #666; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 13px;
+    }
+    
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    th {
+      background: #f97316;
+      color: white;
+      font-weight: 600;
+    }
+    
+    tr:nth-child(even) { background: #f8f9fa; }
+    
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 15px 0;
+    }
+    
+    .endpoint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+      flex-wrap: wrap;
+    }
+    
+    .method {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      min-width: 55px;
+      text-align: center;
+    }
+    
+    .method.get { background: #dcfce7; color: #166534; }
+    .method.post { background: #dbeafe; color: #1e40af; }
+    .method.patch { background: #fef3c7; color: #92400e; }
+    .method.delete { background: #fee2e2; color: #991b1b; }
+    
+    .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #374151;
+    }
+    
+    .desc {
+      color: #6b7280;
+      font-size: 12px;
+      margin-left: auto;
+    }
+    
+    .print-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+    
+    .print-btn:hover { background: #ea580c; }
+    
+    .toc {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .toc-title { font-weight: 600; margin-bottom: 10px; }
+    .toc ul { list-style: none; columns: 2; }
+    .toc li { padding: 4px 0; }
+    .toc a { color: #f97316; text-decoration: none; }
+    
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+    }
+    
+    .note {
+      background: #fffbeb;
+      border-left: 4px solid #f97316;
+      padding: 12px 16px;
+      margin: 15px 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🏠</div>
+    <h1>Home Buddy</h1>
+    <p class="subtitle">AI-Powered Home Maintenance Assistant</p>
+    <span class="version">v1.0.0</span>
+    <p class="updated">Last Updated: January 4, 2026</p>
+  </div>
+  
+  <div class="toc no-print">
+    <div class="toc-title">Table of Contents</div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#stack">Technology Stack</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#database">Database Schema</a></li>
+      <li><a href="#api">API Endpoints</a></li>
+      <li><a href="#files">File Structure</a></li>
+      <li><a href="#env">Environment Variables</a></li>
+    </ul>
+  </div>
+
+  <h2 id="overview">Overview</h2>
+  <p>Home Buddy is a comprehensive home maintenance assistant web application that helps homeowners track maintenance tasks, manage budgets, and get AI-powered guidance for home care decisions.</p>
+  
+  <div class="card">
+    <strong>Key Value Proposition:</strong> Combines task management, budget tracking, and AI assistance into a single platform designed with an empathetic, no-shame approach to home ownership.
+  </div>
+
+  <h2 id="stack">Technology Stack</h2>
+  <div class="grid">
+    <div class="feature">
+      <div class="feature-title">Frontend</div>
+      <div class="feature-desc">React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Wouter routing</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Backend</div>
+      <div class="feature-desc">Express.js, TypeScript, Node.js, Pino logging</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Database</div>
+      <div class="feature-desc">PostgreSQL with Drizzle ORM</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Authentication</div>
+      <div class="feature-desc">Replit Auth (OpenID Connect)</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">AI Integration</div>
+      <div class="feature-desc">OpenAI GPT-4o with streaming responses</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">File Storage</div>
+      <div class="feature-desc">Replit Object Storage for document uploads</div>
+    </div>
+  </div>
+  
+  <h3>Design System</h3>
+  <table>
+    <tr><th>Element</th><th>Value</th></tr>
+    <tr><td>Primary Color</td><td><code>#f97316</code> (Construction Orange)</td></tr>
+    <tr><td>Heading Font</td><td>Plus Jakarta Sans</td></tr>
+    <tr><td>Body Font</td><td>Inter</td></tr>
+    <tr><td>Style</td><td>Minimalist, no cards, split-hero layouts, pill components</td></tr>
+  </table>
+
+  <h2 id="features">Features</h2>
+  <div class="grid">
+    <div class="feature">
+      <div class="feature-title">Home Profile</div>
+      <div class="feature-desc">Address management with optional USPS verification and Google Places autocomplete</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Maintenance Tasks</div>
+      <div class="feature-desc">Track tasks with urgency levels (now/soon/later), DIY ratings, and cost estimates</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">AI Assistant</div>
+      <div class="feature-desc">Streaming chat with GPT-4o for DIY guidance, safety warnings, and recommendations</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Budget Tracker</div>
+      <div class="feature-desc">Funds with allocations and expense tracking (amounts stored in cents)</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">Inspection Reports</div>
+      <div class="feature-desc">Upload PDF/images for analysis (currently mock AI - sample findings generated)</div>
+    </div>
+    <div class="feature">
+      <div class="feature-title">PWA Support</div>
+      <div class="feature-desc">Installable progressive web app with manifest and service worker</div>
+    </div>
+  </div>
+  
+  <div class="note">
+    <strong>Note:</strong> Inspection report analysis currently uses mock data. Real AI analysis can be implemented by integrating document parsing with OpenAI Vision API.
+  </div>
+
+  <h2 id="database">Database Schema</h2>
+  <p>All tables use auto-increment integer primary keys. Foreign keys cascade on delete where appropriate.</p>
+  
+  <h3>users (Replit Auth)</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>text (PK)</td><td>Replit user ID</td></tr>
+    <tr><td>email</td><td>text</td><td>User email</td></tr>
+    <tr><td>firstName</td><td>text</td><td>First name</td></tr>
+    <tr><td>lastName</td><td>text</td><td>Last name</td></tr>
+    <tr><td>profileImageUrl</td><td>text</td><td>Avatar URL</td></tr>
+    <tr><td>createdAt, updatedAt</td><td>timestamp</td><td>Timestamps</td></tr>
+  </table>
+
+  <h3>homes</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>userId</td><td>varchar (FK)</td><td>Reference to users.id</td></tr>
+    <tr><td>address</td><td>text</td><td>Full address string</td></tr>
+    <tr><td>streetAddress, city, state, zipCode, zipPlus4</td><td>varchar</td><td>Parsed address components</td></tr>
+    <tr><td>addressVerified</td><td>boolean</td><td>USPS verification status</td></tr>
+    <tr><td>builtYear</td><td>integer</td><td>Year home was built</td></tr>
+    <tr><td>sqFt</td><td>integer</td><td>Square footage</td></tr>
+    <tr><td>type</td><td>varchar</td><td>Single Family Home, Condo, etc.</td></tr>
+    <tr><td>healthScore</td><td>integer</td><td>Overall home health (default 0)</td></tr>
+  </table>
+
+  <h3>systems</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>homeId</td><td>integer (FK)</td><td>Reference to homes.id</td></tr>
+    <tr><td>name</td><td>varchar</td><td>System name (HVAC, Roof, etc.)</td></tr>
+    <tr><td>age</td><td>integer</td><td>System age in years</td></tr>
+    <tr><td>status</td><td>varchar</td><td>good, warning, critical</td></tr>
+    <tr><td>lastService</td><td>timestamp</td><td>Last service date</td></tr>
+  </table>
+
+  <h3>maintenanceTasks</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>homeId</td><td>integer (FK)</td><td>Reference to homes.id</td></tr>
+    <tr><td>title</td><td>varchar</td><td>Task title</td></tr>
+    <tr><td>category</td><td>varchar</td><td>Category (HVAC, Plumbing, etc.)</td></tr>
+    <tr><td>dueDate</td><td>timestamp</td><td>When task is due</td></tr>
+    <tr><td>urgency</td><td>varchar</td><td>now, soon, later, monitor</td></tr>
+    <tr><td>diyLevel</td><td>varchar</td><td>DIY-Safe, Caution, Pro-Only</td></tr>
+    <tr><td>status</td><td>varchar</td><td>pending, scheduled, completed, overdue</td></tr>
+    <tr><td>estimatedCost</td><td>varchar</td><td>Cost range string (e.g., "$100-200")</td></tr>
+    <tr><td>difficulty</td><td>varchar</td><td>Difficulty level</td></tr>
+    <tr><td>safetyWarning</td><td>text</td><td>Safety warnings if applicable</td></tr>
+  </table>
+
+  <h3>chatMessages</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>homeId</td><td>integer (FK)</td><td>Reference to homes.id</td></tr>
+    <tr><td>role</td><td>varchar</td><td>user or assistant</td></tr>
+    <tr><td>content</td><td>text</td><td>Message content</td></tr>
+    <tr><td>createdAt</td><td>timestamp</td><td>Message timestamp</td></tr>
+  </table>
+
+  <h3>funds</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>homeId</td><td>integer (FK)</td><td>Reference to homes.id</td></tr>
+    <tr><td>name</td><td>varchar</td><td>Fund name</td></tr>
+    <tr><td>balance</td><td>integer</td><td>Current balance <strong>in cents</strong></td></tr>
+    <tr><td>monthlyContribution</td><td>integer</td><td>Monthly savings <strong>in cents</strong></td></tr>
+    <tr><td>fundType</td><td>varchar</td><td>general, emergency, dedicated</td></tr>
+    <tr><td>label</td><td>text</td><td>Optional mental label</td></tr>
+    <tr><td>color</td><td>varchar</td><td>Hex color for display</td></tr>
+  </table>
+
+  <h3>fundAllocations</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>fundId</td><td>integer (FK)</td><td>Reference to funds.id</td></tr>
+    <tr><td>taskId</td><td>integer (FK)</td><td>Reference to maintenanceTasks.id</td></tr>
+    <tr><td>amount</td><td>integer</td><td>Allocated amount <strong>in cents</strong></td></tr>
+    <tr><td>status</td><td>varchar</td><td>planned, committed, paid</td></tr>
+    <tr><td>notes</td><td>text</td><td>Optional notes</td></tr>
+  </table>
+
+  <h3>expenses</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>fundId</td><td>integer (FK)</td><td>Reference to funds.id</td></tr>
+    <tr><td>taskId</td><td>integer (FK, nullable)</td><td>Reference to maintenanceTasks.id</td></tr>
+    <tr><td>amount</td><td>integer</td><td>Expense amount <strong>in cents</strong></td></tr>
+    <tr><td>description</td><td>text</td><td>Expense description</td></tr>
+    <tr><td>paymentStatus</td><td>varchar</td><td>estimated, partial, paid</td></tr>
+    <tr><td>paidAt</td><td>timestamp</td><td>Payment date</td></tr>
+  </table>
+
+  <h3>inspectionReports</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>homeId</td><td>integer (FK)</td><td>Reference to homes.id</td></tr>
+    <tr><td>fileName</td><td>varchar</td><td>Original file name</td></tr>
+    <tr><td>fileType</td><td>varchar</td><td>MIME type</td></tr>
+    <tr><td>objectPath</td><td>text</td><td>Storage path</td></tr>
+    <tr><td>reportType</td><td>varchar</td><td>general, pre-purchase, annual, etc.</td></tr>
+    <tr><td>status</td><td>varchar</td><td>pending, analyzing, analyzed, error</td></tr>
+    <tr><td>summary</td><td>text</td><td>AI-generated summary</td></tr>
+    <tr><td>issuesFound</td><td>integer</td><td>Count of findings</td></tr>
+    <tr><td>analyzedAt</td><td>timestamp</td><td>Analysis completion time</td></tr>
+  </table>
+
+  <h3>inspectionFindings</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>reportId</td><td>integer (FK)</td><td>Reference to inspectionReports.id</td></tr>
+    <tr><td>category</td><td>varchar</td><td>Roof, HVAC, Plumbing, Electrical, etc.</td></tr>
+    <tr><td>title</td><td>varchar</td><td>Finding title</td></tr>
+    <tr><td>description</td><td>text</td><td>Detailed description</td></tr>
+    <tr><td>severity</td><td>varchar</td><td>minor, moderate, major, critical</td></tr>
+    <tr><td>location</td><td>varchar</td><td>Location in home</td></tr>
+    <tr><td>estimatedCost</td><td>varchar</td><td>Cost range string</td></tr>
+    <tr><td>urgency</td><td>varchar</td><td>now, soon, later</td></tr>
+    <tr><td>diyLevel</td><td>varchar</td><td>DIY-Safe, Caution, Pro-Only</td></tr>
+    <tr><td>taskCreated</td><td>boolean</td><td>Whether task was created from finding</td></tr>
+  </table>
+
+  <h3>contactMessages</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>id</td><td>serial (PK)</td><td>Auto-increment ID</td></tr>
+    <tr><td>name</td><td>varchar</td><td>Sender name</td></tr>
+    <tr><td>email</td><td>varchar</td><td>Sender email</td></tr>
+    <tr><td>subject</td><td>varchar</td><td>Message subject</td></tr>
+    <tr><td>message</td><td>text</td><td>Message body</td></tr>
+    <tr><td>status</td><td>varchar</td><td>new, read, replied</td></tr>
+  </table>
+
+  <h2 id="api">API Endpoints</h2>
+  <p>All endpoints except <code>/api/contact</code> and <code>/api/health</code> require authentication via Replit Auth.</p>
+  
+  <h3>Authentication</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/auth/user</span><span class="desc">Get current user</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/logout</span><span class="desc">Logout user</span></div>
+
+  <h3>Home Profile</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home</span><span class="desc">Get user's home</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home</span><span class="desc">Create home profile</span></div>
+  <div class="endpoint"><span class="method patch">PATCH</span><span class="path">/api/home/:id</span><span class="desc">Update home</span></div>
+
+  <h3>Address Verification</h3>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/address/verify</span><span class="desc">Verify address via USPS</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/address/status</span><span class="desc">Check if USPS is configured</span></div>
+
+  <h3>Systems</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/systems</span><span class="desc">List home systems</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home/:homeId/systems</span><span class="desc">Create system</span></div>
+
+  <h3>Maintenance Tasks</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/tasks</span><span class="desc">List tasks</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home/:homeId/tasks</span><span class="desc">Create task</span></div>
+  <div class="endpoint"><span class="method patch">PATCH</span><span class="path">/api/tasks/:id</span><span class="desc">Update task</span></div>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/tasks/:id</span><span class="desc">Delete task</span></div>
+
+  <h3>AI Chat</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/chat</span><span class="desc">Get chat history</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home/:homeId/chat</span><span class="desc">Save message (streaming via SSE)</span></div>
+
+  <h3>Funds</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/funds</span><span class="desc">List funds</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home/:homeId/funds</span><span class="desc">Create fund</span></div>
+  <div class="endpoint"><span class="method patch">PATCH</span><span class="path">/api/funds/:id</span><span class="desc">Update fund</span></div>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/funds/:id</span><span class="desc">Delete fund</span></div>
+
+  <h3>Allocations</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/funds/:fundId/allocations</span><span class="desc">List allocations by fund</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/tasks/:taskId/allocations</span><span class="desc">List allocations by task</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/allocations</span><span class="desc">Create allocation</span></div>
+  <div class="endpoint"><span class="method patch">PATCH</span><span class="path">/api/allocations/:id</span><span class="desc">Update allocation</span></div>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/allocations/:id</span><span class="desc">Delete allocation</span></div>
+
+  <h3>Expenses</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/expenses</span><span class="desc">List all expenses</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/funds/:fundId/expenses</span><span class="desc">List expenses by fund</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/expenses</span><span class="desc">Create expense</span></div>
+  <div class="endpoint"><span class="method patch">PATCH</span><span class="path">/api/expenses/:id</span><span class="desc">Update expense</span></div>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/expenses/:id</span><span class="desc">Delete expense</span></div>
+
+  <h3>Inspection Reports</h3>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/home/:homeId/reports</span><span class="desc">List reports</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/reports/:id</span><span class="desc">Get report with findings</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/home/:homeId/reports</span><span class="desc">Create report</span></div>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/reports/:id/analyze</span><span class="desc">Trigger analysis (mock)</span></div>
+  <div class="endpoint"><span class="method delete">DELETE</span><span class="path">/api/reports/:id</span><span class="desc">Delete report</span></div>
+
+  <h3>Other</h3>
+  <div class="endpoint"><span class="method post">POST</span><span class="path">/api/contact</span><span class="desc">Submit contact form (public)</span></div>
+  <div class="endpoint"><span class="method get">GET</span><span class="path">/api/health</span><span class="desc">Health check endpoint</span></div>
+
+  <h2 id="files">File Structure</h2>
+  <pre>home-buddy/
+├── client/
+│   └── src/
+│       ├── pages/
+│       │   ├── dashboard.tsx      # Home dashboard
+│       │   ├── budget.tsx         # Budget tracker
+│       │   ├── chat.tsx           # AI assistant
+│       │   ├── inspections.tsx    # Inspection reports
+│       │   ├── contact.tsx        # Contact form
+│       │   ├── landing.tsx        # Login page
+│       │   └── onboarding.tsx     # Address setup
+│       ├── components/
+│       │   ├── layout.tsx         # App layout with nav
+│       │   ├── splash-screen.tsx  # Branded splash
+│       │   ├── ObjectUploader.tsx # File upload
+│       │   └── ui/                # shadcn components
+│       ├── hooks/
+│       │   ├── use-auth.ts        # Auth hook
+│       │   └── use-toast.ts       # Toast notifications
+│       └── lib/
+│           ├── api.ts             # API client functions
+│           └── queryClient.ts     # React Query config
+├── server/
+│   ├── index.ts                   # Server entry point
+│   ├── routes.ts                  # All API endpoints
+│   ├── storage.ts                 # Database operations
+│   ├── db.ts                      # Database connection
+│   └── lib/
+│       ├── logger.ts              # Pino structured logging
+│       ├── ai-chat.ts             # OpenAI streaming
+│       ├── usps.ts                # Address verification
+│       ├── email.ts               # Resend emails
+│       └── env-validation.ts      # Startup validation
+├── shared/
+│   ├── schema.ts                  # Drizzle schema + Zod
+│   └── models/
+│       ├── auth.ts                # User model
+│       └── chat.ts                # Chat types
+└── public/
+    ├── manifest.json              # PWA manifest
+    ├── sw.js                      # Service worker
+    └── icons/                     # App icons (192, 512)</pre>
+
+  <h2 id="env">Environment Variables</h2>
+  <table>
+    <tr><th>Variable</th><th>Required</th><th>Description</th></tr>
+    <tr><td>DATABASE_URL</td><td>Yes</td><td>PostgreSQL connection string (auto-provided by Replit)</td></tr>
+    <tr><td>AI_INTEGRATIONS_OPENAI_API_KEY</td><td>No</td><td>OpenAI API key (auto-provided by Replit AI integration)</td></tr>
+    <tr><td>VITE_GOOGLE_PLACES_API_KEY</td><td>No</td><td>Google Places API for address autocomplete</td></tr>
+    <tr><td>USPS_CLIENT_ID</td><td>No</td><td>USPS Web Tools API client ID</td></tr>
+    <tr><td>USPS_CLIENT_SECRET</td><td>No</td><td>USPS Web Tools API client secret</td></tr>
+    <tr><td>RESEND_API_KEY</td><td>No</td><td>Resend API key for email notifications</td></tr>
+    <tr><td>DEFAULT_OBJECT_STORAGE_BUCKET_ID</td><td>No</td><td>Object storage bucket (auto-configured)</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Feature Degradation:</strong> Missing optional environment variables disable specific features gracefully. The app validates environment on startup and logs warnings for missing optional keys.
+  </div>
+
+  <div class="footer">
+    <p>Home Buddy Technical Documentation</p>
+    <p>Generated January 4, 2026 | Built with React, Express, PostgreSQL, and AI</p>
+  </div>
+
+  <button class="print-btn no-print" onclick="window.print()">
+    📄 Save as PDF
+  </button>
+</body>
+</html>
