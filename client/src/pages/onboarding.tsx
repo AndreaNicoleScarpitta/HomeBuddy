@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Home, Search } from "lucide-react";
+import { ArrowRight, Home } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { createHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { AddressAutocomplete, type AddressComponents } from "@/components/address-autocomplete";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 
 export default function Onboarding() {
@@ -16,6 +17,8 @@ export default function Onboarding() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState("");
+  const [addressComponents, setAddressComponents] = useState<AddressComponents | null>(null);
+  const [addressVerified, setAddressVerified] = useState(false);
   const [builtYear, setBuiltYear] = useState("");
   const [sqFt, setSqFt] = useState("");
 
@@ -37,12 +40,32 @@ export default function Onboarding() {
     },
   });
 
+  const handleAddressChange = (addr: string, components?: AddressComponents) => {
+    setAddress(addr);
+    if (components) {
+      setAddressComponents(components);
+    }
+  };
+
+  const handleAddressVerified = (verified: boolean, components?: AddressComponents) => {
+    setAddressVerified(verified);
+    if (verified && components) {
+      setAddressComponents(components);
+    }
+  };
+
   const handleNext = () => {
     if (step === 1 && address) {
       setStep(2);
     } else if (step === 2) {
       createHomeMutation.mutate({
-        address,
+        address: addressComponents?.fullAddress || address,
+        streetAddress: addressComponents?.streetAddress,
+        city: addressComponents?.city,
+        state: addressComponents?.state,
+        zipCode: addressComponents?.zipCode,
+        zipPlus4: addressComponents?.zipPlus4,
+        addressVerified,
         builtYear: builtYear ? parseInt(builtYear) : undefined,
         sqFt: sqFt ? parseInt(sqFt) : undefined,
         type: "Single Family Home",
@@ -79,17 +102,12 @@ export default function Onboarding() {
                     <div className="mt-0.5 shrink-0 text-primary">ℹ</div>
                     We use your address to identify local building codes, permit requirements (AHJ), and regional maintenance costs.
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="address"
-                      placeholder="Enter your home address..." 
-                      className="pl-9 h-12 text-lg"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      data-testid="input-address"
-                    />
-                  </div>
+                  <AddressAutocomplete
+                    value={address}
+                    onChange={handleAddressChange}
+                    onVerified={handleAddressVerified}
+                    placeholder="Enter your home address..."
+                  />
                 </div>
                 <Button 
                   className="w-full h-12 text-lg" 
