@@ -1,18 +1,21 @@
 import { Layout } from "@/components/layout";
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Paperclip, Image as ImageIcon } from "lucide-react";
+import { Send, Bot, User, Paperclip, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getHome, getChatMessages, createChatMessage } from "@/lib/api";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getHome, getChatMessages } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 
 export default function Chat() {
   const [input, setInput] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -28,45 +31,70 @@ export default function Chat() {
     enabled: !!home?.id,
   });
 
-  const createMessageMutation = useMutation({
-    mutationFn: (data: { role: string; content: string }) =>
-      createChatMessage(home!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat", home?.id] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      });
-    },
-  });
-
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
   const handleSend = async () => {
-    if (!input.trim() || !home) return;
+    if (!input.trim() || !home || isStreaming) return;
 
     const userMessage = input;
     setInput("");
+    setIsStreaming(true);
+    setStreamingMessage("");
 
-    await createMessageMutation.mutateAsync({
-      role: "user",
-      content: userMessage,
-    });
-
-    // Mock AI response for now
-    setTimeout(async () => {
-      await createMessageMutation.mutateAsync({
-        role: "assistant",
-        content: "I can help with that! Based on your home profile, I'd recommend consulting with a licensed professional for this type of work. Would you like me to provide more details about costs, safety considerations, or finding qualified contractors in your area?",
+    try {
+      const response = await fetch(`/api/home/${home.id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: userMessage }),
       });
-    }, 1000);
+
+      if (!response.ok) throw new Error("Failed to send message");
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
+          
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.content) {
+                  setStreamingMessage(prev => prev + data.content);
+                } else if (data.done) {
+                  queryClient.invalidateQueries({ queryKey: ["chat", home.id] });
+                } else if (data.error) {
+                  toast({
+                    title: "Error",
+                    description: data.error,
+                    variant: "destructive",
+                  });
+                }
+              } catch {}
+            }
+          }
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to get response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStreaming(false);
+      setStreamingMessage("");
+    }
   };
 
   if (!home) {
@@ -145,6 +173,46 @@ export default function Chat() {
                     </div>
                   </div>
                 ))}
+                
+                {streamingMessage && (
+                  <div className="flex gap-4">
+                    <Avatar className="h-10 w-10 border shadow-sm">
+                      <AvatarImage src={logoImage} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <Bot className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1 max-w-[80%] items-start">
+                      <span className="text-xs text-muted-foreground font-medium mb-1">
+                        Home Buddy
+                      </span>
+                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-white border text-foreground rounded-tl-none">
+                        {streamingMessage}
+                        <span className="inline-block w-2 h-4 bg-primary/50 animate-pulse ml-1" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {isStreaming && !streamingMessage && (
+                  <div className="flex gap-4">
+                    <Avatar className="h-10 w-10 border shadow-sm">
+                      <AvatarImage src={logoImage} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <Bot className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1 max-w-[80%] items-start">
+                      <span className="text-xs text-muted-foreground font-medium mb-1">
+                        Home Buddy
+                      </span>
+                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-white border text-foreground rounded-tl-none">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div ref={scrollRef} />
               </div>
             )}
@@ -152,29 +220,45 @@ export default function Chat() {
 
           <div className="p-4 bg-white/80 border-t backdrop-blur-md">
             <div className="relative flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary shrink-0" data-testid="button-attach">
-                <Paperclip className="h-5 w-5" />
-              </Button>
-               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary shrink-0" data-testid="button-image">
-                <ImageIcon className="h-5 w-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary shrink-0" data-testid="button-attach">
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Attach a file (coming soon)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary shrink-0" data-testid="button-image">
+                    <ImageIcon className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add an image (coming soon)</TooltipContent>
+              </Tooltip>
               <Input
                 placeholder="Ask about maintenance, repairs, or costs..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && !isStreaming && handleSend()}
+                disabled={isStreaming}
                 className="flex-1 rounded-full px-4 border-muted-foreground/20 focus-visible:ring-primary/20"
                 data-testid="input-message"
               />
-              <Button 
-                size="icon" 
-                onClick={handleSend}
-                disabled={!input.trim() || createMessageMutation.isPending}
-                className="rounded-full shadow-lg shadow-primary/20 shrink-0"
-                data-testid="button-send"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    onClick={handleSend}
+                    disabled={!input.trim() || isStreaming}
+                    className="rounded-full shadow-lg shadow-primary/20 shrink-0"
+                    data-testid="button-send"
+                  >
+                    {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Send message</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </Card>

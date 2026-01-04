@@ -3,7 +3,8 @@ import { HomeHealth } from "@/components/home-health";
 import { MaintenanceCard } from "@/components/maintenance-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, ArrowRight, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getHome, getTasks } from "@/lib/api";
@@ -60,11 +61,16 @@ export default function Dashboard() {
             <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Overview</h1>
             <p className="text-muted-foreground mt-1">Good Morning. Here's your home's status.</p>
           </div>
-          <Link href="/chat">
-            <Button size="lg" className="shadow-lg shadow-primary/20" data-testid="button-chat">
-              Ask Assistant <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/chat">
+                <Button size="lg" className="shadow-lg shadow-primary/20" data-testid="button-chat">
+                  Ask Assistant <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Get expert advice on repairs, maintenance, and costs</TooltipContent>
+          </Tooltip>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -108,23 +114,33 @@ export default function Dashboard() {
                  </p>
                </CardContent>
              </Card>
-             <Card>
-               <CardHeader className="pb-2">
-                 <CardTitle className="text-sm font-medium text-muted-foreground">Active Tasks</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <div className="text-2xl font-bold text-foreground" data-testid="text-active-tasks">{activeTasks.length}</div>
-                 <p className="text-sm text-orange-600 mt-1">{highPriorityTasks.length} High Priority</p>
-               </CardContent>
-             </Card>
-             <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 transition-colors" data-testid="card-add-system">
-               <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                   <Plus className="h-6 w-6" />
-                 </div>
-                 <span className="font-medium">Add System</span>
-               </div>
-             </Card>
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Card className="cursor-help">
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-muted-foreground">Active Tasks</CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="text-2xl font-bold text-foreground" data-testid="text-active-tasks">{activeTasks.length}</div>
+                     <p className="text-sm text-orange-600 mt-1">{highPriorityTasks.length} High Priority</p>
+                   </CardContent>
+                 </Card>
+               </TooltipTrigger>
+               <TooltipContent>Pending and scheduled maintenance tasks</TooltipContent>
+             </Tooltip>
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 transition-colors" data-testid="card-add-system">
+                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                       <Plus className="h-6 w-6" />
+                     </div>
+                     <span className="font-medium">Add System</span>
+                   </div>
+                 </Card>
+               </TooltipTrigger>
+               <TooltipContent>Add HVAC, plumbing, roof, or other home systems to track</TooltipContent>
+             </Tooltip>
           </div>
         </div>
 

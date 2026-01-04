@@ -1,5 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface HomeHealthProps {
   score: number;
@@ -20,7 +22,17 @@ export function HomeHealth({ score }: HomeHealthProps) {
   return (
     <Card className="h-full border-none shadow-sm bg-gradient-to-br from-card to-secondary/20">
       <CardHeader>
-        <CardTitle className="text-lg font-heading">Home Health Score</CardTitle>
+        <CardTitle className="text-lg font-heading flex items-center gap-2">
+          Home Health Score
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p>Your home health score is based on the age of your systems, pending maintenance tasks, and completed repairs. Higher is better!</p>
+            </TooltipContent>
+          </Tooltip>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[200px] w-full relative">

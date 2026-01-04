@@ -36,17 +36,32 @@ export function MaintenanceCard({ task }: TaskProps) {
                   {task.category}
                 </Badge>
               )}
-              <Badge className={`text-xs border ${getDiyBadgeColor(task.diyLevel)} shadow-none`}>
-                {task.diyLevel || "Unknown"}
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className={`text-xs border ${getDiyBadgeColor(task.diyLevel)} shadow-none cursor-help`}>
+                    {task.diyLevel || "Unknown"}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  {task.diyLevel === "DIY-Safe" && <p>Safe for most homeowners to complete with basic tools.</p>}
+                  {task.diyLevel === "Caution" && <p>Can be done yourself but requires care. Research first or consider hiring a pro.</p>}
+                  {task.diyLevel === "Pro-Only" && <p>Requires licensed professionals. May involve permits, electrical, gas, or structural work.</p>}
+                  {!task.diyLevel && <p>Difficulty level not yet determined.</p>}
+                </TooltipContent>
+              </Tooltip>
             </div>
             <h3 className="font-heading font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
               {task.title}
             </h3>
           </div>
-          <Button variant="ghost" size="icon" className="text-muted-foreground group-hover:text-primary" data-testid={`button-task-${task.id}`}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground group-hover:text-primary" data-testid={`button-task-${task.id}`}>
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View task details</TooltipContent>
+          </Tooltip>
         </div>
 
         {task.safetyWarning && (

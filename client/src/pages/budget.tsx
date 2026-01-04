@@ -26,6 +26,7 @@ import {
   Sparkles,
   Heart
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Fund, MaintenanceTask } from "@shared/schema";
 
 function formatCurrency(cents: number): string {
@@ -103,27 +104,48 @@ function AffordabilityIndicator({ task, totalAvailable }: { task: MaintenanceTas
 
   if (canAfford) {
     return (
-      <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
-        <CheckCircle2 className="h-3 w-3 mr-1" />
-        You can afford this
-      </Badge>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className="text-xs bg-green-100 text-green-700 border-green-200 cursor-help">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            You can afford this
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>You have enough available funds to cover this expense</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
   if (percentage >= 50) {
     return (
-      <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-200">
-        <Clock className="h-3 w-3 mr-1" />
-        Almost there ({Math.round(percentage)}%)
-      </Badge>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-200 cursor-help">
+            <Clock className="h-3 w-3 mr-1" />
+            Almost there ({Math.round(percentage)}%)
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>You've saved {Math.round(percentage)}% of what you need - keep going!</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
   return (
-    <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-      <AlertCircle className="h-3 w-3 mr-1" />
-      May need to wait
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200 cursor-help">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          May need to wait
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>You'll need to save more before tackling this one</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -360,18 +382,32 @@ export default function Budget() {
                   {formatCurrency(totalBalance)}
                 </p>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Available</p>
-                <p className="text-2xl font-bold text-green-600" data-testid="text-available">
-                  {formatCurrency(availableForRepairs)}
-                </p>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Emergency Reserve</p>
-                <p className="text-2xl font-bold text-red-600" data-testid="text-emergency">
-                  {formatCurrency(emergencyFunds)}
-                </p>
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-center p-4 bg-white rounded-lg shadow-sm cursor-help">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Available</p>
+                    <p className="text-2xl font-bold text-green-600" data-testid="text-available">
+                      {formatCurrency(availableForRepairs)}
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Total funds minus emergency reserves - money you can spend on repairs</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-center p-4 bg-white rounded-lg shadow-sm cursor-help">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Emergency Reserve</p>
+                    <p className="text-2xl font-bold text-red-600" data-testid="text-emergency">
+                      {formatCurrency(emergencyFunds)}
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reserved for unexpected emergencies - try not to touch unless absolutely necessary</p>
+                </TooltipContent>
+              </Tooltip>
               <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Spent YTD</p>
                 <p className="text-2xl font-bold text-muted-foreground" data-testid="text-spent">
