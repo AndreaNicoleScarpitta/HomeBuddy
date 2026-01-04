@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
+import { logInfo, logError, logWarn } from "./lib/logger";
+import { ZodError } from "zod";
+import { fromZodError } from "zod-validation-error";
 import {
   insertHomeSchema,
   insertSystemSchema,
@@ -10,7 +13,34 @@ import {
   insertFundSchema,
   insertFundAllocationSchema,
   insertExpenseSchema,
+  insertContactMessageSchema,
 } from "@shared/schema";
+
+function formatValidationError(error: ZodError): string {
+  const zodError = fromZodError(error);
+  return zodError.message;
+}
+
+function handleApiError(res: any, context: string, error: unknown, statusCode = 400) {
+  if (error instanceof ZodError) {
+    const message = formatValidationError(error);
+    logWarn(context, `Validation error: ${message}`);
+    return res.status(400).json({ 
+      message: "Please check your input and try again.",
+      details: message,
+      code: "VALIDATION_ERROR"
+    });
+  }
+  
+  const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+  logError(context, error);
+  
+  return res.status(statusCode).json({ 
+    message: "Something went wrong. Please try again or contact support if the problem persists.",
+    details: errorMessage,
+    code: "SERVER_ERROR"
+  });
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -303,11 +333,41 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       await storage.deleteExpense(id);
+      logInfo("expenses.delete", "Expense deleted successfully", { id });
       res.json({ message: "Expense deleted successfully" });
     } catch (error) {
-      console.error("Error deleting expense:", error);
-      res.status(400).json({ message: "Failed to delete expense" });
+      return handleApiError(res, "expenses.delete", error);
     }
+  });
+  
+  // Contact form route (public - no auth required)
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const messageData = insertContactMessageSchema.parse(req.body);
+      const message = await storage.createContactMessage(messageData);
+      
+      logInfo("contact.create", "Contact message received", { 
+        name: messageData.name, 
+        email: messageData.email,
+        subject: messageData.subject 
+      });
+      
+      res.json({ 
+        message: "Thank you for reaching out! We'll get back to you soon.",
+        id: message.id 
+      });
+    } catch (error) {
+      return handleApiError(res, "contact.create", error);
+    }
+  });
+  
+  // Health check endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      version: "1.0.0"
+    });
   });
 
   return httpServer;

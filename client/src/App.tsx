@@ -10,6 +10,7 @@ import Chat from "@/pages/chat";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import Budget from "@/pages/budget";
+import Contact from "@/pages/contact";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/chat" component={Chat} />
       <Route path="/budget" component={Budget} />
+      <Route path="/contact" component={Contact} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

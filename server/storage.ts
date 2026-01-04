@@ -20,6 +20,9 @@ import {
   expenses,
   type Expense,
   type InsertExpense,
+  contactMessages,
+  type ContactMessage,
+  type InsertContactMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -66,6 +69,10 @@ export interface IStorage {
   createExpense(expense: InsertExpense): Promise<Expense>;
   updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense>;
   deleteExpense(id: number): Promise<void>;
+  
+  // Contact Messages
+  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+  getContactMessages(): Promise<ContactMessage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -249,6 +256,19 @@ export class DatabaseStorage implements IStorage {
   
   async deleteExpense(id: number): Promise<void> {
     await db.delete(expenses).where(eq(expenses.id, id));
+  }
+  
+  // Contact Messages
+  async createContactMessage(messageData: InsertContactMessage): Promise<ContactMessage> {
+    const [message] = await db.insert(contactMessages).values(messageData).returning();
+    return message;
+  }
+  
+  async getContactMessages(): Promise<ContactMessage[]> {
+    return await db
+      .select()
+      .from(contactMessages)
+      .orderBy(desc(contactMessages.createdAt));
   }
 }
 
