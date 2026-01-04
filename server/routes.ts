@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { logInfo, logError, logWarn } from "./lib/logger";
 import { verifyAddress, isUSPSConfigured } from "./lib/usps";
+import { streamAIResponse } from "./lib/ai-chat";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
@@ -260,11 +261,42 @@ export async function registerRoutes(
       if (!await storage.verifyHomeOwnership(homeId, userId)) {
         return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
       }
-      const messageData = insertChatMessageSchema.parse({ ...req.body, homeId });
-      const message = await storage.createChatMessage(messageData);
-      res.json(message);
+      
+      const { content } = req.body;
+      if (!content) {
+        return res.status(400).json({ message: "Message content is required", code: "VALIDATION_ERROR" });
+      }
+      
+      await storage.createChatMessage({ homeId, role: "user", content });
+      
+      const history = await storage.getChatMessagesByHomeId(homeId);
+      const conversationHistory = history.slice(-10).map(m => ({ role: m.role, content: m.content }));
+      
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      
+      try {
+        const fullResponse = await streamAIResponse(
+          homeId,
+          content,
+          conversationHistory.slice(0, -1),
+          (chunk) => res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`),
+          () => {}
+        );
+        
+        await storage.createChatMessage({ homeId, role: "assistant", content: fullResponse });
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        res.end();
+      } catch (aiError) {
+        logError("chat.ai", aiError);
+        res.write(`data: ${JSON.stringify({ error: "Failed to get AI response" })}\n\n`);
+        res.end();
+      }
     } catch (error) {
-      return handleApiError(res, "chat.create", error);
+      if (!res.headersSent) {
+        return handleApiError(res, "chat.create", error);
+      }
     }
   });
   

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 // Export auth models (IMPORTANT for Replit Auth)
 export * from "./models/auth";
+export * from "./models/chat";
 import { users } from "./models/auth";
 
 // Homes table - stores user's home profile
