@@ -21,40 +21,60 @@ export const MAINTENANCE_TASKS = [
     title: "Change HVAC Filter",
     category: "Routine",
     dueDate: "2025-02-01",
-    priority: "medium",
+    urgency: "now", // Now, Soon, Later, Monitor
+    diyLevel: "DIY-Safe", // DIY-Safe, Pro-Recommended, Permit-Required
     status: "pending",
     estimatedCost: "$20",
-    difficulty: "Easy"
+    difficulty: "Easy",
+    safetyWarning: null
   },
   {
     id: 2,
     title: "Inspect Roof Shingles",
     category: "Inspection",
     dueDate: "2025-03-15",
-    priority: "high",
+    urgency: "soon",
+    diyLevel: "Caution",
     status: "pending",
-    estimatedCost: "Free (Self) or $150",
-    difficulty: "Medium"
+    estimatedCost: "Free (Self) or $150 (Pro)",
+    difficulty: "Medium",
+    safetyWarning: "Ladder safety required. Do not attempt if wet."
   },
   {
     id: 3,
     title: "Flush Water Heater",
     category: "Maintenance",
     dueDate: "2025-04-10",
-    priority: "medium",
+    urgency: "later",
+    diyLevel: "DIY-Safe",
     status: "scheduled",
     estimatedCost: "$200",
-    difficulty: "Hard"
+    difficulty: "Hard",
+    safetyWarning: "Hot water hazard."
   },
   {
     id: 4,
     title: "Clean Gutters",
     category: "Seasonal",
     dueDate: "2024-11-15",
-    priority: "high",
+    urgency: "now",
+    diyLevel: "Caution",
     status: "overdue",
     estimatedCost: "$150",
-    difficulty: "Medium"
+    difficulty: "Medium",
+    safetyWarning: "Ladder safety required."
+  },
+  {
+    id: 5,
+    title: "Foundation Crack",
+    category: "Structural",
+    dueDate: "2025-06-01",
+    urgency: "monitor",
+    diyLevel: "Pro-Only",
+    status: "pending",
+    estimatedCost: "$500 - $2,000",
+    difficulty: "Expert",
+    safetyWarning: "Structural integrity risk. Permit likely required."
   }
 ];
 

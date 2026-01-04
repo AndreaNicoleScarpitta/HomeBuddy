@@ -70,16 +70,37 @@ export default function Dashboard() {
         </div>
 
         {/* Tasks Section */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-heading font-semibold">Upcoming Maintenance</h2>
-            <Button variant="ghost">View All</Button>
+            <div>
+              <h2 className="text-xl font-heading font-semibold">Your Maintenance Plan</h2>
+              <p className="text-sm text-muted-foreground">Prioritized by urgency and safety.</p>
+            </div>
+            <Button variant="ghost">View Full Plan</Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MAINTENANCE_TASKS.map((task) => (
-              <MaintenanceCard key={task.id} task={task} />
-            ))}
-          </div>
+          
+          {["now", "soon", "later", "monitor"].map((urgency) => {
+            const tasks = MAINTENANCE_TASKS.filter(t => t.urgency === urgency);
+            if (tasks.length === 0) return null;
+
+            return (
+              <div key={urgency} className="space-y-3">
+                <h3 className="uppercase text-xs font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${
+                    urgency === 'now' ? 'bg-destructive' : 
+                    urgency === 'soon' ? 'bg-orange-500' : 
+                    urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'
+                  }`} />
+                  {urgency}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tasks.map((task) => (
+                    <MaintenanceCard key={task.id} task={task} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Layout>

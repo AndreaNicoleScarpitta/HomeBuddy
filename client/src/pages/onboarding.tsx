@@ -45,8 +45,11 @@ export default function Onboarding() {
             {step === 1 ? (
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-base font-medium">Where do you live?</Label>
-                  <p className="text-xs text-muted-foreground">We'll pull public records to build your home profile.</p>
+                  <Label htmlFor="address" className="text-base font-medium">Where is your home located?</Label>
+                  <div className="bg-secondary/50 p-3 rounded-lg border border-secondary text-sm text-muted-foreground my-2 flex gap-2 items-start">
+                    <div className="mt-0.5 shrink-0 text-primary">ℹ</div>
+                    We use your address to identify local building codes, permit requirements (AHJ), and regional maintenance costs.
+                  </div>
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input 
