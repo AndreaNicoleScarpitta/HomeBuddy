@@ -171,14 +171,16 @@ export default function Dashboard() {
              </Tooltip>
              <Tooltip>
                <TooltipTrigger asChild>
-                 <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 transition-colors" data-testid="card-add-system">
-                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                       <Plus className="h-6 w-6" />
+                 <Link href="/chat?prompt=help+me+add+a+home+system">
+                   <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors h-full" data-testid="card-add-system">
+                     <div className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                         <Plus className="h-6 w-6" />
+                       </div>
+                       <span className="font-medium">Add System</span>
                      </div>
-                     <span className="font-medium">Add System</span>
-                   </div>
-                 </Card>
+                   </Card>
+                 </Link>
                </TooltipTrigger>
                <TooltipContent>Add HVAC, plumbing, roof, or other home systems to track</TooltipContent>
              </Tooltip>
