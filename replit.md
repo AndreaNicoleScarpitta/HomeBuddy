@@ -7,12 +7,15 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Full authentication system with Replit Auth
 - Complete database schema with all tables
 - All API routes with structured logging and error handling
+- Authorization checks on all routes (users can only access their own data)
+- AI-powered chat with streaming responses (GPT-4o)
 - Budget tracker with funds, allocations, and expenses
-- Contact form (stores to database, email forwarding pending)
-- Unit tests with Vitest (17 passing tests)
+- Contact form with email notifications (Resend)
+- Environment validation at startup (fail-fast on missing required vars)
+- Unit tests with Vitest (36 passing tests)
 
 ## Recent Changes
-- 2026-01-04: Added logging, improved error handling, contact form, unit tests
+- 2026-01-04: Added AI chat with streaming, environment validation, email notifications, authorization tests, fixed nested anchor tag hydration errors
 
 ## Architecture
 
@@ -30,27 +33,36 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 ### Key Files
 - `shared/schema.ts` - Database schema with Drizzle ORM
 - `server/routes.ts` - All API endpoints with logging
-- `server/storage.ts` - Database operations
+- `server/storage.ts` - Database operations with authorization helpers
 - `server/lib/logger.ts` - Structured logging with pino
+- `server/lib/ai-chat.ts` - AI chat with streaming responses
+- `server/lib/env-validation.ts` - Environment validation at startup
+- `server/lib/email.ts` - Email notifications with Resend
 - `client/src/pages/` - React pages (Dashboard, Budget, Chat, Contact)
 
-## Pending Features
+## Environment Variables
 
-### Email Integration
-Contact form currently stores messages to database. To enable email forwarding to andrew.scarpitta@gmail.com:
-1. Set up Resend integration, OR
-2. Add RESEND_API_KEY secret manually
+### Required
+- DATABASE_URL - PostgreSQL connection (auto-provided)
+
+### Optional (features disabled if not set)
+- AI_INTEGRATIONS_OPENAI_API_KEY - AI chat (auto-provided by Replit)
+- VITE_GOOGLE_PLACES_API_KEY - Address autocomplete
+- USPS_CLIENT_ID, USPS_CLIENT_SECRET - Address verification
+- RESEND_API_KEY - Email notifications
 
 ## User Preferences
 - Design: "Modern Utility" aesthetic with construction orange (#f97316)
 - Typography: Plus Jakarta Sans (headings), Inter (UI)
 - UX: Emotional design, no-shame budgeting approach
+- Style: Minimalist, no cards, split-hero layouts, pill-style components
 
 ## Running Tests
 ```bash
 npx vitest run
 ```
 
-## Environment Variables
-- DATABASE_URL - PostgreSQL connection (auto-provided)
-- Replit Auth - Handled automatically
+## Database Commands
+```bash
+npm run db:push   # Push schema changes to database
+```
