@@ -1,13 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Users, Search, Plus, Phone, Calendar, Star, ChevronRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import type { MaintenanceTask, Contractor, ContractorAppointment } from "@shared/schema";
+import { ExternalLink, Users, Search } from "lucide-react";
+import type { MaintenanceTask } from "@shared/schema";
 
 interface ContractorSectionProps {
   homeId: number;
   pendingTasks?: MaintenanceTask[];
+  zipCode?: string;
 }
 
 const serviceTypeMapping: Record<string, string> = {
@@ -17,20 +16,22 @@ const serviceTypeMapping: Record<string, string> = {
   "Roof": "roofing",
   "Windows": "windows",
   "Siding/Exterior": "siding",
-  "Foundation": "foundation",
+  "Foundation": "foundation-repair",
   "Appliances": "appliance-repair",
   "Water Heater": "water-heater",
   "Landscaping": "landscaping",
   "Pest": "pest-control",
+  "Other": "home-improvement",
 };
 
 function buildAngiesListUrl(serviceType: string, zipCode?: string): string {
-  const category = serviceTypeMapping[serviceType] || "home-improvement";
+  const mappedCategory = serviceTypeMapping[serviceType];
+  const category = mappedCategory || encodeURIComponent(serviceType.toLowerCase().replace(/\s+/g, "-"));
   const base = `https://www.angi.com/companylist/${category}.htm`;
   return zipCode ? `${base}?zip=${zipCode}` : base;
 }
 
-export function ContractorSection({ homeId, pendingTasks = [] }: ContractorSectionProps) {
+export function ContractorSection({ homeId, pendingTasks = [], zipCode }: ContractorSectionProps) {
   const urgentTasks = pendingTasks.filter(t => 
     (t.urgency === "now" || t.urgency === "soon") && 
     t.diyLevel === "Pro-Only" && 
@@ -62,7 +63,7 @@ export function ContractorSection({ homeId, pendingTasks = [] }: ContractorSecti
               {urgentTasks.slice(0, 3).map((task) => (
                 <a
                   key={task.id}
-                  href={buildAngiesListUrl(task.category || "Other")}
+                  href={buildAngiesListUrl(task.category || "Other", zipCode)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3 rounded-lg border hover:border-blue-300 hover:bg-blue-50/50 transition-colors group"
@@ -112,11 +113,11 @@ export function ContractorSection({ homeId, pendingTasks = [] }: ContractorSecti
               {uniqueCategories.slice(0, 4).map((cat) => (
                 <a
                   key={cat}
-                  href={buildAngiesListUrl(cat!)}
+                  href={buildAngiesListUrl(cat, zipCode)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                  data-testid={`link-category-${cat?.toLowerCase().replace(/\//g, "-")}`}
+                  data-testid={`link-category-${cat.toLowerCase().replace(/\//g, "-")}`}
                 >
                   {cat}
                   <ExternalLink className="h-3 w-3" />

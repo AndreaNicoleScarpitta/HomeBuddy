@@ -229,7 +229,7 @@ export default function Dashboard() {
         {/* Contractor Section */}
         {tasks.filter(t => t.diyLevel === "Pro-Only" && t.status !== "completed").length > 0 && (
           <section className="space-y-4" data-tour="find-pro">
-            <ContractorSection homeId={home.id} pendingTasks={tasks} />
+            <ContractorSection homeId={home.id} pendingTasks={tasks} zipCode={home.zipCode || undefined} />
           </section>
         )}
 

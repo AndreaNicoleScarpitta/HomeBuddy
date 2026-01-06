@@ -12,15 +12,17 @@ const serviceTypeMapping: Record<string, string> = {
   "Roof": "roofing",
   "Windows": "windows",
   "Siding/Exterior": "siding",
-  "Foundation": "foundation",
+  "Foundation": "foundation-repair",
   "Appliances": "appliance-repair",
   "Water Heater": "water-heater",
   "Landscaping": "landscaping",
   "Pest": "pest-control",
+  "Other": "home-improvement",
 };
 
 function buildAngiesListUrl(serviceType: string): string {
-  const category = serviceTypeMapping[serviceType] || "home-improvement";
+  const mappedCategory = serviceTypeMapping[serviceType];
+  const category = mappedCategory || encodeURIComponent(serviceType.toLowerCase().replace(/\s+/g, "-"));
   return `https://www.angi.com/companylist/${category}.htm`;
 }
 
