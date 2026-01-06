@@ -4,11 +4,10 @@ import { HomeInfoCard } from "@/components/home-info-card";
 import { MaintenanceCard } from "@/components/maintenance-card";
 import { AddSystemWizard } from "@/components/add-system-wizard";
 import { OnboardingTour, useTourState } from "@/components/onboarding-tour";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, ArrowRight, HelpCircle, MessageCircle, Upload } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems } from "@/lib/api";
@@ -17,32 +16,18 @@ import { useEffect, useState } from "react";
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-8">
-      <header className="flex justify-between items-end">
-        <div className="space-y-2">
-          <Skeleton className="h-9 w-32" />
-          <Skeleton className="h-5 w-56" />
-        </div>
-        <Skeleton className="h-10 w-36" />
-      </header>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Skeleton className="h-48" />
-        <div className="md:col-span-2 grid grid-cols-2 gap-4">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
+    <div className="space-y-10">
+      <div className="space-y-2">
+        <Skeleton className="h-9 w-36" />
+        <Skeleton className="h-5 w-64" />
       </div>
-      
       <div className="space-y-4">
-        <Skeleton className="h-7 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-        </div>
+        <Skeleton className="h-32" />
+        <Skeleton className="h-24" />
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-28" />
       </div>
     </div>
   );
@@ -60,7 +45,7 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+  const { data: tasks = [] } = useQuery({
     queryKey: ["tasks", home?.id],
     queryFn: () => getTasks(home!.id),
     enabled: !!home?.id,
@@ -106,108 +91,55 @@ export default function Dashboard() {
     <Layout>
       <OnboardingTour key={tourKey} isOpen={showTour} onComplete={completeTour} />
       
-      <div className="space-y-8">
-        <header className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Overview</h1>
-            <p className="text-muted-foreground mt-1">Here's what needs your attention.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {hasSeenTour && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={startTour}
-                    className="text-muted-foreground hover:text-foreground"
-                    data-testid="button-restart-tour"
-                  >
-                    <HelpCircle className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Take a quick tour</TooltipContent>
-              </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/chat">
-                  <Button size="lg" className="shadow-lg shadow-primary/20" data-testid="button-chat">
-                    Ask Assistant <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>Get expert advice on repairs, maintenance, and costs</TooltipContent>
-            </Tooltip>
-          </div>
+      <div className="space-y-10">
+        {/* Header */}
+        <header>
+          <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">
+            Your Home
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {activeTasks.length > 0 
+              ? `${activeTasks.length} task${activeTasks.length > 1 ? 's' : ''} need${activeTasks.length === 1 ? 's' : ''} attention`
+              : "Everything looks good"
+            }
+          </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Home Status */}
-          <div className="md:col-span-1" data-tour="home-status">
+        {/* At a Glance */}
+        <section className="space-y-4" data-tour="home-status">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HomeHealth 
               score={home.healthScore || 0} 
               systemsCount={systems.length}
               tasksCount={activeTasks.length}
             />
+            <HomeInfoCard home={home} systems={systems} />
           </div>
-
-          {/* Quick Stats */}
-          <div className="md:col-span-2 grid grid-cols-2 gap-4" data-tour="quick-stats">
-             <Card className="bg-primary/5 border-primary/10">
-               <CardHeader className="pb-2">
-                 <CardTitle className="text-sm font-medium text-muted-foreground">Next Service</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 {tasks.length > 0 ? (
-                   <>
-                     <div className="text-2xl font-bold text-foreground" data-testid="text-next-service">{tasks[0].title}</div>
-                     <p className="text-sm text-muted-foreground mt-1">
-                       {tasks[0].dueDate ? new Date(tasks[0].dueDate).toLocaleDateString() : "Not scheduled"}
-                     </p>
-                   </>
-                 ) : (
-                   <>
-                     <div className="text-2xl font-bold text-foreground" data-testid="text-next-service">None scheduled</div>
-                     <p className="text-sm text-muted-foreground mt-1">All caught up!</p>
-                   </>
-                 )}
-               </CardContent>
-             </Card>
-             <HomeInfoCard home={home} systems={systems} />
-             <Tooltip>
-               <TooltipTrigger asChild>
-                 <Card className="cursor-help">
-                   <CardHeader className="pb-2">
-                     <CardTitle className="text-sm font-medium text-muted-foreground">Active Tasks</CardTitle>
-                   </CardHeader>
-                   <CardContent>
-                     <div className="text-2xl font-bold text-foreground" data-testid="text-active-tasks">{activeTasks.length}</div>
-                     <p className="text-sm text-orange-600 mt-1">{highPriorityTasks.length} High Priority</p>
-                   </CardContent>
-                 </Card>
-               </TooltipTrigger>
-               <TooltipContent>Pending and scheduled maintenance tasks</TooltipContent>
-             </Tooltip>
-             <Tooltip>
-               <TooltipTrigger asChild>
-                 <Card 
-                   className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors h-full" 
-                   data-testid="card-add-system"
-                   onClick={() => setShowAddSystem(true)}
-                 >
-                   <div className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                       <Plus className="h-6 w-6" />
-                     </div>
-                     <span className="font-medium">Add System</span>
-                   </div>
-                 </Card>
-               </TooltipTrigger>
-               <TooltipContent>Add HVAC, plumbing, roof, or other home systems to track</TooltipContent>
-             </Tooltip>
+          
+          {/* Quick Stats Row */}
+          <div className="flex flex-wrap gap-4 text-sm" data-tour="quick-stats">
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full">
+              <span className="text-muted-foreground">Next up:</span>
+              <span className="font-medium" data-testid="text-next-service">
+                {tasks.length > 0 ? tasks[0].title : "Nothing scheduled"}
+              </span>
+            </div>
+            {highPriorityTasks.length > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-700 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                <span className="font-medium">{highPriorityTasks.length} high priority</span>
+              </div>
+            )}
+            <button 
+              onClick={() => setShowAddSystem(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+              data-testid="button-add-system"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add system</span>
+            </button>
           </div>
-        </div>
+        </section>
         
         {/* Add System Wizard */}
         <AddSystemWizard 
@@ -215,73 +147,86 @@ export default function Dashboard() {
           onClose={() => setShowAddSystem(false)} 
           homeId={home.id} 
         />
+
         {/* Tasks Section */}
-        <div className="space-y-6" data-tour="maintenance-plan">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-heading font-semibold">Your Maintenance Plan</h2>
-              <p className="text-sm text-muted-foreground">Prioritized by urgency and safety.</p>
-            </div>
+        <section className="space-y-6" data-tour="maintenance-plan">
+          <div className="flex justify-between items-baseline">
+            <h2 className="text-lg font-heading font-semibold">Maintenance Plan</h2>
             <Link href="/budget">
-              <Button variant="ghost" data-testid="button-view-plan">View Full Plan</Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid="button-view-plan">
+                View all <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
             </Link>
           </div>
           
           {tasks.length === 0 ? (
-            <Card className="p-8 md:p-12">
-              <div className="max-w-lg mx-auto text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 mb-6">
-                  <MessageCircle className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-heading font-semibold mb-3">Let's create your maintenance plan</h3>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  We can help you identify what needs attention now vs. what can wait. 
-                  Start by chatting with your home assistant or upload an inspection report.
+            <Card className="p-8">
+              <div className="max-w-md mx-auto text-center">
+                <h3 className="text-lg font-medium mb-2">No maintenance tasks yet</h3>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Chat with your assistant to identify what needs attention, or upload an inspection report.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/chat">
-                    <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-primary/20" data-testid="button-start-chat">
-                      <MessageCircle className="h-4 w-4 mr-2" />
+                    <Button data-testid="button-start-chat">
                       Chat with Assistant
                     </Button>
                   </Link>
                   <Link href="/inspections">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto" data-testid="button-upload-inspection">
-                      <Upload className="h-4 w-4 mr-2" />
+                    <Button variant="outline" data-testid="button-upload-inspection">
                       Upload Report
                     </Button>
                   </Link>
                 </div>
-                <p className="text-xs text-muted-foreground mt-6">
-                  No pressure—we'll guide you through it step by step.
-                </p>
               </div>
             </Card>
           ) : (
-            ["now", "soon", "later", "monitor"].map((urgency) => {
-              const urgencyTasks = tasks.filter(t => t.urgency === urgency);
-              if (urgencyTasks.length === 0) return null;
+            <div className="space-y-6">
+              {["now", "soon", "later", "monitor"].map((urgency) => {
+                const urgencyTasks = tasks.filter(t => t.urgency === urgency);
+                if (urgencyTasks.length === 0) return null;
 
-              return (
-                <div key={urgency} className="space-y-3">
-                  <h3 className="uppercase text-xs font-bold tracking-widest text-muted-foreground flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
-                      urgency === 'now' ? 'bg-destructive' : 
-                      urgency === 'soon' ? 'bg-orange-500' : 
-                      urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'
-                    }`} />
-                    {urgency}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {urgencyTasks.map((task) => (
-                      <MaintenanceCard key={task.id} task={task} />
-                    ))}
+                const urgencyLabels: Record<string, string> = {
+                  now: "Fix Now",
+                  soon: "Plan Soon", 
+                  later: "Address Later",
+                  monitor: "Monitor"
+                };
+
+                return (
+                  <div key={urgency} className="space-y-3">
+                    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        urgency === 'now' ? 'bg-red-500' : 
+                        urgency === 'soon' ? 'bg-orange-500' : 
+                        urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'
+                      }`} />
+                      {urgencyLabels[urgency]}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {urgencyTasks.map((task) => (
+                        <MaintenanceCard key={task.id} task={task} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
-        </div>
+        </section>
+
+        {/* Help link */}
+        {hasSeenTour && (
+          <div className="text-center pt-4">
+            <button 
+              onClick={startTour}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="button-restart-tour"
+            >
+              Need help? Take a quick tour
+            </button>
+          </div>
+        )}
       </div>
     </Layout>
   );
