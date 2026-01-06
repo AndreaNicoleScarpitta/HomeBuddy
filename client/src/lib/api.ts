@@ -1,4 +1,4 @@
-import type { Home, System, MaintenanceTask, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding } from "@shared/schema";
+import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding } from "@shared/schema";
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -61,8 +61,13 @@ export async function getSystems(homeId: number): Promise<System[]> {
 
 export async function createSystem(homeId: number, data: {
   name: string;
-  age?: number;
-  status?: string;
+  category?: string;
+  installYear?: number;
+  condition?: string;
+  notes?: string;
+  photos?: string;
+  documents?: string;
+  source?: string;
 }): Promise<System> {
   const response = await fetch(`/api/home/${homeId}/systems`, {
     method: "POST",
@@ -70,6 +75,22 @@ export async function createSystem(homeId: number, data: {
     body: JSON.stringify(data),
   });
   return handleResponse<System>(response);
+}
+
+export async function updateSystem(id: number, data: Partial<System>): Promise<System> {
+  const response = await fetch(`/api/systems/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<System>(response);
+}
+
+export async function deleteSystem(id: number): Promise<void> {
+  const response = await fetch(`/api/systems/${id}`, {
+    method: "DELETE",
+  });
+  return handleResponse<void>(response);
 }
 
 // Tasks API
@@ -98,6 +119,46 @@ export async function updateTask(id: number, data: Partial<MaintenanceTask>): Pr
 
 export async function deleteTask(id: number): Promise<void> {
   const response = await fetch(`/api/tasks/${id}`, {
+    method: "DELETE",
+  });
+  return handleResponse<void>(response);
+}
+
+// Maintenance Log API
+export async function getLogEntries(homeId: number): Promise<MaintenanceLogEntry[]> {
+  const response = await fetch(`/api/home/${homeId}/log-entries`);
+  return handleResponse<MaintenanceLogEntry[]>(response);
+}
+
+export async function createLogEntry(homeId: number, data: {
+  title: string;
+  taskId?: number;
+  systemId?: number;
+  date?: string;
+  notes?: string;
+  photos?: string;
+  cost?: number;
+  provider?: string;
+}): Promise<MaintenanceLogEntry> {
+  const response = await fetch(`/api/home/${homeId}/log-entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<MaintenanceLogEntry>(response);
+}
+
+export async function updateLogEntry(id: number, data: Partial<MaintenanceLogEntry>): Promise<MaintenanceLogEntry> {
+  const response = await fetch(`/api/log-entries/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<MaintenanceLogEntry>(response);
+}
+
+export async function deleteLogEntry(id: number): Promise<void> {
+  const response = await fetch(`/api/log-entries/${id}`, {
     method: "DELETE",
   });
   return handleResponse<void>(response);

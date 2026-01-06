@@ -8,6 +8,9 @@ import {
   maintenanceTasks,
   type MaintenanceTask,
   type InsertMaintenanceTask,
+  maintenanceLogEntries,
+  type MaintenanceLogEntry,
+  type InsertMaintenanceLogEntry,
   chatMessages,
   type ChatMessage,
   type InsertChatMessage,
@@ -52,6 +55,14 @@ export interface IStorage {
   createTask(task: InsertMaintenanceTask): Promise<MaintenanceTask>;
   updateTask(id: number, data: Partial<InsertMaintenanceTask>): Promise<MaintenanceTask>;
   deleteTask(id: number): Promise<void>;
+  
+  // Maintenance Log Entries
+  getLogEntriesByHomeId(homeId: number): Promise<MaintenanceLogEntry[]>;
+  getLogEntry(id: number): Promise<MaintenanceLogEntry | undefined>;
+  createLogEntry(entry: InsertMaintenanceLogEntry): Promise<MaintenanceLogEntry>;
+  updateLogEntry(id: number, data: Partial<InsertMaintenanceLogEntry>): Promise<MaintenanceLogEntry>;
+  deleteLogEntry(id: number): Promise<void>;
+  verifyLogEntryOwnership(entryId: number, userId: string): Promise<boolean>;
   
   // Chat Messages
   getChatMessagesByHomeId(homeId: number): Promise<ChatMessage[]>;
@@ -188,6 +199,44 @@ export class DatabaseStorage implements IStorage {
   
   async deleteTask(id: number): Promise<void> {
     await db.delete(maintenanceTasks).where(eq(maintenanceTasks.id, id));
+  }
+  
+  // Maintenance Log Entries
+  async getLogEntriesByHomeId(homeId: number): Promise<MaintenanceLogEntry[]> {
+    return await db
+      .select()
+      .from(maintenanceLogEntries)
+      .where(eq(maintenanceLogEntries.homeId, homeId))
+      .orderBy(desc(maintenanceLogEntries.date));
+  }
+  
+  async getLogEntry(id: number): Promise<MaintenanceLogEntry | undefined> {
+    const [entry] = await db.select().from(maintenanceLogEntries).where(eq(maintenanceLogEntries.id, id));
+    return entry;
+  }
+  
+  async createLogEntry(entryData: InsertMaintenanceLogEntry): Promise<MaintenanceLogEntry> {
+    const [entry] = await db.insert(maintenanceLogEntries).values(entryData).returning();
+    return entry;
+  }
+  
+  async updateLogEntry(id: number, data: Partial<InsertMaintenanceLogEntry>): Promise<MaintenanceLogEntry> {
+    const [entry] = await db
+      .update(maintenanceLogEntries)
+      .set(data)
+      .where(eq(maintenanceLogEntries.id, id))
+      .returning();
+    return entry;
+  }
+  
+  async deleteLogEntry(id: number): Promise<void> {
+    await db.delete(maintenanceLogEntries).where(eq(maintenanceLogEntries.id, id));
+  }
+  
+  async verifyLogEntryOwnership(entryId: number, userId: string): Promise<boolean> {
+    const entry = await this.getLogEntry(entryId);
+    if (!entry) return false;
+    return this.verifyHomeOwnership(entry.homeId, userId);
   }
   
   // Chat Messages

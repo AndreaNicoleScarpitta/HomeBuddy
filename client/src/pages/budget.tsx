@@ -22,8 +22,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Info,
-  Sparkles,
   Heart
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -549,24 +547,93 @@ export default function Budget() {
           )}
         </div>
 
-        {/* Helpful tips */}
-        <Card className="bg-muted/30">
-          <CardContent className="py-6">
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <Info className="h-5 w-5 text-blue-600" />
+        {/* Upcoming Costs Timeline */}
+        {tasks.filter(t => t.status !== "completed").length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="h-5 w-5 text-primary" />
+                Upcoming Costs Timeline
+              </CardTitle>
+              <CardDescription>
+                When you might need to spend and how much
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Now - Immediate needs */}
+                {tasks.filter(t => t.urgency === "now" && t.status !== "completed").length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-destructive" />
+                      <span className="text-sm font-medium text-destructive">Immediate</span>
+                    </div>
+                    <div className="ml-5 space-y-2">
+                      {tasks.filter(t => t.urgency === "now" && t.status !== "completed").map(task => (
+                        <div key={task.id} className="flex justify-between items-center text-sm p-2 bg-red-50 rounded">
+                          <span className="truncate">{task.title}</span>
+                          <span className="font-medium text-destructive shrink-0 ml-2">{task.estimatedCost || "TBD"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Soon - Within a few months */}
+                {tasks.filter(t => t.urgency === "soon" && t.status !== "completed").length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-orange-500" />
+                      <span className="text-sm font-medium text-orange-600">Within 1-3 Months</span>
+                    </div>
+                    <div className="ml-5 space-y-2">
+                      {tasks.filter(t => t.urgency === "soon" && t.status !== "completed").map(task => (
+                        <div key={task.id} className="flex justify-between items-center text-sm p-2 bg-orange-50 rounded">
+                          <span className="truncate">{task.title}</span>
+                          <span className="font-medium text-orange-600 shrink-0 ml-2">{task.estimatedCost || "TBD"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Later - Plan ahead */}
+                {tasks.filter(t => t.urgency === "later" && t.status !== "completed").length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <span className="text-sm font-medium text-green-600">3-12 Months</span>
+                    </div>
+                    <div className="ml-5 space-y-2">
+                      {tasks.filter(t => t.urgency === "later" && t.status !== "completed").map(task => (
+                        <div key={task.id} className="flex justify-between items-center text-sm p-2 bg-green-50 rounded">
+                          <span className="truncate">{task.title}</span>
+                          <span className="font-medium text-green-600 shrink-0 ml-2">{task.estimatedCost || "TBD"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Total upcoming costs */}
+                <div className="pt-3 border-t mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Estimated total upcoming costs</span>
+                    <span className="font-bold">
+                      {formatCurrency(tasks
+                        .filter(t => t.status !== "completed" && t.urgency !== "monitor")
+                        .reduce((sum, t) => {
+                          const cost = t.estimatedCost ? parseInt(t.estimatedCost.replace(/[^0-9]/g, '')) * 100 : 0;
+                          return sum + cost;
+                        }, 0)
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium mb-1">Budget Tips</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Keep an emergency fund separate for unexpected repairs</li>
-                  <li>• Consider setting up a monthly contribution to build your repair fund over time</li>
-                  <li>• Prioritize repairs that protect your home from bigger issues later</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Layout>
   );

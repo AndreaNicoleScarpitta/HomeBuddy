@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, MessageSquare, Mail, Wallet, Menu, LogOut, FileText } from "lucide-react";
+import { Home, MessageSquare, Mail, Wallet, Menu, LogOut, FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -13,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention", tourId: "nav-overview" },
+    { href: "/maintenance-log", icon: ClipboardList, label: "History", sublabel: "What you've done", tourId: "nav-history" },
     { href: "/budget", icon: Wallet, label: "Budget", sublabel: "What you can afford", tourId: "nav-budget" },
     { href: "/inspections", icon: FileText, label: "Inspections", sublabel: "What's wrong", tourId: "nav-inspections" },
     { href: "/chat", icon: MessageSquare, label: "Assistant", sublabel: "Get guidance", tourId: "nav-assistant" },
@@ -37,7 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side="right" className="w-64 p-0">
             <div className="p-6 border-b">
                <div className="flex items-center gap-2 mb-6">
                  <img src={logoImage} alt="Home Buddy Logo" className="w-10 h-10 rounded-lg" />

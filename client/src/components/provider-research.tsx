@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ExternalLink, Star, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChevronRight, ExternalLink, Star, Users, Globe } from "lucide-react";
 
 interface ProviderResearchProps {
   category: string;
@@ -60,13 +61,18 @@ export function ProviderResearch({
     return (
       <div className={`p-4 rounded-lg bg-muted/20 border border-muted ${className}`}>
         <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Users className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+            <Globe className="h-5 w-5 text-orange-600" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-foreground text-sm">Ready to explore professionals?</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-medium text-foreground text-sm">Find a professional</h4>
+              <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
+                via Angi
+              </Badge>
+            </div>
             <p className="text-sm text-muted-foreground mt-1">
-              We can show highly rated local providers for this type of repair.
+              Search Angi.com to compare local providers, read reviews, and get quotes.
             </p>
             <div className="flex items-center gap-3 mt-3">
               <a
@@ -76,39 +82,43 @@ export function ProviderResearch({
                 className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                 data-testid="link-angi-search"
               >
-                Research providers
+                Search on Angi.com
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
-              <span className="text-xs text-muted-foreground">via Angi</span>
             </div>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-muted italic">
-          Provider listings powered by Angi. Home Buddy does not receive payment based on your choice.
+        <p className="text-[10px] text-muted-foreground mt-4 pt-3 border-t border-muted">
+          This opens Angi.com in a new tab. Home Buddy is not affiliated with Angi and receives no payment based on your choice.
         </p>
       </div>
     );
   }
   
   return (
-    <div className={`flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-muted ${className}`}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Need a pro?</span>
-        <a
-          href={angiUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-          data-testid="link-angi-search"
-        >
-          Get vetted local pros
-          <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+    <div className={`p-3 bg-muted/20 rounded-lg border border-muted ${className}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Need a pro?</span>
+          <a
+            href={angiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            data-testid="link-angi-search"
+          >
+            Search vetted providers
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+          <Globe className="h-3 w-3 mr-1" />
+          Angi
+        </Badge>
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-        <span>via Angi</span>
-      </div>
+      <p className="text-[10px] text-muted-foreground mt-2">
+        Opens Angi.com in a new tab. We're not affiliated with Angi and receive no payment.
+      </p>
     </div>
   );
 }

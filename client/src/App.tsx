@@ -16,6 +16,7 @@ import Budget from "@/pages/budget";
 import Contact from "@/pages/contact";
 import Inspections from "@/pages/inspections";
 import Terms from "@/pages/terms";
+import MaintenanceLog from "@/pages/maintenance-log";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/chat" component={Chat} />
       <Route path="/budget" component={Budget} />
+      <Route path="/maintenance-log" component={MaintenanceLog} />
       <Route path="/inspections" component={Inspections} />
       <Route path="/contact" component={Contact} />
       <Route path="/terms" component={Terms} />

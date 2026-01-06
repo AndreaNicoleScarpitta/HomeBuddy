@@ -12,6 +12,7 @@ import {
   insertHomeSchema,
   insertSystemSchema,
   insertMaintenanceTaskSchema,
+  insertMaintenanceLogEntrySchema,
   insertChatMessageSchema,
   insertFundSchema,
   insertFundAllocationSchema,
@@ -239,6 +240,67 @@ export async function registerRoutes(
       res.json({ message: "Task deleted successfully" });
     } catch (error) {
       return handleApiError(res, "tasks.delete", error);
+    }
+  });
+  
+  // Maintenance log entry routes
+  app.get("/api/home/:homeId/log-entries", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      const entries = await storage.getLogEntriesByHomeId(homeId);
+      res.json(entries);
+    } catch (error) {
+      return handleApiError(res, "logEntries.get", error, 500);
+    }
+  });
+  
+  app.post("/api/home/:homeId/log-entries", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = parseInt(req.params.homeId);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      const entryData = insertMaintenanceLogEntrySchema.parse({ ...req.body, homeId });
+      const entry = await storage.createLogEntry(entryData);
+      logInfo("logEntries.create", "Log entry created successfully", { entryId: entry.id, homeId });
+      res.json(entry);
+    } catch (error) {
+      return handleApiError(res, "logEntries.create", error);
+    }
+  });
+  
+  app.patch("/api/log-entries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyLogEntryOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      const entry = await storage.updateLogEntry(id, req.body);
+      logInfo("logEntries.update", "Log entry updated successfully", { entryId: id });
+      res.json(entry);
+    } catch (error) {
+      return handleApiError(res, "logEntries.update", error);
+    }
+  });
+  
+  app.delete("/api/log-entries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      if (!await storage.verifyLogEntryOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      await storage.deleteLogEntry(id);
+      logInfo("logEntries.delete", "Log entry deleted successfully", { entryId: id });
+      res.json({ message: "Log entry deleted successfully" });
+    } catch (error) {
+      return handleApiError(res, "logEntries.delete", error);
     }
   });
   

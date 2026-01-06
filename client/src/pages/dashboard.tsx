@@ -1,6 +1,8 @@
 import { Layout } from "@/components/layout";
 import { HomeHealth } from "@/components/home-health";
+import { HomeInfoCard } from "@/components/home-info-card";
 import { MaintenanceCard } from "@/components/maintenance-card";
+import { AddSystemWizard } from "@/components/add-system-wizard";
 import { OnboardingTour, useTourState } from "@/components/onboarding-tour";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +12,13 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const { hasSeenTour, showTour, tourKey, startTour, completeTour } = useTourState();
+  const [showAddSystem, setShowAddSystem] = useState(false);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
@@ -142,19 +145,7 @@ export default function Dashboard() {
                  )}
                </CardContent>
              </Card>
-             <Card>
-               <CardHeader className="pb-2">
-                 <CardTitle className="text-sm font-medium text-muted-foreground">Home Age</CardTitle>
-               </CardHeader>
-               <CardContent>
-                 <div className="text-2xl font-bold text-foreground" data-testid="text-home-age">
-                   {home.builtYear ? new Date().getFullYear() - home.builtYear : "N/A"}
-                 </div>
-                 <p className="text-sm text-muted-foreground mt-1">
-                   {home.builtYear ? `Built ${home.builtYear}` : "Year not set"}
-                 </p>
-               </CardContent>
-             </Card>
+             <HomeInfoCard home={home} systems={systems} />
              <Tooltip>
                <TooltipTrigger asChild>
                  <Card className="cursor-help">
@@ -171,22 +162,30 @@ export default function Dashboard() {
              </Tooltip>
              <Tooltip>
                <TooltipTrigger asChild>
-                 <Link href="/chat?prompt=help+me+add+a+home+system">
-                   <Card className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors h-full" data-testid="card-add-system">
-                     <div className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                         <Plus className="h-6 w-6" />
-                       </div>
-                       <span className="font-medium">Add System</span>
+                 <Card 
+                   className="flex flex-col justify-center items-center border-dashed cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors h-full" 
+                   data-testid="card-add-system"
+                   onClick={() => setShowAddSystem(true)}
+                 >
+                   <div className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                       <Plus className="h-6 w-6" />
                      </div>
-                   </Card>
-                 </Link>
+                     <span className="font-medium">Add System</span>
+                   </div>
+                 </Card>
                </TooltipTrigger>
                <TooltipContent>Add HVAC, plumbing, roof, or other home systems to track</TooltipContent>
              </Tooltip>
           </div>
         </div>
-
+        
+        {/* Add System Wizard */}
+        <AddSystemWizard 
+          isOpen={showAddSystem} 
+          onClose={() => setShowAddSystem(false)} 
+          homeId={home.id} 
+        />
         {/* Tasks Section */}
         <div className="space-y-6" data-tour="maintenance-plan">
           <div className="flex justify-between items-center">
@@ -194,7 +193,9 @@ export default function Dashboard() {
               <h2 className="text-xl font-heading font-semibold">Your Maintenance Plan</h2>
               <p className="text-sm text-muted-foreground">Prioritized by urgency and safety.</p>
             </div>
-            <Button variant="ghost" data-testid="button-view-plan">View Full Plan</Button>
+            <Link href="/budget">
+              <Button variant="ghost" data-testid="button-view-plan">View Full Plan</Button>
+            </Link>
           </div>
           
           {tasks.length === 0 ? (

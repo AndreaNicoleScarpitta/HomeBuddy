@@ -21,7 +21,10 @@ export const homes = pgTable("homes", {
   addressVerified: boolean("address_verified").default(false),
   builtYear: integer("built_year"),
   sqFt: integer("sq_ft"),
+  beds: integer("beds"),
+  baths: integer("baths"),
   type: varchar("type", { length: 100 }),
+  zillowUrl: text("zillow_url"),
   healthScore: integer("health_score").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -33,46 +36,106 @@ export const insertHomeSchema = createInsertSchema(homes).omit({ id: true, creat
 export type InsertHome = z.infer<typeof insertHomeSchema>;
 export type Home = typeof homes.$inferSelect;
 
+// System categories enum
+export const systemCategories = [
+  "Roof",
+  "HVAC", 
+  "Plumbing",
+  "Electrical",
+  "Windows",
+  "Siding/Exterior",
+  "Foundation",
+  "Appliances",
+  "Water Heater",
+  "Landscaping",
+  "Pest",
+  "Other"
+] as const;
+export type SystemCategory = typeof systemCategories[number];
+
+// System conditions enum
+export const systemConditions = ["Great", "Good", "Fair", "Poor", "Unknown"] as const;
+export type SystemCondition = typeof systemConditions[number];
+
 // Systems table - stores home systems (HVAC, Roof, etc.)
 export const systems = pgTable("systems", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  category: varchar("category", { length: 50 }).default("Other"),
   name: varchar("name", { length: 100 }).notNull(),
-  age: integer("age"),
-  status: varchar("status", { length: 50 }).default("good"), // good, warning, critical
-  lastService: timestamp("last_service"),
+  installYear: integer("install_year"),
+  lastServiceDate: timestamp("last_service_date"),
+  condition: varchar("condition", { length: 50 }).default("Unknown"),
+  notes: text("notes"),
+  photos: text("photos"), // JSON array of { uri, caption, createdAt }
+  documents: text("documents"), // JSON array of { uri, type, createdAt }
+  source: varchar("source", { length: 50 }).default("manual"), // manual, chat, import, inspection
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("systems_home_id_idx").on(table.homeId),
+  index("systems_category_idx").on(table.category),
 ]);
 
-export const insertSystemSchema = createInsertSchema(systems).omit({ id: true, createdAt: true });
+export const insertSystemSchema = createInsertSchema(systems).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertSystem = z.infer<typeof insertSystemSchema>;
 export type System = typeof systems.$inferSelect;
+
+// Task statuses
+export const taskStatuses = ["pending", "scheduled", "completed", "skipped"] as const;
+export type TaskStatus = typeof taskStatuses[number];
 
 // Maintenance tasks table
 export const maintenanceTasks = pgTable("maintenance_tasks", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  relatedSystemId: integer("related_system_id").references(() => systems.id, { onDelete: "set null" }),
   title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
   category: varchar("category", { length: 100 }),
   dueDate: timestamp("due_date"),
   urgency: varchar("urgency", { length: 50 }).default("later"), // now, soon, later, monitor
   diyLevel: varchar("diy_level", { length: 50 }).default("DIY-Safe"), // DIY-Safe, Caution, Pro-Only
-  status: varchar("status", { length: 50 }).default("pending"), // pending, scheduled, completed, overdue
+  status: varchar("status", { length: 50 }).default("pending"), // pending, scheduled, completed, skipped
   estimatedCost: varchar("estimated_cost", { length: 100 }),
+  actualCost: integer("actual_cost"), // in cents
   difficulty: varchar("difficulty", { length: 50 }),
   safetyWarning: text("safety_warning"),
+  createdFrom: varchar("created_from", { length: 50 }).default("manual"), // manual, chat, inspection, import
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("maintenance_tasks_home_id_idx").on(table.homeId),
   index("maintenance_tasks_urgency_idx").on(table.urgency),
+  index("maintenance_tasks_system_id_idx").on(table.relatedSystemId),
 ]);
 
 export const insertMaintenanceTaskSchema = createInsertSchema(maintenanceTasks).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertMaintenanceTask = z.infer<typeof insertMaintenanceTaskSchema>;
 export type MaintenanceTask = typeof maintenanceTasks.$inferSelect;
+
+// Maintenance log entries - tracks completed maintenance work
+export const maintenanceLogEntries = pgTable("maintenance_log_entries", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  taskId: integer("task_id").references(() => maintenanceTasks.id, { onDelete: "set null" }),
+  systemId: integer("system_id").references(() => systems.id, { onDelete: "set null" }),
+  date: timestamp("date").notNull().defaultNow(),
+  title: varchar("title", { length: 255 }).notNull(),
+  notes: text("notes"),
+  photos: text("photos"), // JSON array of photo URIs
+  cost: integer("cost"), // in cents
+  provider: varchar("provider", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("maintenance_log_home_id_idx").on(table.homeId),
+  index("maintenance_log_task_id_idx").on(table.taskId),
+  index("maintenance_log_date_idx").on(table.date),
+]);
+
+export const insertMaintenanceLogEntrySchema = createInsertSchema(maintenanceLogEntries).omit({ id: true, createdAt: true });
+export type InsertMaintenanceLogEntry = z.infer<typeof insertMaintenanceLogEntrySchema>;
+export type MaintenanceLogEntry = typeof maintenanceLogEntries.$inferSelect;
 
 // Chat messages table
 export const chatMessages = pgTable("chat_messages", {
@@ -219,16 +282,19 @@ export const homesRelations = relations(homes, ({ one, many }) => ({
   }),
   systems: many(systems),
   maintenanceTasks: many(maintenanceTasks),
+  maintenanceLogEntries: many(maintenanceLogEntries),
   chatMessages: many(chatMessages),
   funds: many(funds),
   inspectionReports: many(inspectionReports),
 }));
 
-export const systemsRelations = relations(systems, ({ one }) => ({
+export const systemsRelations = relations(systems, ({ one, many }) => ({
   home: one(homes, {
     fields: [systems.homeId],
     references: [homes.id],
   }),
+  tasks: many(maintenanceTasks),
+  logEntries: many(maintenanceLogEntries),
 }));
 
 export const maintenanceTasksRelations = relations(maintenanceTasks, ({ one, many }) => ({
@@ -236,8 +302,28 @@ export const maintenanceTasksRelations = relations(maintenanceTasks, ({ one, man
     fields: [maintenanceTasks.homeId],
     references: [homes.id],
   }),
+  relatedSystem: one(systems, {
+    fields: [maintenanceTasks.relatedSystemId],
+    references: [systems.id],
+  }),
+  logEntries: many(maintenanceLogEntries),
   allocations: many(fundAllocations),
   expenses: many(expenses),
+}));
+
+export const maintenanceLogEntriesRelations = relations(maintenanceLogEntries, ({ one }) => ({
+  home: one(homes, {
+    fields: [maintenanceLogEntries.homeId],
+    references: [homes.id],
+  }),
+  task: one(maintenanceTasks, {
+    fields: [maintenanceLogEntries.taskId],
+    references: [maintenanceTasks.id],
+  }),
+  system: one(systems, {
+    fields: [maintenanceLogEntries.systemId],
+    references: [systems.id],
+  }),
 }));
 
 export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
