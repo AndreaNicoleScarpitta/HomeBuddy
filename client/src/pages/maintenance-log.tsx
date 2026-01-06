@@ -18,8 +18,11 @@ import {
   Clock,
   Building,
   FileText,
-  ChevronRight
+  ChevronRight,
+  ClipboardList
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems, getLogEntries, createLogEntry, updateTask } from "@/lib/api";
@@ -28,6 +31,27 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, formatDistanceToNow } from "date-fns";
 import type { MaintenanceTask, System, MaintenanceLogEntry } from "@shared/schema";
 
+function MaintenanceLogSkeleton() {
+  return (
+    <div className="space-y-6">
+      <header className="flex justify-between items-start">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <Skeleton className="h-10 w-28" />
+      </header>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+      </div>
+      <Skeleton className="h-64" />
+    </div>
+  );
+}
+
 export default function MaintenanceLog() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -35,7 +59,7 @@ export default function MaintenanceLog() {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MaintenanceTask | null>(null);
 
-  const { data: home } = useQuery({
+  const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
     queryFn: getHome,
     enabled: isAuthenticated,
@@ -73,6 +97,32 @@ export default function MaintenanceLog() {
   };
 
   const totalSpent = logEntries.reduce((sum, e) => sum + (e.cost || 0), 0);
+
+  if (homeLoading || (home && entriesLoading)) {
+    return (
+      <Layout>
+        <MaintenanceLogSkeleton />
+      </Layout>
+    );
+  }
+
+  if (!home) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center max-w-md">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <ClipboardList className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Set up your home first</h2>
+            <p className="text-muted-foreground">
+              Complete your home profile to start tracking your maintenance history.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

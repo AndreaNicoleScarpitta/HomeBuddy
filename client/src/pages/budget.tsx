@@ -22,10 +22,35 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Heart
+  Heart,
+  Info
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Fund, MaintenanceTask } from "@shared/schema";
+
+function BudgetSkeleton() {
+  return (
+    <div className="space-y-8">
+      <header className="flex justify-between items-end">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-5 w-64" />
+        </div>
+        <Skeleton className="h-10 w-28" />
+      </header>
+      <Skeleton className="h-48" />
+      <div className="space-y-4">
+        <Skeleton className="h-6 w-32" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-36" />
+          <Skeleton className="h-36" />
+          <Skeleton className="h-36" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -299,7 +324,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
 export default function Budget() {
   const queryClient = useQueryClient();
 
-  const { data: home } = useQuery({
+  const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
     queryFn: getHome,
   });
@@ -343,11 +368,27 @@ export default function Budget() {
     queryClient.invalidateQueries({ queryKey: ["expenses"] });
   };
 
+  if (homeLoading || (home && fundsLoading)) {
+    return (
+      <Layout>
+        <BudgetSkeleton />
+      </Layout>
+    );
+  }
+
   if (!home) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">Please complete your home profile first.</p>
+          <div className="text-center max-w-md">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Wallet className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Set up your home first</h2>
+            <p className="text-muted-foreground">
+              Complete your home profile to start tracking your repair budget and funds.
+            </p>
+          </div>
         </div>
       </Layout>
     );

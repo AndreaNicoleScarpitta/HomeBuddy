@@ -7,12 +7,46 @@ import { OnboardingTour, useTourState } from "@/components/onboarding-tour";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, ArrowRight, HelpCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, ArrowRight, HelpCircle, MessageCircle, Upload } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      <header className="flex justify-between items-end">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-5 w-56" />
+        </div>
+        <Skeleton className="h-10 w-36" />
+      </header>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Skeleton className="h-48" />
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        <Skeleton className="h-7 w-48" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -56,12 +90,7 @@ export default function Dashboard() {
   if (authLoading || homeLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading your home...</p>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </Layout>
     );
   }
@@ -199,30 +228,33 @@ export default function Dashboard() {
           </div>
           
           {tasks.length === 0 ? (
-            <Card className="p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Plus className="h-8 w-8 text-primary" />
+            <Card className="p-8 md:p-12">
+              <div className="max-w-lg mx-auto text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 mb-6">
+                  <MessageCircle className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No maintenance tasks yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Upload an inspection report to get personalized recommendations, or ask the assistant to help create a plan.
-                </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  We'll help you understand what needs attention now versus what can wait.
+                <h3 className="text-xl font-heading font-semibold mb-3">Let's create your maintenance plan</h3>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
+                  We can help you identify what needs attention now vs. what can wait. 
+                  Start by chatting with your home assistant or upload an inspection report.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/inspections">
-                    <Button variant="outline" data-testid="button-upload-inspection">
-                      Upload Inspection
+                  <Link href="/chat">
+                    <Button size="lg" className="w-full sm:w-auto shadow-lg shadow-primary/20" data-testid="button-start-chat">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Chat with Assistant
                     </Button>
                   </Link>
-                  <Link href="/chat">
-                    <Button data-testid="button-start-chat">
-                      Ask Assistant
+                  <Link href="/inspections">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto" data-testid="button-upload-inspection">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Report
                     </Button>
                   </Link>
                 </div>
+                <p className="text-xs text-muted-foreground mt-6">
+                  No pressure—we'll guide you through it step by step.
+                </p>
               </div>
             </Card>
           ) : (
