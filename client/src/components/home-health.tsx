@@ -7,16 +7,38 @@ interface HomeHealthProps {
   score: number;
   systemsCount?: number;
   tasksCount?: number;
+  urgentTasksCount?: number;
+  overdueTasksCount?: number;
+  poorSystemsCount?: number;
 }
 
 type HealthTier = "healthy" | "watch" | "needs-attention" | "unknown";
 
-function getHealthTier(score: number, systemsCount: number): { tier: HealthTier; label: string; description: string } {
+function getHealthTier(
+  score: number, 
+  systemsCount: number, 
+  urgentTasksCount: number = 0,
+  overdueTasksCount: number = 0,
+  poorSystemsCount: number = 0
+): { tier: HealthTier; label: string; description: string } {
   if (systemsCount === 0) {
     return {
       tier: "unknown",
       label: "Getting Started",
       description: "Add your home systems to see your health status"
+    };
+  }
+  
+  if (urgentTasksCount > 0 || overdueTasksCount > 0 || poorSystemsCount > 0) {
+    const issues = [];
+    if (urgentTasksCount > 0) issues.push(`${urgentTasksCount} urgent task${urgentTasksCount > 1 ? 's' : ''}`);
+    if (overdueTasksCount > 0) issues.push(`${overdueTasksCount} overdue`);
+    if (poorSystemsCount > 0) issues.push(`${poorSystemsCount} system${poorSystemsCount > 1 ? 's' : ''} in poor condition`);
+    
+    return {
+      tier: "needs-attention",
+      label: "Needs Attention",
+      description: issues.join(", ")
     };
   }
   
@@ -80,8 +102,15 @@ function getTierStyles(tier: HealthTier) {
   }
 }
 
-export function HomeHealth({ score, systemsCount = 0, tasksCount = 0 }: HomeHealthProps) {
-  const { tier, label, description } = getHealthTier(score, systemsCount);
+export function HomeHealth({ 
+  score, 
+  systemsCount = 0, 
+  tasksCount = 0,
+  urgentTasksCount = 0,
+  overdueTasksCount = 0,
+  poorSystemsCount = 0
+}: HomeHealthProps) {
+  const { tier, label, description } = getHealthTier(score, systemsCount, urgentTasksCount, overdueTasksCount, poorSystemsCount);
   const styles = getTierStyles(tier);
   const TierIcon = styles.icon;
 

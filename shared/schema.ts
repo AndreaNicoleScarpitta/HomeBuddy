@@ -8,7 +8,7 @@ export * from "./models/auth";
 export * from "./models/chat";
 import { users } from "./models/auth";
 
-// Homes table - stores user's home profile
+// Homes table - stores user's home profile with Zillow-style fields
 export const homes = pgTable("homes", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -24,6 +24,12 @@ export const homes = pgTable("homes", {
   beds: integer("beds"),
   baths: integer("baths"),
   type: varchar("type", { length: 100 }),
+  lotSize: integer("lot_size"),
+  exteriorType: varchar("exterior_type", { length: 100 }),
+  roofType: varchar("roof_type", { length: 100 }),
+  lastSaleYear: integer("last_sale_year"),
+  homeValueEstimate: integer("home_value_estimate"),
+  dataSource: varchar("data_source", { length: 50 }).default("manual"),
   zillowUrl: text("zillow_url"),
   healthScore: integer("health_score").default(0),
   createdAt: timestamp("created_at").defaultNow(),
@@ -57,19 +63,30 @@ export type SystemCategory = typeof systemCategories[number];
 export const systemConditions = ["Great", "Good", "Fair", "Poor", "Unknown"] as const;
 export type SystemCondition = typeof systemConditions[number];
 
-// Systems table - stores home systems (HVAC, Roof, etc.)
+// Systems table - stores home systems with category-specific metadata
 export const systems = pgTable("systems", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
   category: varchar("category", { length: 50 }).default("Other"),
   name: varchar("name", { length: 100 }).notNull(),
+  make: varchar("make", { length: 100 }),
+  model: varchar("model", { length: 100 }),
   installYear: integer("install_year"),
   lastServiceDate: timestamp("last_service_date"),
+  nextServiceDate: timestamp("next_service_date"),
   condition: varchar("condition", { length: 50 }).default("Unknown"),
+  warrantyExpiry: timestamp("warranty_expiry"),
+  material: varchar("material", { length: 100 }),
+  energyRating: varchar("energy_rating", { length: 50 }),
+  provider: varchar("provider", { length: 255 }),
+  treatmentType: varchar("treatment_type", { length: 100 }),
+  recurrenceInterval: varchar("recurrence_interval", { length: 50 }),
+  statusReason: text("status_reason"),
+  metadata: text("metadata"),
   notes: text("notes"),
-  photos: text("photos"), // JSON array of { uri, caption, createdAt }
-  documents: text("documents"), // JSON array of { uri, type, createdAt }
-  source: varchar("source", { length: 50 }).default("manual"), // manual, chat, import, inspection
+  photos: text("photos"),
+  documents: text("documents"),
+  source: varchar("source", { length: 50 }).default("manual"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -270,6 +287,71 @@ export const insertInspectionFindingSchema = createInsertSchema(inspectionFindin
 export type InsertInspectionFinding = z.infer<typeof insertInspectionFindingSchema>;
 export type InspectionFinding = typeof inspectionFindings.$inferSelect;
 
+// Contractors table - stores saved contractor references (Angie's List integration)
+export const contractors = pgTable("contractors", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  serviceType: varchar("service_type", { length: 100 }),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  website: text("website"),
+  angiesListUrl: text("angies_list_url"),
+  notes: text("notes"),
+  rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("contractors_home_id_idx").on(table.homeId),
+  index("contractors_service_type_idx").on(table.serviceType),
+]);
+
+export const insertContractorSchema = createInsertSchema(contractors).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertContractor = z.infer<typeof insertContractorSchema>;
+export type Contractor = typeof contractors.$inferSelect;
+
+// Contractor appointments - tracks scheduled/completed work with contractors
+export const contractorAppointments = pgTable("contractor_appointments", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  contractorId: integer("contractor_id").references(() => contractors.id, { onDelete: "set null" }),
+  taskId: integer("task_id").references(() => maintenanceTasks.id, { onDelete: "set null" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  scheduledDate: timestamp("scheduled_date"),
+  status: varchar("status", { length: 50 }).default("inquiry"),
+  estimatedCost: varchar("estimated_cost", { length: 100 }),
+  actualCost: integer("actual_cost"),
+  notes: text("notes"),
+  angiesListInquiryId: varchar("angies_list_inquiry_id", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("contractor_appointments_home_id_idx").on(table.homeId),
+  index("contractor_appointments_status_idx").on(table.status),
+]);
+
+export const insertContractorAppointmentSchema = createInsertSchema(contractorAppointments).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertContractorAppointment = z.infer<typeof insertContractorAppointmentSchema>;
+export type ContractorAppointment = typeof contractorAppointments.$inferSelect;
+
+// User notification preferences
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  maintenanceReminders: boolean("maintenance_reminders").default(true),
+  contractorFollowups: boolean("contractor_followups").default(true),
+  systemAlerts: boolean("system_alerts").default(true),
+  weeklyDigest: boolean("weekly_digest").default(false),
+  pushEnabled: boolean("push_enabled").default(false),
+  emailEnabled: boolean("email_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   homes: many(homes),
@@ -376,5 +458,35 @@ export const inspectionFindingsRelations = relations(inspectionFindings, ({ one 
   report: one(inspectionReports, {
     fields: [inspectionFindings.reportId],
     references: [inspectionReports.id],
+  }),
+}));
+
+export const contractorsRelations = relations(contractors, ({ one, many }) => ({
+  home: one(homes, {
+    fields: [contractors.homeId],
+    references: [homes.id],
+  }),
+  appointments: many(contractorAppointments),
+}));
+
+export const contractorAppointmentsRelations = relations(contractorAppointments, ({ one }) => ({
+  home: one(homes, {
+    fields: [contractorAppointments.homeId],
+    references: [homes.id],
+  }),
+  contractor: one(contractors, {
+    fields: [contractorAppointments.contractorId],
+    references: [contractors.id],
+  }),
+  task: one(maintenanceTasks, {
+    fields: [contractorAppointments.taskId],
+    references: [maintenanceTasks.id],
+  }),
+}));
+
+export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [notificationPreferences.userId],
+    references: [users.id],
   }),
 }));

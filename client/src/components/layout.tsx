@@ -38,7 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-64 p-0">
+          <SheetContent side="left" className="w-64 p-0">
             <div className="p-6 border-b">
                <div className="flex items-center gap-2 mb-6">
                  <img src={logoImage} alt="Home Buddy Logo" className="w-10 h-10 rounded-lg" />

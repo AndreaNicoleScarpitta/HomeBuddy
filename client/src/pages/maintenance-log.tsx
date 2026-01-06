@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems, getLogEntries, createLogEntry, updateTask } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -364,7 +364,7 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, task, systems }: AddLogEnt
     notes: "",
   });
 
-  useState(() => {
+  useEffect(() => {
     if (task) {
       setFormData({
         title: task.title,
@@ -374,8 +374,17 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, task, systems }: AddLogEnt
         provider: "",
         notes: "",
       });
+    } else {
+      setFormData({
+        title: "",
+        date: format(new Date(), "yyyy-MM-dd"),
+        systemId: "",
+        cost: "",
+        provider: "",
+        notes: "",
+      });
     }
-  });
+  }, [task]);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {

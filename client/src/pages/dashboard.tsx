@@ -86,6 +86,13 @@ export default function Dashboard() {
 
   const activeTasks = tasks.filter(t => t.status === "pending" || t.status === "scheduled");
   const highPriorityTasks = tasks.filter(t => t.urgency === "now" || t.urgency === "soon");
+  
+  const urgentTasksCount = tasks.filter(t => t.urgency === "now" && t.status !== "completed").length;
+  const overdueTasksCount = tasks.filter(t => {
+    if (!t.dueDate || t.status === "completed") return false;
+    return new Date(t.dueDate) < new Date();
+  }).length;
+  const poorSystemsCount = systems.filter(s => s.condition === "Poor").length;
 
   return (
     <Layout>
@@ -112,6 +119,9 @@ export default function Dashboard() {
               score={home.healthScore || 0} 
               systemsCount={systems.length}
               tasksCount={activeTasks.length}
+              urgentTasksCount={urgentTasksCount}
+              overdueTasksCount={overdueTasksCount}
+              poorSystemsCount={poorSystemsCount}
             />
             <HomeInfoCard home={home} systems={systems} />
           </div>
