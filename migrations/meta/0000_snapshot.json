@@ -1,5 +1,5 @@
 {
-  "id": "e176aa84-4b35-44fa-bc0e-bd020fbd0812",
+  "id": "3ef64b0e-9746-4857-90e9-8fc6109bf806",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -776,6 +776,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "varchar(100)",
@@ -816,6 +822,12 @@
           "notNull": false,
           "default": "'#f97316'"
         },
+        "scoped_system_id": {
+          "name": "scoped_system_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -837,6 +849,21 @@
           "columns": [
             {
               "expression": "home_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "funds_scoped_system_idx": {
+          "name": "funds_scoped_system_idx",
+          "columns": [
+            {
+              "expression": "scoped_system_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1620,6 +1647,43 @@
           "notNull": false,
           "default": "'manual'"
         },
+        "is_recurring": {
+          "name": "is_recurring",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "recurrence_cadence": {
+          "name": "recurrence_cadence",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_task_id": {
+          "name": "parent_task_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assigned_contractor_id": {
+          "name": "assigned_contractor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fund_id": {
+          "name": "fund_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1671,6 +1735,21 @@
           "columns": [
             {
               "expression": "related_system_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "maintenance_tasks_contractor_idx": {
+          "name": "maintenance_tasks_contractor_idx",
+          "columns": [
+            {
+              "expression": "assigned_contractor_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1857,6 +1936,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'asset'"
+        },
         "category": {
           "name": "category",
           "type": "varchar(50)",
@@ -1943,6 +2029,30 @@
           "primaryKey": false,
           "notNull": false
         },
+        "contract_start_date": {
+          "name": "contract_start_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cadence": {
+          "name": "cadence",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contractor_id": {
+          "name": "contractor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related_asset_id": {
+          "name": "related_asset_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status_reason": {
           "name": "status_reason",
           "type": "text",
@@ -2016,6 +2126,21 @@
           "columns": [
             {
               "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "systems_entity_type_idx": {
+          "name": "systems_entity_type_idx",
+          "columns": [
+            {
+              "expression": "entity_type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

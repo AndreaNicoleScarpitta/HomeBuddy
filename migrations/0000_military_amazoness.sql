@@ -73,12 +73,14 @@ CREATE TABLE "fund_allocations" (
 CREATE TABLE "funds" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "funds_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"home_id" integer NOT NULL,
+	"purpose" text,
 	"name" varchar(100) NOT NULL,
 	"balance" integer DEFAULT 0 NOT NULL,
 	"monthly_contribution" integer DEFAULT 0,
 	"fund_type" varchar(50) DEFAULT 'general',
 	"label" text,
 	"color" varchar(20) DEFAULT '#f97316',
+	"scoped_system_id" integer,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -170,6 +172,12 @@ CREATE TABLE "maintenance_tasks" (
 	"difficulty" varchar(50),
 	"safety_warning" text,
 	"created_from" varchar(50) DEFAULT 'manual',
+	"is_recurring" boolean DEFAULT false,
+	"recurrence_cadence" varchar(50),
+	"parent_task_id" integer,
+	"assigned_contractor_id" integer,
+	"fund_id" integer,
+	"completed_at" timestamp,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -191,6 +199,7 @@ CREATE TABLE "notification_preferences" (
 CREATE TABLE "systems" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "systems_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"home_id" integer NOT NULL,
+	"entity_type" varchar(20) DEFAULT 'asset',
 	"category" varchar(50) DEFAULT 'Other',
 	"name" varchar(100) NOT NULL,
 	"make" varchar(100),
@@ -205,6 +214,10 @@ CREATE TABLE "systems" (
 	"provider" varchar(255),
 	"treatment_type" varchar(100),
 	"recurrence_interval" varchar(50),
+	"contract_start_date" timestamp,
+	"cadence" varchar(50),
+	"contractor_id" integer,
+	"related_asset_id" integer,
 	"status_reason" text,
 	"metadata" text,
 	"notes" text,
@@ -277,6 +290,7 @@ CREATE INDEX "expenses_task_id_idx" ON "expenses" USING btree ("task_id");--> st
 CREATE INDEX "fund_allocations_fund_id_idx" ON "fund_allocations" USING btree ("fund_id");--> statement-breakpoint
 CREATE INDEX "fund_allocations_task_id_idx" ON "fund_allocations" USING btree ("task_id");--> statement-breakpoint
 CREATE INDEX "funds_home_id_idx" ON "funds" USING btree ("home_id");--> statement-breakpoint
+CREATE INDEX "funds_scoped_system_idx" ON "funds" USING btree ("scoped_system_id");--> statement-breakpoint
 CREATE INDEX "homes_user_id_idx" ON "homes" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "inspection_findings_report_id_idx" ON "inspection_findings" USING btree ("report_id");--> statement-breakpoint
 CREATE INDEX "inspection_reports_home_id_idx" ON "inspection_reports" USING btree ("home_id");--> statement-breakpoint
@@ -286,6 +300,8 @@ CREATE INDEX "maintenance_log_date_idx" ON "maintenance_log_entries" USING btree
 CREATE INDEX "maintenance_tasks_home_id_idx" ON "maintenance_tasks" USING btree ("home_id");--> statement-breakpoint
 CREATE INDEX "maintenance_tasks_urgency_idx" ON "maintenance_tasks" USING btree ("urgency");--> statement-breakpoint
 CREATE INDEX "maintenance_tasks_system_id_idx" ON "maintenance_tasks" USING btree ("related_system_id");--> statement-breakpoint
+CREATE INDEX "maintenance_tasks_contractor_idx" ON "maintenance_tasks" USING btree ("assigned_contractor_id");--> statement-breakpoint
 CREATE INDEX "systems_home_id_idx" ON "systems" USING btree ("home_id");--> statement-breakpoint
 CREATE INDEX "systems_category_idx" ON "systems" USING btree ("category");--> statement-breakpoint
+CREATE INDEX "systems_entity_type_idx" ON "systems" USING btree ("entity_type");--> statement-breakpoint
 CREATE INDEX "IDX_session_expire" ON "sessions" USING btree ("expire");
