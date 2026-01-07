@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { logEnvironmentStatus } from "./lib/env-validation";
+import { bootstrapMigrationTracking } from "./lib/db-bootstrap";
 
 const app = express();
 const httpServer = createServer(app);
@@ -63,6 +64,9 @@ app.use((req, res, next) => {
 
 (async () => {
   logEnvironmentStatus();
+  
+  // Bootstrap migration tracking for deployments
+  await bootstrapMigrationTracking();
   
   // Setup auth BEFORE registering other routes
   await setupAuth(app);
