@@ -17,6 +17,16 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Milestone 5 — Workers & Reconciliation:
+  - Created server/jobs/queue.ts with enqueue/lock (SKIP LOCKED)/complete/fail with retry backoff and dead-letter
+  - Created server/jobs/reportAnalyzer.ts (emits InspectionReportAnalyzedDraft with {draft} shape)
+  - Created server/jobs/digester.ts (emits DigestDelivered with task summary in meta)
+  - Created server/jobs/reconciler.ts (detects stuck reports >30min, overdue tasks; emits RetryRequested/TaskOverdueMarked with deterministic idempotency keys)
+  - Implemented server/worker/worker.ts — poll loop with SKIP LOCKED, handler dispatch, graceful shutdown
+  - Implemented server/cli/reconcile.ts — CLI runner for reconciliation checks
+  - Added RetryRequested to queued report state machine transitions
+  - Added 11 Vitest tests: queue CRUD (5), report analyzer (2), reconciler (4 including idempotency)
+  - All 94 tests passing (11 new + 83 existing)
 - 2026-02-21: Milestone 4 — Assistant Gating:
   - Extracted assistant logic into server/assistant/assistantService.ts (core gating) and server/assistant/assistantRoutes.ts (thin router)
   - Propose stores provenance metadata (confidence, rationale) in projection

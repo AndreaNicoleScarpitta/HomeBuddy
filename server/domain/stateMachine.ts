@@ -86,6 +86,7 @@ const reportTransitions: Record<string, Set<string>> = {
   queued: new Set([
     EventTypes.InspectionReportAnalyzedDraft,
     EventTypes.InspectionReportAnalysisFailed,
+    EventTypes.RetryRequested,
   ]),
   draft_ready: new Set([
     EventTypes.InspectionReportNeedsReview,
