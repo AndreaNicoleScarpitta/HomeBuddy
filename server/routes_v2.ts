@@ -1226,7 +1226,7 @@ v2Router.post("/chat/sessions", async (req: Request, res: Response) => {
     const actor = getActor(req);
     const userId = getUserId(req);
     const homeId = req.body.homeId;
-    if (homeId && !(await verifyHomeOwnership(homeId, userId))) {
+    if (homeId && !(await verifyHomeOwnershipStrict(homeId, userId))) {
       res.status(403).json({ error: "Access denied" });
       return;
     }

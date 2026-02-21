@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { v2Router } from "./routes_v2";
 import { serveStatic } from "./static";
@@ -26,6 +27,26 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://www.google-analytics.com"],
+        connectSrc: ["'self'", "https://www.google-analytics.com", "https://analytics.google.com"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -74,13 +95,30 @@ app.use((req, res, next) => {
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  const apiLimiter = rateLimit({
+  const mutationLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests, please try again later" },
     skip: (req) => req.method === "GET",
+  });
+
+  const readLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please try again later" },
+    skip: (req) => req.method !== "GET",
+  });
+
+  const contactLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many messages. Please wait a minute before sending another." },
   });
 
   const authLimiter = rateLimit({
@@ -91,9 +129,12 @@ app.use((req, res, next) => {
     message: { error: "Too many login attempts, please try again later" },
   });
 
-  app.use("/api", apiLimiter);
-  app.use("/v2", apiLimiter);
+  app.use("/api/contact", contactLimiter);
   app.use("/api/auth", authLimiter);
+  app.use("/api", mutationLimiter);
+  app.use("/api", readLimiter);
+  app.use("/v2", mutationLimiter);
+  app.use("/v2", readLimiter);
 
   app.use("/v2", v2Router);
   await registerRoutes(httpServer, app);

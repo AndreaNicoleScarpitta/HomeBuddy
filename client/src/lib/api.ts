@@ -1,6 +1,10 @@
 import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding, ContractorAppointment, NotificationPreferences } from "@shared/schema";
 
 async function handleResponse<T>(response: Response): Promise<T> {
+  if (response.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Session expired. Please log in again.");
+  }
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "An error occurred" }));
     throw new Error(error.message || error.error || "Request failed");

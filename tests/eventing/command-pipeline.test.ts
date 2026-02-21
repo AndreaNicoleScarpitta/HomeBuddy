@@ -342,7 +342,10 @@ describe("projection sync", () => {
   });
 
   it("should create and read chat sessions with messages", async () => {
-    const homeId = crypto.randomUUID();
+    // Create a home first so chat session ownership check passes
+    const homeCreate = await v2("POST", "/homes", { address: "Chat Test Home" }, `chat-home-${crypto.randomUUID()}`);
+    expect(homeCreate.status).toBe(201);
+    const homeId = homeCreate.data.id as string;
 
     // Create session
     const session = await v2("POST", "/chat/sessions", { homeId }, `chat-create-${crypto.randomUUID()}`);
