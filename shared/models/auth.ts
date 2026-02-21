@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const sessions = pgTable(
   "sessions",
@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   provider: varchar("provider"),
   providerId: varchar("provider_id"),
+  dataStorageOptOut: boolean("data_storage_opt_out").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -249,6 +249,13 @@ export async function getAIResponse(
   }
 }
 
+export interface AIResponseMeta {
+  fullResponse: string;
+  model: string;
+  promptTokens?: number;
+  completionTokens?: number;
+}
+
 export async function streamAIResponse(
   homeId: number,
   userMessage: string,
@@ -257,14 +264,14 @@ export async function streamAIResponse(
   onDone: () => void,
   imageBase64?: string,
   imageType?: string
-): Promise<string> {
+): Promise<AIResponseMeta> {
   try {
     const highRiskCheck = containsHighRiskTopic(userMessage);
     if (highRiskCheck.isHighRisk && highRiskCheck.topic) {
       const response = getHighRiskResponse(highRiskCheck.topic);
       onChunk(response);
       onDone();
-      return response;
+      return { fullResponse: response, model: "safety-filter" };
     }
 
     const home = await storage.getHomeById(homeId);
@@ -313,15 +320,19 @@ export async function streamAIResponse(
       hasImage: !!imageBase64 
     });
 
+    const modelName = "gpt-4o";
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: modelName,
       messages,
       max_completion_tokens: 1024,
       temperature: 0.7,
       stream: true,
+      stream_options: { include_usage: true },
     });
 
     let fullResponse = "";
+    let promptTokens: number | undefined;
+    let completionTokens: number | undefined;
 
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
@@ -329,10 +340,14 @@ export async function streamAIResponse(
         fullResponse += content;
         onChunk(content);
       }
+      if (chunk.usage) {
+        promptTokens = chunk.usage.prompt_tokens;
+        completionTokens = chunk.usage.completion_tokens;
+      }
     }
 
     onDone();
-    return fullResponse;
+    return { fullResponse, model: modelName, promptTokens, completionTokens };
   } catch (error) {
     logError("ai-chat.stream", error);
     throw new Error("Failed to get AI response. Please try again later.");

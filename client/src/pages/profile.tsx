@@ -5,13 +5,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, MapPin, Home, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { User, MapPin, Home, Save, Shield, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, updateHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function ProfileSkeleton() {
   return (
@@ -38,6 +50,54 @@ export default function Profile() {
 
   const [formData, setFormData] = useState({
     address: "",
+  });
+
+  const { data: privacy, isLoading: privacyLoading } = useQuery({
+    queryKey: ["privacy"],
+    queryFn: async () => {
+      const res = await fetch("/api/user/privacy", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load privacy settings");
+      return res.json() as Promise<{ dataStorageOptOut: boolean }>;
+    },
+  });
+
+  const privacyMutation = useMutation({
+    mutationFn: async (dataStorageOptOut: boolean) => {
+      const res = await fetch("/api/user/privacy", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ dataStorageOptOut }),
+      });
+      if (!res.ok) throw new Error("Failed to update privacy settings");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["privacy"] });
+      toast({ title: "Privacy settings updated", description: "Your preference has been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not update privacy settings.", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/user/data", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete data");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast({ title: "Data deleted", description: "All your home data has been permanently removed." });
+      trackEvent("delete_all_data", "privacy", "user_data_deletion");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not delete your data. Please try again.", variant: "destructive" });
+    },
   });
 
   useEffect(() => {
@@ -151,6 +211,79 @@ export default function Profile() {
           </Card>
 
           <NotificationSettings />
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-heading flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Data & Privacy
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="opt-out" className="text-sm font-medium">
+                    Opt out of data storage
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    When enabled, chat messages and photos will not be saved. You can still use the assistant, but conversation history will not persist between sessions.
+                  </p>
+                </div>
+                <Switch
+                  id="opt-out"
+                  checked={privacy?.dataStorageOptOut ?? false}
+                  disabled={privacyLoading || privacyMutation.isPending}
+                  onCheckedChange={(checked) => {
+                    trackEvent("toggle_data_opt_out", "privacy", checked ? "opt_out" : "opt_in");
+                    privacyMutation.mutate(checked);
+                  }}
+                  data-testid="switch-data-opt-out"
+                />
+              </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-destructive">
+                    Delete all data
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Permanently remove all your home data including systems, maintenance tasks, chat history, budget information, inspection reports, and event history. Your login account will remain active but all stored data will be gone. This cannot be undone.
+                  </p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteMutation.isPending}
+                      data-testid="button-delete-all-data"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteMutation.isPending ? "Deleting..." : "Delete All My Data"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all your home data including systems, maintenance tasks, chat history, budget information, inspection reports, and event history. Your login account will remain, but all stored data will be gone forever. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        data-testid="button-confirm-delete"
+                      >
+                        Yes, delete everything
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
         </section>
       </div>
     </Layout>

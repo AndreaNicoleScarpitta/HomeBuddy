@@ -183,8 +183,13 @@ export type MaintenanceLogEntry = typeof maintenanceLogEntries.$inferSelect;
 export const chatMessages = pgTable("chat_messages", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
-  role: varchar("role", { length: 50 }).notNull(), // user, assistant
+  role: varchar("role", { length: 50 }).notNull(),
   content: text("content").notNull(),
+  imageData: text("image_data"),
+  imageType: varchar("image_type", { length: 100 }),
+  model: varchar("model", { length: 100 }),
+  promptTokens: integer("prompt_tokens"),
+  completionTokens: integer("completion_tokens"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("chat_messages_home_id_idx").on(table.homeId),

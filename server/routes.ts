@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { logInfo, logError, logWarn } from "./lib/logger";
 import { verifyAddress, isUSPSConfigured } from "./lib/usps";
-import { streamAIResponse } from "./lib/ai-chat";
+import { streamAIResponse, type AIResponseMeta } from "./lib/ai-chat";
+import { authStorage } from "./replit_integrations/auth/storage";
 import { sendContactFormNotification } from "./lib/email";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -55,7 +56,46 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   // All routes protected by authentication
-  
+
+  // Privacy & data management routes
+  app.get("/api/user/privacy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await authStorage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found", code: "NOT_FOUND" });
+      res.json({ dataStorageOptOut: user.dataStorageOptOut ?? false });
+    } catch (error) {
+      return handleApiError(res, "privacy.get", error, 500);
+    }
+  });
+
+  app.put("/api/user/privacy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { dataStorageOptOut } = req.body;
+      if (typeof dataStorageOptOut !== "boolean") {
+        return res.status(400).json({ message: "dataStorageOptOut must be a boolean", code: "VALIDATION_ERROR" });
+      }
+      const user = await authStorage.updateUserPrivacy(userId, dataStorageOptOut);
+      logInfo("privacy.update", "User updated privacy settings", { userId, dataStorageOptOut });
+      res.json({ dataStorageOptOut: user.dataStorageOptOut ?? false });
+    } catch (error) {
+      return handleApiError(res, "privacy.update", error, 500);
+    }
+  });
+
+  app.delete("/api/user/data", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      logInfo("data.delete", "User requested deletion of all data", { userId });
+      await storage.deleteAllUserData(userId);
+      logInfo("data.delete", "All user data deleted", { userId });
+      res.json({ success: true, message: "All your data has been permanently deleted." });
+    } catch (error) {
+      return handleApiError(res, "data.delete", error, 500);
+    }
+  });
+
   // Home routes
   app.get("/api/home", isAuthenticated, async (req: any, res) => {
     try {
@@ -333,14 +373,25 @@ export async function registerRoutes(
       if (!content && !image) {
         return res.status(400).json({ message: "Message content or image is required", code: "VALIDATION_ERROR" });
       }
+
+      const user = await authStorage.getUser(userId);
+      const optedOut = user?.dataStorageOptOut ?? false;
       
       const messageContent = image 
         ? `${content || "What can you tell me about this?"} [Photo attached]`
         : content;
+
+      if (!optedOut) {
+        await storage.createChatMessage({
+          homeId,
+          role: "user",
+          content: messageContent,
+          imageData: image || null,
+          imageType: imageType || null,
+        });
+      }
       
-      await storage.createChatMessage({ homeId, role: "user", content: messageContent });
-      
-      const history = await storage.getChatMessagesByHomeId(homeId);
+      const history = optedOut ? [] : await storage.getChatMessagesByHomeId(homeId);
       const conversationHistory = history.slice(-10).map(m => ({ role: m.role, content: m.content }));
       
       res.setHeader("Content-Type", "text/event-stream");
@@ -348,7 +399,7 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
       
       try {
-        const fullResponse = await streamAIResponse(
+        const aiResult = await streamAIResponse(
           homeId,
           content || "What can you tell me about this photo?",
           conversationHistory.slice(0, -1),
@@ -357,8 +408,17 @@ export async function registerRoutes(
           image,
           imageType
         );
-        
-        await storage.createChatMessage({ homeId, role: "assistant", content: fullResponse });
+
+        if (!optedOut) {
+          await storage.createChatMessage({
+            homeId,
+            role: "assistant",
+            content: aiResult.fullResponse,
+            model: aiResult.model,
+            promptTokens: aiResult.promptTokens ?? null,
+            completionTokens: aiResult.completionTokens ?? null,
+          });
+        }
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
         res.end();
       } catch (aiError) {

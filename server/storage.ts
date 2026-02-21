@@ -134,6 +134,10 @@ export interface IStorage {
   getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined>;
   createNotificationPreferences(prefs: InsertNotificationPreferences): Promise<NotificationPreferences>;
   updateNotificationPreferences(userId: string, data: Partial<InsertNotificationPreferences>): Promise<NotificationPreferences>;
+
+  // Data Management
+  deleteAllUserData(userId: string): Promise<void>;
+  deleteChatMessagesByHomeId(homeId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -548,6 +552,70 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notificationPreferences.userId, userId))
       .returning();
     return prefs;
+  }
+
+  async deleteChatMessagesByHomeId(homeId: number): Promise<void> {
+    await db.delete(chatMessages).where(eq(chatMessages.homeId, homeId));
+  }
+
+  async deleteAllUserData(userId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      const userHomes = await tx.select().from(homes).where(eq(homes.userId, userId));
+      const homeIds = userHomes.map(h => h.id);
+
+      for (const home of userHomes) {
+        await tx.delete(chatMessages).where(eq(chatMessages.homeId, home.id));
+        await tx.delete(maintenanceTasks).where(eq(maintenanceTasks.homeId, home.id));
+        await tx.delete(maintenanceLogEntries).where(eq(maintenanceLogEntries.homeId, home.id));
+        await tx.delete(systems).where(eq(systems.homeId, home.id));
+
+        const homeFunds = await tx.select().from(funds).where(eq(funds.homeId, home.id));
+        for (const fund of homeFunds) {
+          await tx.delete(expenses).where(eq(expenses.fundId, fund.id));
+          await tx.delete(fundAllocations).where(eq(fundAllocations.fundId, fund.id));
+        }
+        await tx.delete(funds).where(eq(funds.homeId, home.id));
+
+        await tx.delete(inspectionFindings).where(
+          sql`report_id IN (SELECT id FROM inspection_reports WHERE home_id = ${home.id})`
+        );
+        await tx.delete(inspectionReports).where(eq(inspectionReports.homeId, home.id));
+        await tx.delete(contractorAppointments).where(eq(contractorAppointments.homeId, home.id));
+      }
+
+      if (homeIds.length > 0) {
+        for (const homeId of homeIds) {
+          const homeUuid = String(homeId);
+          await tx.execute(sql`DELETE FROM projection_chat_message WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_chat_session WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_task WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_finding WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_report WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_system WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_assistant_action WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_notification_pref WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_checkpoint WHERE home_id = ${homeUuid}`);
+          await tx.execute(sql`DELETE FROM projection_home WHERE id = ${homeUuid}`);
+        }
+
+        await tx.execute(sql`ALTER TABLE event_log DISABLE TRIGGER trg_event_log_immutable`);
+        for (const homeId of homeIds) {
+          const homeUuid = String(homeId);
+          await tx.execute(sql`DELETE FROM event_log WHERE aggregate_id::text = ${homeUuid}`);
+        }
+        await tx.execute(sql`DELETE FROM event_log WHERE actor_id = ${userId}`);
+        await tx.execute(sql`ALTER TABLE event_log ENABLE TRIGGER trg_event_log_immutable`);
+
+        for (const homeId of homeIds) {
+          const homeUuid = String(homeId);
+          await tx.execute(sql`DELETE FROM job_queue WHERE data->>'homeId' = ${homeUuid}`);
+        }
+      }
+
+      await tx.delete(homes).where(eq(homes.userId, userId));
+      await tx.delete(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+      await tx.delete(contactMessages).where(eq(contactMessages.userId, userId));
+    });
   }
 }
 

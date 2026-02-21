@@ -17,6 +17,18 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Privacy & Data Management:
+  - Added dataStorageOptOut field to users table for chat data opt-out
+  - Added imageData, imageType columns to chat_messages for photo persistence
+  - Added model, promptTokens, completionTokens to chat_messages for AI metadata tracking
+  - Updated streamAIResponse to return AIResponseMeta (model name, token usage via stream_options)
+  - Chat route respects dataStorageOptOut: skips message persistence when opted out
+  - Chat route persists image data and AI metadata per message
+  - Added GET/PUT /api/user/privacy routes for opt-out toggle
+  - Added DELETE /api/user/data route for full data deletion
+  - deleteAllUserData is transactional, purges legacy tables + event_log + all projection tables + job_queue
+  - Profile page: Data & Privacy card with Switch toggle and AlertDialog confirmation for data deletion
+  - All 94 tests passing
 - 2026-02-21: Milestone 5 — Workers & Reconciliation:
   - Created server/jobs/queue.ts with enqueue/lock (SKIP LOCKED)/complete/fail with retry backoff and dead-letter
   - Created server/jobs/reportAnalyzer.ts (emits InspectionReportAnalyzedDraft with {draft} shape)
