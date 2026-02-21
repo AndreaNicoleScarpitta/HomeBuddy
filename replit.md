@@ -17,6 +17,14 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Milestone 4 — Assistant Gating:
+  - Extracted assistant logic into server/assistant/assistantService.ts (core gating) and server/assistant/assistantRoutes.ts (thin router)
+  - Propose stores provenance metadata (confidence, rationale) in projection
+  - Approve + execute is transactional: validates proposed state, runs all proposed commands, emits AssistantActionExecuted with correlation IDs
+  - Reject prevents subsequent approval (state machine enforced)
+  - Added GET /v2/assistant/actions/:id and GET /v2/assistant/actions?homeId= for traceability/audit
+  - Added 9 Vitest tests: execution guard (double-approve, reject-then-approve), provenance storage, event trail with correlation IDs, GET endpoints, full lifecycle
+  - All 83 tests passing (9 new + 74 existing)
 - 2026-02-21: Milestone 3 — State-Machine Guards:
   - Created server/domain/stateMachine.ts with transition maps for Task, InspectionReport, Finding, and AssistantAction aggregates
   - validateTransition() and TransitionError enforce valid lifecycle transitions at write time
