@@ -15,6 +15,7 @@ import { PhotoConsentModal, usePhotoConsent } from "@/components/photo-consent-m
 import { AddSystemWizard } from "@/components/add-system-wizard";
 import { Link } from "wouter";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
+import { trackEvent } from "@/lib/analytics";
 
 function renderRichText(text: string): JSX.Element {
   const lines = text.split('\n');
@@ -228,6 +229,8 @@ export default function Chat() {
     setIsStreaming(true);
     setStreamingMessage("");
 
+    trackEvent('send_message', 'chat', imageToSend ? 'with_photo' : 'text_only');
+
     try {
       let imageBase64: string | undefined;
       if (imageToSend && imagePreviewToSend) {
@@ -352,19 +355,19 @@ export default function Chat() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <button 
-                      onClick={() => setInput("What repairs should I prioritize?")}
+                      onClick={() => { trackEvent('click', 'chat', 'suggestion_prioritize'); setInput("What repairs should I prioritize?"); }}
                       className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
                     >
                       What should I fix first?
                     </button>
                     <button 
-                      onClick={() => setInput("How much should I budget for home repairs?")}
+                      onClick={() => { trackEvent('click', 'chat', 'suggestion_budget'); setInput("How much should I budget for home repairs?"); }}
                       className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
                     >
                       Help me plan costs
                     </button>
                     <button 
-                      onClick={() => setInput("What can I safely do myself vs hire a pro?")}
+                      onClick={() => { trackEvent('click', 'chat', 'suggestion_diy'); setInput("What can I safely do myself vs hire a pro?"); }}
                       className="px-3 py-2 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
                     >
                       DIY or hire a pro?
@@ -381,7 +384,7 @@ export default function Chat() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setInput("Help me add a maintenance task for my home")}
+                        onClick={() => { trackEvent('click', 'chat', 'quick_add_task'); setInput("Help me add a maintenance task for my home"); }}
                         className="text-xs"
                         data-testid="button-add-task-quick"
                       >
@@ -391,7 +394,7 @@ export default function Chat() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setShowAddSystem(true)}
+                        onClick={() => { trackEvent('click', 'chat', 'quick_add_system'); setShowAddSystem(true); }}
                         className="text-xs"
                         data-testid="button-add-system-quick"
                       >
@@ -529,7 +532,7 @@ export default function Chat() {
                     variant="ghost" 
                     size="icon" 
                     className="text-muted-foreground hover:text-primary shrink-0" 
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => { trackEvent('click', 'chat', 'add_photo'); fileInputRef.current?.click(); }}
                     disabled={isStreaming}
                     data-testid="button-add-photo"
                   >

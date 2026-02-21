@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Send, CheckCircle2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 async function submitContactForm(data: {
   name: string;
@@ -65,6 +66,7 @@ export default function Contact() {
       });
       return;
     }
+    trackEvent('submit_form', 'contact', 'contact_message');
     submitMutation.mutate({ name, email, subject, message });
   };
 
@@ -81,7 +83,7 @@ export default function Contact() {
               <p className="text-muted-foreground mb-6">
                 Thank you for reaching out. We'll get back to you as soon as possible.
               </p>
-              <Button onClick={() => setSubmitted(false)} data-testid="button-send-another">
+              <Button onClick={() => { trackEvent('click', 'contact', 'send_another'); setSubmitted(false); }} data-testid="button-send-another">
                 Send Another Message
               </Button>
             </CardContent>

@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, MessageSquare, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Landing() {
   const handleLogin = () => {
+    trackEvent('click', 'landing', 'sign_in_button');
     window.location.href = "/login";
   };
 

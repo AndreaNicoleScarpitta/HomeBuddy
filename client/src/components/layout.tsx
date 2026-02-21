@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
+import { trackEvent } from "@/lib/analytics";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -22,6 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   const handleLogout = () => {
+    trackEvent('logout', 'auth', 'logout_button');
     window.location.href = "/api/logout";
   };
 
@@ -56,7 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link 
                   key={item.href} 
                   href={item.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => { trackEvent('navigate', 'sidebar', item.label.toLowerCase()); setIsOpen(false); }}
                   data-tour={`mobile-${item.tourId}`}
                   className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                     location === item.href 
@@ -100,6 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link 
               key={item.href} 
               href={item.href}
+              onClick={() => trackEvent('navigate', 'sidebar', item.label.toLowerCase())}
               data-tour={item.tourId}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 location === item.href 

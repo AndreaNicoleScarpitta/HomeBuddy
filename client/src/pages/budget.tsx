@@ -28,6 +28,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Fund, MaintenanceTask } from "@shared/schema";
+import { trackEvent } from "@/lib/analytics";
 
 function BudgetSkeleton() {
   return (
@@ -77,7 +78,7 @@ function FundCard({ fund, onEdit }: { fund: Fund; onEdit: () => void }) {
     <Card 
       className="relative overflow-hidden cursor-pointer hover:shadow-md transition-all group"
       style={{ borderLeftColor: fund.color || "#f97316", borderLeftWidth: "4px" }}
-      onClick={onEdit}
+      onClick={() => { trackEvent('click', 'budget', 'view_fund'); onEdit(); }}
       data-testid={`card-fund-${fund.id}`}
     >
       <CardHeader className="pb-2">
@@ -216,6 +217,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
 
   const handleSubmit = () => {
     if (!name || !balance) return;
+    trackEvent('create_fund', 'budget', fundType);
     createFundMutation.mutate({
       name,
       purpose: purpose || undefined,
@@ -229,7 +231,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number; onSuccess: () =>
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="shadow-lg shadow-primary/20" data-testid="button-add-fund">
+        <Button className="shadow-lg shadow-primary/20" data-testid="button-add-fund" onClick={() => trackEvent('click', 'budget', 'open_add_fund')}>
           <Plus className="h-4 w-4 mr-2" />
           Add Fund
         </Button>
@@ -404,6 +406,7 @@ function EditFundDialog({
 
   const handleSave = () => {
     if (!name || !balance) return;
+    trackEvent('update_fund', 'budget', fundType);
     updateFundMutation.mutate({
       name,
       purpose: purpose || undefined,
@@ -416,6 +419,7 @@ function EditFundDialog({
 
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this fund? This action cannot be undone.")) {
+      trackEvent('delete_fund', 'budget', fund?.name);
       deleteFundMutation.mutate();
     }
   };

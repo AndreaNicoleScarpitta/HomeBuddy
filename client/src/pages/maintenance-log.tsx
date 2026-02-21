@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { format, formatDistanceToNow } from "date-fns";
 import type { MaintenanceTask, System, MaintenanceLogEntry } from "@shared/schema";
+import { trackEvent } from "@/lib/analytics";
 
 function MaintenanceLogSkeleton() {
   return (
@@ -136,7 +137,7 @@ export default function MaintenanceLog() {
               Track completed work and maintenance history
             </p>
           </div>
-          <Button onClick={() => { setSelectedTask(null); setShowAddEntry(true); }} data-testid="button-add-entry">
+          <Button onClick={() => { trackEvent('click', 'maintenance_log', 'log_work'); setSelectedTask(null); setShowAddEntry(true); }} data-testid="button-add-entry">
             <Plus className="h-4 w-4 mr-2" />
             Log Work
           </Button>
@@ -226,7 +227,7 @@ export default function MaintenanceLog() {
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => handleCompleteTask(task)}
+                      onClick={() => { trackEvent('click', 'maintenance_log', 'complete_task'); handleCompleteTask(task); }}
                       data-testid={`button-complete-task-${task.id}`}
                     >
                       <CheckCircle2 className="h-4 w-4 mr-1" />
@@ -429,6 +430,7 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, task, systems }: AddLogEnt
       toast({ title: "Error", description: "Please enter a title.", variant: "destructive" });
       return;
     }
+    trackEvent('submit_form', 'maintenance_log', task ? 'complete_task' : 'log_entry');
     createMutation.mutate(formData);
   };
 

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { InspectionReport, InspectionFinding } from "@shared/schema";
+import { trackEvent } from "@/lib/analytics";
 
 function SeverityBadge({ severity }: { severity: string }) {
   const colors = {
@@ -141,7 +142,7 @@ function FindingCard({ finding }: { finding: InspectionFinding }) {
       
       <div className="flex items-center gap-4">
         <button
-          onClick={() => setShowWhy(!showWhy)}
+          onClick={() => { trackEvent('click', 'inspections', 'why_this_matters'); setShowWhy(!showWhy); }}
           className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
           data-testid="button-why-matters"
         >
@@ -237,7 +238,7 @@ function ReportDetail({ reportId, onBack }: { reportId: number; onBack: () => vo
                 Our AI will review your inspection report and identify issues, estimated costs, and recommended actions.
               </p>
               <Button 
-                onClick={() => analyzeMutation.mutate()}
+                onClick={() => { trackEvent('click', 'inspections', 'analyze_report'); analyzeMutation.mutate(); }}
                 disabled={analyzeMutation.isPending}
                 className="mt-4"
                 data-testid="button-analyze"
@@ -506,7 +507,7 @@ export default function Inspections() {
             {reports.map((report) => (
               <button
                 key={report.id}
-                onClick={() => setSelectedReportId(report.id)}
+                onClick={() => { trackEvent('click', 'inspections', 'view_report'); setSelectedReportId(report.id); }}
                 className="w-full p-4 rounded-xl bg-secondary/30 border border-border/50 hover:bg-secondary/50 transition-colors text-left group"
                 data-testid={`button-report-${report.id}`}
               >
@@ -528,6 +529,7 @@ export default function Inspections() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        trackEvent('click', 'inspections', 'delete_report');
                         deleteMutation.mutate(report.id);
                       }}
                       className="p-2 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"

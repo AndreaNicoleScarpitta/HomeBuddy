@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SplashScreen } from "@/components/splash-screen";
 import { useAuth } from "@/hooks/use-auth";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { initGA } from "@/lib/analytics";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Chat from "@/pages/chat";
@@ -38,6 +40,7 @@ function PublicTermsPage() {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  useAnalytics();
   const [showSplash, setShowSplash] = useState(true);
   const [splashComplete, setSplashComplete] = useState(false);
 
@@ -102,6 +105,12 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      initGA();
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

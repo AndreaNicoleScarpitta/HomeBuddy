@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { AddressAutocomplete, type AddressComponents } from "@/components/address-autocomplete";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
@@ -54,8 +55,10 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (step === 1 && address) {
+      trackEvent('onboarding_step', 'onboarding', 'address_completed');
       setStep(2);
     } else if (step === 2) {
+      trackEvent('onboarding_step', 'onboarding', 'create_home');
       createHomeMutation.mutate({
         address: addressComponents?.fullAddress || address,
         streetAddress: addressComponents?.streetAddress,

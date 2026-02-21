@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Home, Shield } from "lucide-react";
 import { motion } from "framer-motion";
+import { trackEvent } from "@/lib/analytics";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -84,7 +85,7 @@ export default function Login() {
             {providers?.google && (
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = "/api/auth/google")}
+                onClick={() => { trackEvent('login_attempt', 'auth', 'google'); window.location.href = "/api/auth/google"; }}
                 className="w-full h-14 text-base font-medium gap-3 justify-center"
                 data-testid="button-login-google"
               >
@@ -96,7 +97,7 @@ export default function Login() {
             {providers?.facebook && (
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = "/api/auth/facebook")}
+                onClick={() => { trackEvent('login_attempt', 'auth', 'facebook'); window.location.href = "/api/auth/facebook"; }}
                 className="w-full h-14 text-base font-medium gap-3 justify-center"
                 data-testid="button-login-facebook"
               >
@@ -108,7 +109,7 @@ export default function Login() {
             {providers?.instagram && (
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = "/api/auth/instagram")}
+                onClick={() => { trackEvent('login_attempt', 'auth', 'instagram'); window.location.href = "/api/auth/instagram"; }}
                 className="w-full h-14 text-base font-medium gap-3 justify-center"
                 data-testid="button-login-instagram"
               >

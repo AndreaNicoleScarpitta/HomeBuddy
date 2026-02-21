@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 function DashboardSkeleton() {
   return (
@@ -143,7 +144,7 @@ export default function Dashboard() {
               </div>
             )}
             <button 
-              onClick={() => setShowAddSystem(true)}
+              onClick={() => { trackEvent('click', 'dashboard', 'add_system'); setShowAddSystem(true); }}
               className="flex items-center gap-1.5 px-4 py-2 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
               data-testid="button-add-system"
             >
@@ -243,7 +244,7 @@ export default function Dashboard() {
         {hasSeenTour && (
           <div className="text-center pt-4">
             <button 
-              onClick={startTour}
+              onClick={() => { trackEvent('click', 'dashboard', 'restart_tour'); startTour(); }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               data-testid="button-restart-tour"
             >

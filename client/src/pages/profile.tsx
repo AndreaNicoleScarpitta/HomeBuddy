@@ -11,6 +11,7 @@ import { getHome, updateHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 function ProfileSkeleton() {
   return (
@@ -60,6 +61,7 @@ export default function Profile() {
   });
 
   const handleSave = () => {
+    trackEvent('save_profile', 'profile', 'update_home_info');
     updateMutation.mutate(formData);
   };
 
