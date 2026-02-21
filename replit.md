@@ -17,6 +17,14 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Milestone 1 — Event Log Foundation:
+  - Created event_log table with envelope fields, idempotency + concurrency unique constraints
+  - Created 10 projection tables (home, system, report, finding, task, notification_pref, assistant_action, chat_session, chat_message, checkpoint)
+  - Created job_queue table for background processing
+  - Added SQL immutability trigger preventing UPDATE/DELETE on event_log
+  - Added 10 Vitest DB-backed tests validating all constraints
+  - Added CLI placeholders (backfill, rebuildProjections, reconcile, worker)
+- 2026-02-21: GA4 event tracking across all pages and navigation
 - 2026-02-21: Authentication overhaul:
   - Replaced Replit Auth (OIDC) with social login via Passport.js (Google, Facebook, Instagram)
   - Added provider and providerId fields to users table
