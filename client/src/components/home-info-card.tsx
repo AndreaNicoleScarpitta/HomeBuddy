@@ -11,7 +11,10 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import type { Home as HomeType, System } from "@shared/schema";
+import type { V2Home, V2System } from "@/lib/api";
+
+type HomeType = V2Home;
+type System = V2System;
 
 interface HomeInfoCardProps {
   home: HomeType;

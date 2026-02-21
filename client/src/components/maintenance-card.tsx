@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { MaintenanceTask } from "@shared/schema";
+import type { V2Task } from "@/lib/api";
 
 const serviceTypeMapping: Record<string, string> = {
   "HVAC": "hvac",
@@ -27,13 +27,13 @@ function buildAngiesListUrl(serviceType: string): string {
 }
 
 interface TaskProps {
-  task: MaintenanceTask;
+  task: V2Task;
 }
 
 export function MaintenanceCard({ task }: TaskProps) {
   const isNow = task.urgency === "now";
   
-  const getDiyBadgeColor = (level: string | null) => {
+  const getDiyBadgeColor = (level: string | null | undefined) => {
     switch (level) {
       case "DIY-Safe": return "bg-green-100 text-green-700 hover:bg-green-200 border-green-200";
       case "Caution": return "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200";

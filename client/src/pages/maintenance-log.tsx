@@ -29,7 +29,8 @@ import { getHome, getTasks, getSystems, getLogEntries, createLogEntry, updateTas
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { format, formatDistanceToNow } from "date-fns";
-import type { MaintenanceTask, System, MaintenanceLogEntry } from "@shared/schema";
+import type { V2Task, V2System } from "@/lib/api";
+import type { MaintenanceLogEntry } from "@shared/schema";
 import { trackEvent } from "@/lib/analytics";
 
 function MaintenanceLogSkeleton() {
@@ -58,7 +59,7 @@ export default function MaintenanceLog() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddEntry, setShowAddEntry] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<MaintenanceTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<V2Task | null>(null);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
@@ -80,7 +81,7 @@ export default function MaintenanceLog() {
 
   const { data: logEntries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ["logEntries", home?.id],
-    queryFn: () => getLogEntries(home!.id),
+    queryFn: () => getLogEntries(home!.legacyId!),
     enabled: !!home?.id,
   });
 
@@ -90,9 +91,9 @@ export default function MaintenanceLog() {
   const systemsById = systems.reduce((acc, s) => {
     acc[s.id] = s;
     return acc;
-  }, {} as Record<number, System>);
+  }, {} as Record<string, V2System>);
 
-  const handleCompleteTask = (task: MaintenanceTask) => {
+  const handleCompleteTask = (task: V2Task) => {
     setSelectedTask(task);
     setShowAddEntry(true);
   };
@@ -336,7 +337,7 @@ export default function MaintenanceLog() {
       <AddLogEntryDialog
         isOpen={showAddEntry}
         onClose={() => { setShowAddEntry(false); setSelectedTask(null); }}
-        homeId={home?.id || 0}
+        homeId={home?.legacyId || 0}
         task={selectedTask}
         systems={systems}
       />
@@ -348,8 +349,8 @@ interface AddLogEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   homeId: number;
-  task: MaintenanceTask | null;
-  systems: System[];
+  task: V2Task | null;
+  systems: V2System[];
 }
 
 function AddLogEntryDialog({ isOpen, onClose, homeId, task, systems }: AddLogEntryDialogProps) {

@@ -16,6 +16,7 @@ import { Pool } from "pg";
 const TEST_PORT = Number(process.env.PORT ?? 5000);
 const BASE = `http://localhost:${TEST_PORT}/v2`;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const TEST_USER_ID = 99998;
 
 interface V2Response {
   status: number;
@@ -33,6 +34,7 @@ async function v2(
     headers: {
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
+      "X-Test-User-Id": String(TEST_USER_ID),
     },
   };
   if (method !== "GET") {
@@ -46,13 +48,22 @@ async function v2(
 async function v2Get(path: string): Promise<V2Response> {
   const res = await fetch(`${BASE}${path}`, {
     method: "GET",
-    headers: { "Idempotency-Key": crypto.randomUUID() },
+    headers: {
+      "Idempotency-Key": crypto.randomUUID(),
+      "X-Test-User-Id": String(TEST_USER_ID),
+    },
   });
   const data = await res.json();
   return { status: res.status, data };
 }
 
 beforeAll(async () => {
+  await pool.query(
+    `INSERT INTO users (id, email, provider, provider_id)
+     VALUES ($1, 'test-assistant@test.local', 'test', 'test-assistant-user')
+     ON CONFLICT (id) DO NOTHING`,
+    [TEST_USER_ID],
+  );
   await new Promise((r) => setTimeout(r, 500));
 });
 

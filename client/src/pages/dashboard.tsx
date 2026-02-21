@@ -237,7 +237,7 @@ export default function Dashboard() {
         
         {/* Contractor Schedule */}
         <section className="space-y-4">
-          <ContractorSchedule homeId={home.id} />
+          <ContractorSchedule homeId={home.legacyId!} />
         </section>
 
         {/* Help link */}

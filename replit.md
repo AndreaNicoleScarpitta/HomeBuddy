@@ -17,6 +17,18 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Milestone 7 — Cutover (Frontend to V2):
+  - Updated frontend API client with V2 types (V2Home, V2System, V2Task, V2Report, V2ChatMessage)
+  - Added idempotency key generation for all v2 mutations
+  - Hybrid approach: v2 for home/system/task/report/notification, legacy for budget/log/appointment/chat-SSE
+  - V2Home has legacyId field for bridging to integer-based legacy APIs
+  - Updated all frontend components from @shared/schema legacy types to V2 types from api.ts
+  - Updated dashboard, maintenance-log, inspections, budget pages for string UUID IDs
+  - Pages use home.legacyId for budget/log/contractor-appointment API calls
+  - V2 routes auth middleware with X-Test-User-Id bypass in non-production for integration tests
+  - Fixed PATCH /homes/:homeId SQL parameterization (proper drizzle sql template tags)
+  - Updated command-pipeline and assistant-gating tests with auth headers and test user creation
+  - All 103 tests passing
 - 2026-02-21: Milestone 6 — Backfill/Migration:
   - Implemented server/cli/backfill.ts with full CRUD-to-event-log migration
   - deterministicUuid() creates stable UUID v4 from SHA-256 hash of namespace:type:id

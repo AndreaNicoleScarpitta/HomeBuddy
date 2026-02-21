@@ -36,7 +36,7 @@ import { systemCategories, systemConditions } from "@shared/schema";
 interface AddSystemWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  homeId: number;
+  homeId: string | number;
 }
 
 const categoryIcons: Record<string, any> = {

@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Users, Search } from "lucide-react";
-import type { MaintenanceTask } from "@shared/schema";
+import type { V2Task } from "@/lib/api";
 
 interface ContractorSectionProps {
-  homeId: number;
-  pendingTasks?: MaintenanceTask[];
+  homeId: string | number;
+  pendingTasks?: V2Task[];
   zipCode?: string;
 }
 

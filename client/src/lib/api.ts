@@ -3,21 +3,135 @@ import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, F
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "An error occurred" }));
-    throw new Error(error.message || "Request failed");
+    throw new Error(error.message || error.error || "Request failed");
   }
   return response.json();
 }
 
-// Home API
-export async function getHome(): Promise<Home | null> {
+function idempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+function v2Headers(extraHeaders?: Record<string, string>): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "Idempotency-Key": idempotencyKey(),
+    ...extraHeaders,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// V2 Home type — extends legacy Home with string UUID id + legacyId
+// ---------------------------------------------------------------------------
+export interface V2Home {
+  id: string;
+  legacyId: number | null;
+  userId: string;
+  address: string;
+  streetAddress?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  zipPlus4?: string | null;
+  addressVerified?: boolean;
+  builtYear?: number | null;
+  sqFt?: number | null;
+  beds?: number | null;
+  baths?: number | null;
+  type?: string | null;
+  lotSize?: number | null;
+  exteriorType?: string | null;
+  roofType?: string | null;
+  lastSaleYear?: number | null;
+  homeValueEstimate?: number | null;
+  dataSource?: string | null;
+  zillowUrl?: string | null;
+  healthScore?: number | null;
+}
+
+export interface V2System {
+  id: string;
+  homeId: string;
+  category: string;
+  name: string;
+  entityType?: string;
+  make?: string | null;
+  model?: string | null;
+  installYear?: number | null;
+  lastServiceDate?: string | null;
+  nextServiceDate?: string | null;
+  condition?: string | null;
+  warrantyExpiry?: string | null;
+  material?: string | null;
+  energyRating?: string | null;
+  provider?: string | null;
+  treatmentType?: string | null;
+  recurrenceInterval?: string | null;
+  contractStartDate?: string | null;
+  cadence?: string | null;
+  statusReason?: string | null;
+  notes?: string | null;
+  photos?: string | null;
+  documents?: string | null;
+  source?: string | null;
+  healthState?: string | null;
+  riskScore?: number | null;
+}
+
+export interface V2Task {
+  id: string;
+  homeId: string;
+  relatedSystemId?: string | null;
+  title: string;
+  status: string;
+  state: string;
+  description?: string | null;
+  category?: string | null;
+  dueDate?: string | null;
+  urgency?: string;
+  diyLevel?: string | null;
+  estimatedCost?: string | null;
+  actualCost?: number | null;
+  difficulty?: string | null;
+  safetyWarning?: string | null;
+  createdFrom?: string;
+  isRecurring?: boolean;
+  recurrenceCadence?: string | null;
+  completedAt?: string | null;
+}
+
+export interface V2ChatMessage {
+  id: string;
+  homeId: string;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface V2Report {
+  id: string;
+  homeId: string;
+  status: string;
+  fileName: string;
+  objectPath: string;
+  summary?: string | null;
+  issuesFound?: number;
+  createdAt?: string;
+  findings?: Array<{ id: string; reportId: string; state: string }>;
+}
+
+// ---------------------------------------------------------------------------
+// Home API (v2)
+// ---------------------------------------------------------------------------
+export async function getHome(): Promise<V2Home | null> {
   try {
-    const response = await fetch("/api/home");
+    const response = await fetch("/v2/home");
     if (response.status === 404) {
       return null;
     }
-    return handleResponse<Home>(response);
+    return handleResponse<V2Home>(response);
   } catch (error) {
-    if ((error as any)?.message === "Home not found") {
+    if ((error as any)?.message?.includes("not found")) {
       return null;
     }
     throw error;
@@ -35,31 +149,33 @@ export async function createHome(data: {
   builtYear?: number;
   sqFt?: number;
   type?: string;
-}): Promise<Home> {
-  const response = await fetch("/api/home", {
+}): Promise<V2Home> {
+  const response = await fetch("/v2/homes", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: v2Headers(),
     body: JSON.stringify(data),
   });
-  return handleResponse<Home>(response);
+  return handleResponse<V2Home>(response);
 }
 
-export async function updateHome(id: number, data: Partial<Home>): Promise<Home> {
-  const response = await fetch(`/api/home/${id}`, {
+export async function updateHome(id: string | number, data: Partial<V2Home>): Promise<V2Home> {
+  const response = await fetch(`/v2/homes/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: v2Headers(),
     body: JSON.stringify(data),
   });
-  return handleResponse<Home>(response);
+  return handleResponse<V2Home>(response);
 }
 
-// Systems API
-export async function getSystems(homeId: number): Promise<System[]> {
-  const response = await fetch(`/api/home/${homeId}/systems`);
-  return handleResponse<System[]>(response);
+// ---------------------------------------------------------------------------
+// Systems API (v2)
+// ---------------------------------------------------------------------------
+export async function getSystems(homeId: string | number): Promise<V2System[]> {
+  const response = await fetch(`/v2/homes/${homeId}/systems`);
+  return handleResponse<V2System[]>(response);
 }
 
-export async function createSystem(homeId: number, data: {
+export async function createSystem(homeId: string | number, data: {
   name: string;
   category?: string;
   installYear?: number;
@@ -68,63 +184,70 @@ export async function createSystem(homeId: number, data: {
   photos?: string;
   documents?: string;
   source?: string;
-}): Promise<System> {
-  const response = await fetch(`/api/home/${homeId}/systems`, {
+  entityType?: string;
+}): Promise<V2System> {
+  const response = await fetch(`/v2/homes/${homeId}/systems`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: v2Headers(),
     body: JSON.stringify(data),
   });
-  return handleResponse<System>(response);
+  return handleResponse<V2System>(response);
 }
 
-export async function updateSystem(id: number, data: Partial<System>): Promise<System> {
-  const response = await fetch(`/api/systems/${id}`, {
+export async function updateSystem(id: string | number, data: Partial<V2System>): Promise<V2System> {
+  const response = await fetch(`/v2/systems/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: v2Headers(),
     body: JSON.stringify(data),
   });
-  return handleResponse<System>(response);
+  return handleResponse<V2System>(response);
 }
 
-export async function deleteSystem(id: number): Promise<void> {
-  const response = await fetch(`/api/systems/${id}`, {
+export async function deleteSystem(id: string | number): Promise<void> {
+  const response = await fetch(`/v2/systems/${id}`, {
     method: "DELETE",
+    headers: v2Headers(),
   });
   return handleResponse<void>(response);
 }
 
-// Tasks API
-export async function getTasks(homeId: number): Promise<MaintenanceTask[]> {
-  const response = await fetch(`/api/home/${homeId}/tasks`);
-  return handleResponse<MaintenanceTask[]>(response);
+// ---------------------------------------------------------------------------
+// Tasks API (v2)
+// ---------------------------------------------------------------------------
+export async function getTasks(homeId: string | number): Promise<V2Task[]> {
+  const response = await fetch(`/v2/homes/${homeId}/tasks`);
+  return handleResponse<V2Task[]>(response);
 }
 
-export async function createTask(homeId: number, data: Partial<MaintenanceTask>): Promise<MaintenanceTask> {
-  const response = await fetch(`/api/home/${homeId}/tasks`, {
+export async function createTask(homeId: string | number, data: Partial<V2Task>): Promise<V2Task> {
+  const response = await fetch(`/v2/tasks`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    headers: v2Headers(),
+    body: JSON.stringify({ homeId, ...data }),
   });
-  return handleResponse<MaintenanceTask>(response);
+  return handleResponse<V2Task>(response);
 }
 
-export async function updateTask(id: number, data: Partial<MaintenanceTask>): Promise<MaintenanceTask> {
-  const response = await fetch(`/api/tasks/${id}`, {
+export async function updateTask(id: string | number, data: Partial<V2Task>): Promise<V2Task> {
+  const response = await fetch(`/v2/tasks/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: v2Headers(),
     body: JSON.stringify(data),
   });
-  return handleResponse<MaintenanceTask>(response);
+  return handleResponse<V2Task>(response);
 }
 
-export async function deleteTask(id: number): Promise<void> {
-  const response = await fetch(`/api/tasks/${id}`, {
+export async function deleteTask(id: string | number): Promise<void> {
+  const response = await fetch(`/v2/tasks/${id}`, {
     method: "DELETE",
+    headers: v2Headers(),
   });
   return handleResponse<void>(response);
 }
 
-// Maintenance Log API
+// ---------------------------------------------------------------------------
+// Maintenance Log API (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
 export async function getLogEntries(homeId: number): Promise<MaintenanceLogEntry[]> {
   const response = await fetch(`/api/home/${homeId}/log-entries`);
   return handleResponse<MaintenanceLogEntry[]>(response);
@@ -164,10 +287,12 @@ export async function deleteLogEntry(id: number): Promise<void> {
   return handleResponse<void>(response);
 }
 
-// Chat API
-export async function getChatMessages(homeId: number): Promise<ChatMessage[]> {
-  const response = await fetch(`/api/home/${homeId}/chat`);
-  return handleResponse<ChatMessage[]>(response);
+// ---------------------------------------------------------------------------
+// Chat API (v2 reads, legacy SSE streaming)
+// ---------------------------------------------------------------------------
+export async function getChatMessages(homeId: string | number): Promise<V2ChatMessage[]> {
+  const response = await fetch(`/v2/homes/${homeId}/chat`);
+  return handleResponse<V2ChatMessage[]>(response);
 }
 
 export async function createChatMessage(homeId: number, data: {
@@ -182,7 +307,9 @@ export async function createChatMessage(homeId: number, data: {
   return handleResponse<ChatMessage>(response);
 }
 
-// Funds API
+// ---------------------------------------------------------------------------
+// Funds API (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
 export async function getFunds(homeId: number): Promise<Fund[]> {
   const response = await fetch(`/api/home/${homeId}/funds`);
   return handleResponse<Fund[]>(response);
@@ -222,7 +349,9 @@ export async function deleteFund(id: number): Promise<void> {
   return handleResponse<void>(response);
 }
 
-// Allocations API
+// ---------------------------------------------------------------------------
+// Allocations API (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
 export async function getAllocationsByFund(fundId: number): Promise<FundAllocation[]> {
   const response = await fetch(`/api/funds/${fundId}/allocations`);
   return handleResponse<FundAllocation[]>(response);
@@ -264,7 +393,9 @@ export async function deleteAllocation(id: number): Promise<void> {
   return handleResponse<void>(response);
 }
 
-// Expenses API
+// ---------------------------------------------------------------------------
+// Expenses API (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
 export async function getExpenses(homeId: number): Promise<Expense[]> {
   const response = await fetch(`/api/home/${homeId}/expenses`);
   return handleResponse<Expense[]>(response);
@@ -307,47 +438,58 @@ export async function deleteExpense(id: number): Promise<void> {
   return handleResponse<void>(response);
 }
 
-// Inspection Reports API
-export async function getInspectionReports(homeId: number): Promise<InspectionReport[]> {
-  const response = await fetch(`/api/home/${homeId}/reports`);
-  return handleResponse<InspectionReport[]>(response);
+// ---------------------------------------------------------------------------
+// Inspection Reports API (v2)
+// ---------------------------------------------------------------------------
+export async function getInspectionReports(homeId: string | number): Promise<V2Report[]> {
+  const response = await fetch(`/v2/homes/${homeId}/reports`);
+  return handleResponse<V2Report[]>(response);
 }
 
-export async function getInspectionReport(id: number): Promise<InspectionReport & { findings: InspectionFinding[] }> {
-  const response = await fetch(`/api/reports/${id}`);
-  return handleResponse<InspectionReport & { findings: InspectionFinding[] }>(response);
+export async function getInspectionReport(id: string | number): Promise<V2Report> {
+  const response = await fetch(`/v2/reports/${id}`);
+  return handleResponse<V2Report>(response);
 }
 
-export async function createInspectionReport(homeId: number, data: {
+export async function createInspectionReport(homeId: string | number, data: {
   fileName: string;
   fileType?: string;
   objectPath: string;
   reportType?: string;
   inspectionDate?: string;
-}): Promise<InspectionReport> {
-  const response = await fetch(`/api/home/${homeId}/reports`, {
+}): Promise<V2Report> {
+  const response = await fetch(`/v2/homes/${homeId}/reports`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    headers: v2Headers(),
+    body: JSON.stringify({
+      fileHash: data.fileName,
+      storageRef: data.objectPath,
+      reportType: data.reportType,
+      inspectionDate: data.inspectionDate,
+    }),
   });
-  return handleResponse<InspectionReport>(response);
+  return handleResponse<V2Report>(response);
 }
 
-export async function analyzeInspectionReport(id: number): Promise<{ message: string; status: string }> {
-  const response = await fetch(`/api/reports/${id}/analyze`, {
+export async function analyzeInspectionReport(id: string | number): Promise<{ message: string; status: string }> {
+  const response = await fetch(`/v2/reports/${id}/queue-analysis`, {
     method: "POST",
+    headers: v2Headers(),
   });
   return handleResponse<{ message: string; status: string }>(response);
 }
 
-export async function deleteInspectionReport(id: number): Promise<void> {
-  const response = await fetch(`/api/reports/${id}`, {
+export async function deleteInspectionReport(id: string | number): Promise<void> {
+  const response = await fetch(`/v2/reports/${id}`, {
     method: "DELETE",
+    headers: v2Headers(),
   });
   return handleResponse<void>(response);
 }
 
-// AI System Identification
+// ---------------------------------------------------------------------------
+// AI System Identification (legacy)
+// ---------------------------------------------------------------------------
 export interface SystemIdentificationResult {
   category?: string;
   name?: string;
@@ -368,7 +510,9 @@ export async function identifySystemFromImage(imageBase64: string): Promise<Syst
   return handleResponse<SystemIdentificationResult>(response);
 }
 
-// Contractor Appointments
+// ---------------------------------------------------------------------------
+// Contractor Appointments (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
 export async function getAppointments(homeId: number): Promise<ContractorAppointment[]> {
   const response = await fetch(`/api/home/${homeId}/appointments`);
   return handleResponse<ContractorAppointment[]>(response);
@@ -406,17 +550,19 @@ export async function deleteAppointment(id: number): Promise<void> {
   return handleResponse<void>(response);
 }
 
-// Notification Preferences
+// ---------------------------------------------------------------------------
+// Notification Preferences (v2)
+// ---------------------------------------------------------------------------
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
-  const response = await fetch("/api/notifications/preferences");
+  const response = await fetch("/v2/notifications/preferences");
   return handleResponse<NotificationPreferences>(response);
 }
 
 export async function updateNotificationPreferences(data: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
-  const response = await fetch("/api/notifications/preferences", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+  const response = await fetch("/v2/notifications/preferences", {
+    method: "PUT",
+    headers: v2Headers(),
+    body: JSON.stringify({ prefs: data }),
   });
   return handleResponse<NotificationPreferences>(response);
 }

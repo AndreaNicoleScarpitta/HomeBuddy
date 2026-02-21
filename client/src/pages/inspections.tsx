@@ -26,8 +26,21 @@ import {
   Info
 } from "lucide-react";
 import { format } from "date-fns";
-import type { InspectionReport, InspectionFinding } from "@shared/schema";
+import type { V2Report } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
+
+interface InspectionFinding {
+  id: string;
+  reportId: string;
+  state: string;
+  title?: string;
+  description?: string;
+  severity?: string | null;
+  category?: string | null;
+  location?: string | null;
+  estimatedCost?: string | null;
+  diyLevel?: string | null;
+}
 
 function SeverityBadge({ severity }: { severity: string }) {
   const colors = {
@@ -173,7 +186,7 @@ function FindingCard({ finding }: { finding: InspectionFinding }) {
   );
 }
 
-function ReportDetail({ reportId, onBack }: { reportId: number; onBack: () => void }) {
+function ReportDetail({ reportId, onBack }: { reportId: string | number; onBack: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -361,7 +374,7 @@ function ReportDetail({ reportId, onBack }: { reportId: number; onBack: () => vo
 }
 
 export default function Inspections() {
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   

@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Fund, MaintenanceTask } from "@shared/schema";
+import type { V2Task } from "@/lib/api";
+import type { Fund } from "@shared/schema";
 import { trackEvent } from "@/lib/analytics";
 
 function BudgetSkeleton() {
@@ -119,7 +120,7 @@ function FundCard({ fund, onEdit }: { fund: Fund; onEdit: () => void }) {
   );
 }
 
-function AffordabilityIndicator({ task, totalAvailable }: { task: MaintenanceTask; totalAvailable: number }) {
+function AffordabilityIndicator({ task, totalAvailable }: { task: V2Task; totalAvailable: number }) {
   const estimatedCost = task.estimatedCost ? parseInt(task.estimatedCost.replace(/[^0-9]/g, '')) * 100 : 0;
   const canAfford = estimatedCost <= totalAvailable;
   const percentage = totalAvailable > 0 ? Math.min(100, (totalAvailable / estimatedCost) * 100) : 0;
@@ -557,8 +558,8 @@ export default function Budget() {
 
   const { data: funds = [], isLoading: fundsLoading } = useQuery({
     queryKey: ["funds", home?.id],
-    queryFn: () => getFunds(home!.id),
-    enabled: !!home?.id,
+    queryFn: () => getFunds(home!.legacyId!),
+    enabled: !!home?.legacyId,
   });
 
   const { data: tasks = [] } = useQuery({
@@ -569,7 +570,7 @@ export default function Budget() {
 
   const { data: expenses = [] } = useQuery({
     queryKey: ["expenses", home?.id],
-    queryFn: () => getExpenses(home!.id),
+    queryFn: () => getExpenses(home!.legacyId!),
     enabled: !!home?.id,
   });
 
@@ -628,7 +629,7 @@ export default function Budget() {
             <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Budget</h1>
             <p className="text-muted-foreground mt-1">See what you can afford and plan with confidence.</p>
           </div>
-          <AddFundDialog homeId={home.id} onSuccess={handleRefresh} />
+          <AddFundDialog homeId={home.legacyId!} onSuccess={handleRefresh} />
         </header>
 
         {/* Repair Readiness Section */}
@@ -784,7 +785,7 @@ export default function Budget() {
                 <p className="text-muted-foreground mb-6">
                   Add your first fund to start tracking what you can afford. This is your personal planning tool—no bank connection required.
                 </p>
-                <AddFundDialog homeId={home.id} onSuccess={handleRefresh} />
+                <AddFundDialog homeId={home.legacyId!} onSuccess={handleRefresh} />
               </div>
             </Card>
           ) : (

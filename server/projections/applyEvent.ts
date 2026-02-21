@@ -39,16 +39,21 @@ export async function applyEvent(tx: DrizzleTx, event: EventRow): Promise<void> 
 
   switch (eventType) {
     // ----- Home -----
-    case EventTypes.HomeAttributesUpdated:
+    case EventTypes.HomeAttributesUpdated: {
+      const homeUserId = (event.meta?.userId as string) ?? (event.actor_type === "user" ? event.actor_id : null);
+      const homeLegacyId = (event.meta?.legacyId as number) ?? null;
       await tx.execute(sql`
-        INSERT INTO projection_home (home_id, attrs, last_event_seq, updated_at)
-        VALUES (${id}, ${JSON.stringify(data.attrs ?? data)}::jsonb, ${seq}, now())
+        INSERT INTO projection_home (home_id, user_id, legacy_id, attrs, last_event_seq, updated_at)
+        VALUES (${id}, ${homeUserId}, ${homeLegacyId}, ${JSON.stringify(data.attrs ?? data)}::jsonb, ${seq}, now())
         ON CONFLICT (home_id) DO UPDATE
         SET attrs = projection_home.attrs || ${JSON.stringify(data.attrs ?? data)}::jsonb,
+            user_id = COALESCE(${homeUserId}, projection_home.user_id),
+            legacy_id = COALESCE(${homeLegacyId}, projection_home.legacy_id),
             last_event_seq = ${seq},
             updated_at = now()
       `);
       break;
+    }
 
     // ----- System -----
     case EventTypes.SystemAttributesUpserted:

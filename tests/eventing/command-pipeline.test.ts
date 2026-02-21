@@ -23,7 +23,10 @@ async function v2(
   body?: Record<string, unknown>,
   idempotencyKey?: string,
 ): Promise<{ status: number; data: Record<string, unknown> }> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Test-User-Id": String(TEST_USER_ID),
+  };
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
 
   const res = await fetch(`${BASE_URL}/v2${path}`, {
@@ -35,8 +38,16 @@ async function v2(
   return { status: res.status, data: data as Record<string, unknown> };
 }
 
+const TEST_USER_ID = 99999;
+
 beforeAll(async () => {
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  await pool.query(
+    `INSERT INTO users (id, email, provider, provider_id)
+     VALUES ($1, 'test-pipeline@test.local', 'test', 'test-pipeline-user')
+     ON CONFLICT (id) DO NOTHING`,
+    [TEST_USER_ID],
+  );
 });
 
 afterAll(async () => {
@@ -95,9 +106,9 @@ describe("optimistic concurrency", () => {
     const homeId = crypto.randomUUID();
 
     // Create a home (version 0 → 1)
-    const create = await v2("POST", "/homes", { name: "Test Home" }, `home-create-${crypto.randomUUID()}`);
+    const create = await v2("POST", "/homes", { address: "123 Test St" }, `home-create-${crypto.randomUUID()}`);
     expect(create.status).toBe(201);
-    const createdHomeId = create.data.homeId as string;
+    const createdHomeId = (create.data.id ?? create.data.homeId) as string;
 
     // First update (version 1 → 2) with explicit expectedVersion
     const first = await v2(
