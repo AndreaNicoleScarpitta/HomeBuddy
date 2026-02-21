@@ -17,6 +17,18 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Milestone 6 — Backfill/Migration:
+  - Implemented server/cli/backfill.ts with full CRUD-to-event-log migration
+  - deterministicUuid() creates stable UUID v4 from SHA-256 hash of namespace:type:id
+  - idempotencyKey() builds predictable keys (safe to re-run)
+  - Per-table import: homes → systems → tasks → reports → notification prefs → chat
+  - Task status mapping: pending→proposed, completed→proposed+approved+started+done, scheduled→proposed+approved+scheduled, skipped→proposed+skipped
+  - Chat backfill creates sessions per home, messages with seq numbering and metadata preservation
+  - --dry-run flag shows counts without writing events
+  - Full backfill wrapped in single DB transaction, rebuilds projections after
+  - Added 9 Vitest tests: deterministic UUID, idempotency keys, dry-run, full run, re-run idempotency, projection verification
+  - Set fileParallelism: false in vitest.config.ts for DB test isolation
+  - All 103 tests passing (9 new + 94 existing)
 - 2026-02-21: Privacy & Data Management:
   - Added dataStorageOptOut field to users table for chat data opt-out
   - Added imageData, imageType columns to chat_messages for photo persistence
