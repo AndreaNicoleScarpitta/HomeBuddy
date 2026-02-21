@@ -17,6 +17,16 @@ Home Buddy is a home maintenance assistant web application with OAuth authentica
 - Legal Terms & Conditions page accessible without authentication
 
 ## Recent Changes
+- 2026-02-21: Security Hardening Pass:
+  - C1 (IDOR): Ownership verification helpers on all v2 mutation endpoints (systems, tasks, reports, findings, chat, assistant)
+  - C2 (Event leakage): v2/events endpoints filter by user ownership via LEFT JOINs
+  - C3-C5 (Data deletion): deleteAllUserData handles v2 UUID homes, correct column names, orphaned events
+  - H1-H3 (Event semantics): TaskUpdated, SystemDeleted, InspectionReportDeleted event types with state machine transitions
+  - H4 (Email validation): Contact form schema uses .email() validation
+  - H5 (Legacy validation): Zod partial schemas on all legacy PATCH routes (tasks, log entries, funds, allocations, expenses)
+  - H6-H7 (Error sanitization): handleError hides PG internals, FK constraint names for 500 responses
+  - H8-H9 (Rate limiting): express-rate-limit — 100 req/min API mutations, 20 req/15min auth endpoints
+  - All 103 tests passing
 - 2026-02-21: Milestone 7 — Cutover (Frontend to V2):
   - Updated frontend API client with V2 types (V2Home, V2System, V2Task, V2Report, V2ChatMessage)
   - Added idempotency key generation for all v2 mutations
