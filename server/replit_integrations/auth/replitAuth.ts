@@ -1,17 +1,16 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Strategy as FacebookStrategy } from "passport-facebook";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import OpenIDConnectStrategy from "passport-openidconnect";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
 
   const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret && process.env.NODE_ENV === "production") {
-    throw new Error("SESSION_SECRET must be set in production");
+  if (!sessionSecret) {
+    throw new Error("SESSION_SECRET environment variable is required");
   }
 
   const pgStore = connectPg(session);
@@ -22,7 +21,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: sessionSecret || "home-buddy-dev-session-secret",
+    secret: sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -32,6 +31,18 @@ export function getSession() {
       maxAge: sessionTtl,
     },
   });
+}
+
+function getExternalUrl(): string {
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  const replSlug = process.env.REPL_SLUG;
+  const replOwner = process.env.REPL_OWNER;
+  if (replSlug && replOwner) {
+    return `https://${replSlug}.${replOwner}.repl.co`;
+  }
+  return `http://localhost:5000`;
 }
 
 export async function setupAuth(app: Express) {
@@ -53,118 +64,61 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
-          proxy: true,
-        },
-        async (_accessToken, _refreshToken, profile, done) => {
-          try {
-            const user = await authStorage.upsertUser({
-              provider: "google",
-              providerId: profile.id,
-              email: profile.emails?.[0]?.value || null,
-              firstName: profile.name?.givenName || null,
-              lastName: profile.name?.familyName || null,
-              profileImageUrl: profile.photos?.[0]?.value || null,
-            });
-            done(null, user);
-          } catch (err) {
-            done(err as Error, undefined);
-          }
+  const callbackURL = `${getExternalUrl()}/api/callback`;
+
+  passport.use(
+    "oidc",
+    new OpenIDConnectStrategy(
+      {
+        issuer: "https://replit.com/",
+        authorizationURL: "https://replit.com/auth/authorize",
+        tokenURL: "https://replit.com/auth/token",
+        userInfoURL: "https://replit.com/auth/userinfo",
+        clientID: process.env.REPL_ID!,
+        clientSecret: process.env.REPL_ID!,
+        callbackURL,
+        scope: "openid email profile",
+      },
+      async (
+        _issuer: string,
+        profile: any,
+        _context: any,
+        _idToken: any,
+        _accessToken: any,
+        _refreshToken: any,
+        done: any,
+      ) => {
+        try {
+          const user = await authStorage.upsertUser({
+            id: profile.id,
+            email: profile.emails?.[0]?.value || null,
+            firstName: profile.name?.givenName || profile.displayName || null,
+            lastName: profile.name?.familyName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            provider: "replit",
+            providerId: profile.id,
+          });
+          return done(null, user);
+        } catch (err) {
+          return done(err, null);
         }
-      )
-    );
-  }
-
-  if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-    passport.use(
-      new FacebookStrategy(
-        {
-          clientID: process.env.FACEBOOK_APP_ID,
-          clientSecret: process.env.FACEBOOK_APP_SECRET,
-          callbackURL: "/api/auth/facebook/callback",
-          profileFields: ["id", "emails", "name", "picture.type(large)"],
-          proxy: true,
-        },
-        async (_accessToken, _refreshToken, profile, done) => {
-          try {
-            const user = await authStorage.upsertUser({
-              provider: "facebook",
-              providerId: profile.id,
-              email: profile.emails?.[0]?.value || null,
-              firstName: profile.name?.givenName || null,
-              lastName: profile.name?.familyName || null,
-              profileImageUrl: profile.photos?.[0]?.value || null,
-            });
-            done(null, user);
-          } catch (err) {
-            done(err as Error, undefined);
-          }
-        }
-      )
-    );
-  }
-
-  app.get("/api/auth/google", (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(503).json({ message: "Google login is not configured" });
-    }
-    passport.authenticate("google", {
-      scope: ["profile", "email"],
-    })(req, res, next);
-  });
-
-  app.get(
-    "/api/auth/google/callback",
-    passport.authenticate("google", {
-      failureRedirect: "/?error=auth_failed",
-      successRedirect: "/",
-    })
+      },
+    ),
   );
 
-  app.get("/api/auth/facebook", (req, res, next) => {
-    if (!process.env.FACEBOOK_APP_ID) {
-      return res.status(503).json({ message: "Facebook login is not configured" });
-    }
-    passport.authenticate("facebook", {
-      scope: ["email"],
-    })(req, res, next);
-  });
+  app.get("/api/login", passport.authenticate("oidc"));
 
   app.get(
-    "/api/auth/facebook/callback",
-    passport.authenticate("facebook", {
+    "/api/callback",
+    passport.authenticate("oidc", {
       failureRedirect: "/?error=auth_failed",
       successRedirect: "/",
-    })
+    }),
   );
-
-  app.get("/api/auth/instagram", (req, res, next) => {
-    if (!process.env.FACEBOOK_APP_ID) {
-      return res.status(503).json({ message: "Instagram login is not configured" });
-    }
-    (req as any).isInstagramLogin = true;
-    passport.authenticate("facebook", {
-      scope: ["email"],
-    })(req, res, next);
-  });
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
       res.redirect("/");
-    });
-  });
-
-  app.get("/api/auth/providers", (_req, res) => {
-    res.json({
-      google: !!process.env.GOOGLE_CLIENT_ID,
-      facebook: !!process.env.FACEBOOK_APP_ID,
-      instagram: !!process.env.FACEBOOK_APP_ID,
     });
   });
 }
