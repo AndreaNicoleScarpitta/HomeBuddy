@@ -12,6 +12,11 @@ export function redirectToLogin(toast?: (options: { title: string; description: 
     });
   }
   setTimeout(() => {
-    window.open("/api/login", "_top");
+    const link = document.createElement('a');
+    link.href = '/api/login';
+    link.target = '_top';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }, 500);
 }

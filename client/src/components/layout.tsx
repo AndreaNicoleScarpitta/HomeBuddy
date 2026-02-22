@@ -32,7 +32,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     trackEvent('logout', 'auth', 'logout_button');
-    window.open("/api/logout", "_top");
   };
 
   return (
@@ -83,15 +82,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </div>
                 </Link>
               ))}
-              <Button 
-                variant="ghost" 
+              <a 
+                href="/api/logout" 
+                target="_top"
                 onClick={handleLogout}
-                className="justify-start px-4 py-3 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex items-center justify-start px-4 py-3 text-muted-foreground hover:bg-muted hover:text-foreground rounded-md"
                 data-testid="button-logout-mobile"
               >
                 <LogOut className="h-5 w-5 mr-3" />
                 Logout
-              </Button>
+              </a>
             </nav>
           </SheetContent>
         </Sheet>
@@ -134,15 +134,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <p className="font-medium text-foreground truncate">{user.email || "User"}</p>
             </div>
           )}
-          <Button 
-            variant="outline" 
+          <a 
+            href="/api/logout" 
+            target="_top"
             onClick={handleLogout}
-            className="w-full justify-start"
+            className="flex items-center w-full justify-start px-4 py-2 border rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             data-testid="button-logout"
           >
             <LogOut className="h-4 w-4 mr-2" />
             Logout
-          </Button>
+          </a>
         </div>
       </aside>
 

@@ -18,7 +18,12 @@ async function fetchUser(): Promise<User | null> {
 }
 
 async function logout(): Promise<void> {
-  window.open("/api/logout", "_top");
+  const link = document.createElement('a');
+  link.href = '/api/logout';
+  link.target = '_top';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 export function useAuth() {

@@ -39,17 +39,20 @@ export default function Login() {
           </div>
 
           <div className="space-y-3">
-            <Button
-              onClick={() => {
-                trackEvent('login_attempt', 'auth', 'replit');
-                window.open("/api/login", "_top");
-              }}
-              className="w-full h-14 text-base font-medium gap-3 justify-center"
+            <a
+              href="/api/login"
+              target="_top"
+              onClick={() => trackEvent('login_attempt', 'auth', 'replit')}
               data-testid="button-login"
             >
-              <LogIn className="h-5 w-5" />
-              Sign In
-            </Button>
+              <Button
+                className="w-full h-14 text-base font-medium gap-3 justify-center"
+                asChild={false}
+              >
+                <LogIn className="h-5 w-5" />
+                Sign In
+              </Button>
+            </a>
 
             <p className="text-center text-xs text-muted-foreground">
               Sign in with Google, GitHub, Apple, or email
