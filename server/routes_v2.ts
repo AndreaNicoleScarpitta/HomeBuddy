@@ -1221,6 +1221,59 @@ v2Router.get("/homes/:homeId/chat", async (req: Request, res: Response) => {
   }
 });
 
+v2Router.get("/homes/:homeId/chat/sessions", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+
+    const ownership = await db.execute(sql`
+      SELECT user_id FROM projection_home WHERE home_id = ${homeId}
+    `);
+    if (ownership.rows.length === 0 || (ownership.rows[0] as any).user_id !== userId) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    const sessions = await db.execute(sql`
+      SELECT cs.session_id, cs.home_id, cs.title, cs.created_at,
+             (SELECT COUNT(*)::int FROM projection_chat_message cm WHERE cm.session_id = cs.session_id) AS message_count
+      FROM projection_chat_session cs
+      WHERE cs.home_id = ${homeId}
+      ORDER BY cs.created_at DESC
+    `);
+
+    res.json(sessions.rows.map((row: any) => ({
+      id: row.session_id,
+      homeId: row.home_id,
+      title: row.title || 'New Conversation',
+      messageCount: row.message_count,
+      createdAt: row.created_at,
+    })));
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+v2Router.patch("/chat/sessions/:sessionId", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { sessionId } = req.params;
+    if (!(await verifyChatSessionOwnership(sessionId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const { title } = req.body;
+    if (title) {
+      await db.execute(sql`
+        UPDATE projection_chat_session SET title = ${title} WHERE session_id = ${sessionId}
+      `);
+    }
+    res.json({ sessionId, title });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 v2Router.post("/chat/sessions", async (req: Request, res: Response) => {
   try {
     const actor = getActor(req);

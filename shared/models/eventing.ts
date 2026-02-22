@@ -232,6 +232,7 @@ export type ProjectionAssistantAction = typeof projectionAssistantAction.$inferS
 export const projectionChatSession = pgTable("projection_chat_session", {
   sessionId: text("session_id").primaryKey(),
   homeId: text("home_id").notNull(),
+  title: text("title"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastEventSeq: bigint("last_event_seq", { mode: "number" }).notNull().default(0),
 });

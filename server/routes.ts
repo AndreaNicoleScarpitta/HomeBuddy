@@ -29,6 +29,8 @@ import {
   type InsertContactMessage,
   insertInspectionReportSchema,
   type InsertInspectionReport,
+  insertHomeDocumentSchema,
+  type InsertHomeDocument,
   insertContractorAppointmentSchema,
   type InsertContractorAppointment,
   insertNotificationPreferencesSchema,
@@ -869,6 +871,55 @@ export async function registerRoutes(
     }
   });
   
+  // Home Documents routes
+  app.get("/api/home/:homeId/documents", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      const userId = req.user.id;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      const documents = await storage.getDocumentsByHomeId(homeId);
+      res.json(documents);
+    } catch (error) {
+      return handleApiError(res, "documents.list", error, 500);
+    }
+  });
+
+  app.post("/api/home/:homeId/documents", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      const userId = req.user.id;
+      if (!await storage.verifyHomeOwnership(homeId, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      const docData = insertHomeDocumentSchema.parse({ ...req.body, homeId }) as unknown as InsertHomeDocument;
+      const doc = await storage.createDocument(docData);
+      logInfo("documents.create", "Document created successfully", { docId: doc.id, homeId });
+      res.json(doc);
+    } catch (error) {
+      return handleApiError(res, "documents.create", error);
+    }
+  });
+
+  app.delete("/api/documents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      const userId = req.user.id;
+      if (!await storage.verifyDocumentOwnership(id, userId)) {
+        return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      }
+      await storage.deleteDocument(id);
+      logInfo("documents.delete", "Document deleted successfully", { id });
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      return handleApiError(res, "documents.delete", error);
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({ 

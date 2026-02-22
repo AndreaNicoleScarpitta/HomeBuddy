@@ -69,6 +69,57 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
   });
 
   const handleSave = () => {
+    const errors: string[] = [];
+    const currentYear = 2026;
+
+    if (editData.beds) {
+      const beds = parseInt(editData.beds);
+      if (!Number.isInteger(beds) || beds < 1 || beds > 50) {
+        errors.push("Bedrooms must be a whole number between 1 and 50.");
+      }
+    }
+    if (editData.baths) {
+      const baths = parseInt(editData.baths);
+      if (!Number.isInteger(baths) || baths < 1 || baths > 50) {
+        errors.push("Bathrooms must be a whole number between 1 and 50.");
+      }
+    }
+    if (editData.sqFt) {
+      const sqFt = parseInt(editData.sqFt);
+      if (isNaN(sqFt) || sqFt < 100 || sqFt > 100000) {
+        errors.push("Square feet must be between 100 and 100,000.");
+      }
+    }
+    if (editData.builtYear) {
+      const year = parseInt(editData.builtYear);
+      if (isNaN(year) || year < 1600 || year > currentYear) {
+        errors.push(`Year built must be between 1600 and ${currentYear}.`);
+      }
+    }
+    if (editData.lotSize) {
+      const lot = parseInt(editData.lotSize);
+      if (isNaN(lot) || lot < 0 || lot > 10000000) {
+        errors.push("Lot size must be between 0 and 10,000,000 sq ft.");
+      }
+    }
+    if (editData.lastSaleYear) {
+      const saleYear = parseInt(editData.lastSaleYear);
+      if (isNaN(saleYear) || saleYear < 1600 || saleYear > currentYear) {
+        errors.push(`Last sale year must be between 1600 and ${currentYear}.`);
+      }
+    }
+    if (editData.homeValueEstimate) {
+      const value = parseInt(editData.homeValueEstimate);
+      if (isNaN(value) || value < 0) {
+        errors.push("Home value estimate must be 0 or greater.");
+      }
+    }
+
+    if (errors.length > 0) {
+      toast({ title: "Validation Error", description: errors.join(" "), variant: "destructive" });
+      return;
+    }
+
     updateMutation.mutate({
       builtYear: editData.builtYear ? parseInt(editData.builtYear) : undefined,
       sqFt: editData.sqFt ? parseInt(editData.sqFt) : undefined,
@@ -114,6 +165,8 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="builtYear"
                         type="number"
+                        min={1600}
+                        max={2026}
                         placeholder="1990"
                         value={editData.builtYear}
                         onChange={(e) => setEditData({ ...editData, builtYear: e.target.value })}
@@ -125,6 +178,8 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="sqFt"
                         type="number"
+                        min={100}
+                        max={100000}
                         placeholder="2000"
                         value={editData.sqFt}
                         onChange={(e) => setEditData({ ...editData, sqFt: e.target.value })}
@@ -138,6 +193,9 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="beds"
                         type="number"
+                        min={1}
+                        max={50}
+                        step={1}
                         placeholder="3"
                         value={editData.beds}
                         onChange={(e) => setEditData({ ...editData, beds: e.target.value })}
@@ -149,7 +207,9 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="baths"
                         type="number"
-                        step="0.5"
+                        min={1}
+                        max={50}
+                        step={1}
                         placeholder="2"
                         value={editData.baths}
                         onChange={(e) => setEditData({ ...editData, baths: e.target.value })}
@@ -163,6 +223,8 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="lotSize"
                         type="number"
+                        min={0}
+                        max={10000000}
                         placeholder="5000"
                         value={editData.lotSize}
                         onChange={(e) => setEditData({ ...editData, lotSize: e.target.value })}
@@ -174,6 +236,8 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="lastSaleYear"
                         type="number"
+                        min={1600}
+                        max={2026}
                         placeholder="2020"
                         value={editData.lastSaleYear}
                         onChange={(e) => setEditData({ ...editData, lastSaleYear: e.target.value })}
@@ -214,6 +278,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                     <Input
                       id="homeValueEstimate"
                       type="number"
+                      min={0}
                       placeholder="350000"
                       value={editData.homeValueEstimate}
                       onChange={(e) => setEditData({ ...editData, homeValueEstimate: e.target.value })}

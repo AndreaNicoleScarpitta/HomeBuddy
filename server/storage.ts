@@ -38,6 +38,9 @@ import {
   notificationPreferences,
   type NotificationPreferences,
   type InsertNotificationPreferences,
+  homeDocuments,
+  type HomeDocument,
+  type InsertHomeDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -134,6 +137,13 @@ export interface IStorage {
   getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined>;
   createNotificationPreferences(prefs: InsertNotificationPreferences): Promise<NotificationPreferences>;
   updateNotificationPreferences(userId: string, data: Partial<InsertNotificationPreferences>): Promise<NotificationPreferences>;
+
+  // Home Documents
+  getDocumentsByHomeId(homeId: number): Promise<HomeDocument[]>;
+  getDocument(id: number): Promise<HomeDocument | undefined>;
+  createDocument(doc: InsertHomeDocument): Promise<HomeDocument>;
+  deleteDocument(id: number): Promise<void>;
+  verifyDocumentOwnership(documentId: number, userId: string): Promise<boolean>;
 
   // Data Management
   deleteAllUserData(userId: string): Promise<void>;
@@ -552,6 +562,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notificationPreferences.userId, userId))
       .returning();
     return prefs;
+  }
+
+  // Home Documents
+  async getDocumentsByHomeId(homeId: number): Promise<HomeDocument[]> {
+    return await db
+      .select()
+      .from(homeDocuments)
+      .where(eq(homeDocuments.homeId, homeId))
+      .orderBy(desc(homeDocuments.createdAt));
+  }
+
+  async getDocument(id: number): Promise<HomeDocument | undefined> {
+    const [doc] = await db.select().from(homeDocuments).where(eq(homeDocuments.id, id));
+    return doc;
+  }
+
+  async createDocument(docData: InsertHomeDocument): Promise<HomeDocument> {
+    const [doc] = await db.insert(homeDocuments).values(docData as any).returning();
+    return doc;
+  }
+
+  async deleteDocument(id: number): Promise<void> {
+    await db.delete(homeDocuments).where(eq(homeDocuments.id, id));
+  }
+
+  async verifyDocumentOwnership(documentId: number, userId: string): Promise<boolean> {
+    const doc = await this.getDocument(documentId);
+    if (!doc) return false;
+    return this.verifyHomeOwnership(doc.homeId, userId);
   }
 
   async deleteChatMessagesByHomeId(homeId: number): Promise<void> {

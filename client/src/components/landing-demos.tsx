@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, Clock, AlertTriangle, Bot, TrendingUp, PiggyBank, Plus } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Bot, FileText, Shield, FileCheck, Upload } from "lucide-react";
 
 function DashboardDemo() {
   const tasks = [
@@ -195,115 +195,92 @@ function ChatDemo() {
   );
 }
 
-function BudgetDemo() {
-  const funds = [
-    { label: "Emergency Fund", current: 2400, target: 5000, color: "bg-red-500" },
-    { label: "HVAC Replacement", current: 3200, target: 8000, color: "bg-primary" },
-    { label: "Roof Repair", current: 1800, target: 4000, color: "bg-amber-500" },
+function DocumentsDemo() {
+  const documents = [
+    { name: "Home Insurance Policy", type: "Insurance", icon: Shield, color: "text-blue-500" },
+    { name: "HVAC Warranty Certificate", type: "Warranty", icon: FileCheck, color: "text-green-500" },
+    { name: "Roof Inspection Report", type: "Inspection", icon: FileText, color: "text-amber-500" },
+    { name: "Kitchen Remodel Permit", type: "Permit", icon: FileText, color: "text-primary" },
   ];
 
-  const [deposits, setDeposits] = useState<{ fundIndex: number; amount: number; id: number }[]>([]);
-  const [totalExtra, setTotalExtra] = useState(0);
-  const [nextId, setNextId] = useState(0);
+  const [uploadedDocs, setUploadedDocs] = useState<number[]>([]);
+  const [uploading, setUploading] = useState<number | null>(null);
+
+  const runCycle = useCallback(() => {
+    setUploadedDocs([]);
+    setUploading(null);
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    documents.forEach((_, i) => {
+      timers.push(setTimeout(() => setUploading(i), 800 + i * 1400));
+      timers.push(setTimeout(() => {
+        setUploadedDocs(prev => [...prev, i]);
+        setUploading(null);
+      }, 800 + i * 1400 + 700));
+    });
+
+    timers.push(setTimeout(() => {
+      setUploadedDocs([]);
+      setUploading(null);
+      setTimeout(runCycle, 600);
+    }, 800 + documents.length * 1400 + 2000));
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const fundIndex = Math.floor(Math.random() * funds.length);
-      const amount = [50, 75, 100, 150, 200, 250][Math.floor(Math.random() * 6)];
-      setDeposits(prev => [...prev.slice(-4), { fundIndex, amount, id: nextId }]);
-      setTotalExtra(prev => prev + amount);
-      setNextId(prev => prev + 1);
-    }, 2200);
-
-    const resetInterval = setInterval(() => {
-      setDeposits([]);
-      setTotalExtra(0);
-    }, 18000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(resetInterval);
-    };
-  }, [nextId]);
-
-  const fundTotals = funds.map((fund, i) => {
-    const extra = deposits.filter(d => d.fundIndex === i).reduce((sum, d) => sum + d.amount, 0);
-    return Math.min(fund.current + extra, fund.target);
-  });
-
-  const grandTotal = fundTotals.reduce((s, v) => s + v, 0);
+    const cleanup = runCycle();
+    return cleanup;
+  }, [runCycle]);
 
   return (
-    <div className="bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm" data-testid="demo-budget">
+    <div className="bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm" data-testid="demo-documents">
       <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-        <span className="text-sm font-heading font-bold text-foreground">Budget Overview</span>
-        <PiggyBank className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-heading font-bold text-foreground">Document Vault</span>
+        <Upload className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <motion.p
-              key={grandTotal}
-              initial={{ y: -8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-2xl font-heading font-bold text-foreground"
-            >
-              ${grandTotal.toLocaleString()}
-            </motion.p>
-            <p className="text-xs text-muted-foreground">Total saved</p>
-          </div>
-          <motion.div
-            animate={{ scale: totalExtra > 0 ? [1, 1.15, 1] : 1 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-1 text-green-600 dark:text-green-400"
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span className="text-sm font-medium">+${totalExtra}</span>
-          </motion.div>
-        </div>
-
-        <div className="space-y-3 relative">
-          {funds.map((fund, i) => {
-            const fillPct = Math.min((fundTotals[i] / fund.target) * 100, 100);
-            return (
-              <div key={i} className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-foreground font-medium">{fund.label}</span>
-                  <motion.span
-                    key={fundTotals[i]}
-                    initial={{ scale: 1.2, color: "#22c55e" }}
-                    animate={{ scale: 1, color: "inherit" }}
-                    className="text-muted-foreground"
-                  >
-                    ${fundTotals[i].toLocaleString()} / ${fund.target.toLocaleString()}
-                  </motion.span>
-                </div>
-                <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${fund.color}`}
-                    animate={{ width: `${fillPct}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-
-          {deposits.slice(-1).map(dep => (
+      <div className="p-4 space-y-2">
+        {documents.map((doc, i) => {
+          const isUploaded = uploadedDocs.includes(i);
+          const isUploading = uploading === i;
+          return (
             <motion.div
-              key={dep.id}
-              initial={{ opacity: 1, y: 0, scale: 1 }}
-              animate={{ opacity: 0, y: -30, scale: 0.8 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-              className="absolute right-2 bottom-0 flex items-center gap-1 text-green-600 dark:text-green-400 font-bold text-xs pointer-events-none"
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{
+                opacity: isUploaded || isUploading ? 1 : 0.3,
+                x: isUploaded || isUploading ? 0 : -10,
+              }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-3 py-2 px-3 rounded-lg bg-muted/50"
             >
-              <Plus className="h-3 w-3" />${dep.amount}
+              <doc.icon className={`h-4 w-4 shrink-0 ${isUploaded ? doc.color : "text-muted-foreground"}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">{doc.name}</p>
+                <p className="text-[10px] text-muted-foreground">{doc.type}</p>
+              </div>
+              {isUploading && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full"
+                />
+              )}
+              {isUploaded && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <FileCheck className="h-4 w-4 text-green-500" />
+                </motion.div>
+              )}
             </motion.div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export { DashboardDemo, ChatDemo, BudgetDemo };
+export { DashboardDemo, ChatDemo, DocumentsDemo };

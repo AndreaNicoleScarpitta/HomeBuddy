@@ -1,4 +1,4 @@
-import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding, ContractorAppointment, NotificationPreferences } from "@shared/schema";
+import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding, ContractorAppointment, NotificationPreferences, HomeDocument } from "@shared/schema";
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
@@ -324,6 +324,44 @@ export async function createChatMessage(homeId: number, data: {
 }
 
 // ---------------------------------------------------------------------------
+// Chat Sessions API (v2)
+// ---------------------------------------------------------------------------
+export interface ChatSession {
+  id: string;
+  homeId: string;
+  title: string;
+  messageCount: number;
+  createdAt: string;
+}
+
+export async function getChatSessions(homeId: string): Promise<ChatSession[]> {
+  const response = await fetch(`/v2/homes/${homeId}/chat/sessions`);
+  return handleResponse<ChatSession[]>(response);
+}
+
+export async function createChatSession(homeId: string): Promise<{ sessionId: string }> {
+  const response = await fetch(`/v2/chat/sessions`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify({ homeId }),
+  });
+  return handleResponse<{ sessionId: string }>(response);
+}
+
+export async function getChatSession(sessionId: string): Promise<{ session: any; messages: V2ChatMessage[] }> {
+  const response = await fetch(`/v2/chat/sessions/${sessionId}`);
+  return handleResponse<{ session: any; messages: V2ChatMessage[] }>(response);
+}
+
+export async function updateChatSessionTitle(sessionId: string, title: string): Promise<void> {
+  await fetch(`/v2/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: v2Headers(),
+    body: JSON.stringify({ title }),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Funds API (legacy — stays on CRUD)
 // ---------------------------------------------------------------------------
 export async function getFunds(homeId: number): Promise<Fund[]> {
@@ -499,6 +537,37 @@ export async function deleteInspectionReport(id: string | number): Promise<void>
   const response = await fetch(`/v2/reports/${id}`, {
     method: "DELETE",
     headers: v2Headers(),
+  });
+  return handleResponse<void>(response);
+}
+
+// ---------------------------------------------------------------------------
+// Home Documents API (legacy — stays on CRUD)
+// ---------------------------------------------------------------------------
+export async function getDocuments(homeId: number): Promise<HomeDocument[]> {
+  const response = await fetch(`/api/home/${homeId}/documents`);
+  return handleResponse<HomeDocument[]>(response);
+}
+
+export async function createDocument(homeId: number, data: {
+  name: string;
+  fileType?: string;
+  fileSize?: number;
+  objectPath: string;
+  category?: string;
+  notes?: string;
+}): Promise<HomeDocument> {
+  const response = await fetch(`/api/home/${homeId}/documents`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<HomeDocument>(response);
+}
+
+export async function deleteDocument(id: number): Promise<void> {
+  const response = await fetch(`/api/documents/${id}`, {
+    method: "DELETE",
   });
   return handleResponse<void>(response);
 }

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Home } from "lucide-react";
+import { Home, Settings } from "lucide-react";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -29,8 +29,16 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           }}
           className="mx-auto mb-6"
         >
-          <div className="h-20 w-20 rounded-2xl bg-primary flex items-center justify-center mx-auto shadow-lg shadow-primary/30">
+          <div className="h-20 w-20 rounded-2xl bg-primary flex items-center justify-center mx-auto shadow-lg shadow-primary/30 relative">
             <Home className="h-10 w-10 text-white" />
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, ease: "linear", repeat: Infinity }}
+              className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center shadow-md"
+            >
+              <Settings className="h-4 w-4 text-primary" />
+            </motion.div>
           </div>
         </motion.div>
         

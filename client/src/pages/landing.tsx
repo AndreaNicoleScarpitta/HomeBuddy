@@ -1,6 +1,6 @@
-import { Calendar, MessageSquare, ArrowRight, Sparkles, Wallet } from "lucide-react";
+import { Calendar, MessageSquare, ArrowRight, Sparkles, FileText } from "lucide-react";
 import { motion } from "framer-motion";
-import { DashboardDemo, ChatDemo, BudgetDemo } from "@/components/landing-demos";
+import { DashboardDemo, ChatDemo, DocumentsDemo } from "@/components/landing-demos";
 
 export default function Landing() {
   const benefits = [
@@ -13,7 +13,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-background to-background dark:from-orange-950/20 dark:via-background dark:to-background">
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="container mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -135,14 +135,14 @@ export default function Landing() {
                 transition={{ delay: 0.3 }}
                 viewport={{ once: true }}
               >
-                <BudgetDemo />
+                <DocumentsDemo />
                 <div className="flex items-center gap-3 mt-4">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Wallet className="h-5 w-5 text-primary" />
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-bold text-foreground text-lg" data-testid="text-feature-budget">Budget Tracking</h3>
-                    <p className="text-sm text-muted-foreground">No-shame financial planning</p>
+                    <h3 className="font-heading font-bold text-foreground text-lg" data-testid="text-feature-documents">Document Vault</h3>
+                    <p className="text-sm text-muted-foreground">All your records in one place</p>
                   </div>
                 </div>
               </motion.div>

@@ -58,6 +58,24 @@ export default function Onboarding() {
       trackEvent('onboarding_step', 'onboarding', 'address_completed');
       setStep(2);
     } else if (step === 2) {
+      const errors: string[] = [];
+      const currentYear = 2026;
+      if (builtYear) {
+        const year = parseInt(builtYear);
+        if (isNaN(year) || year < 1600 || year > currentYear) {
+          errors.push(`Year built must be between 1600 and ${currentYear}.`);
+        }
+      }
+      if (sqFt) {
+        const sq = parseInt(sqFt);
+        if (isNaN(sq) || sq < 100 || sq > 100000) {
+          errors.push("Square feet must be between 100 and 100,000.");
+        }
+      }
+      if (errors.length > 0) {
+        toast({ title: "Validation Error", description: errors.join(" "), variant: "destructive" });
+        return;
+      }
       trackEvent('onboarding_step', 'onboarding', 'create_home');
       createHomeMutation.mutate({
         address: addressComponents?.fullAddress || address,
@@ -177,6 +195,8 @@ export default function Onboarding() {
                   <Input 
                     id="year"
                     type="number"
+                    min={1600}
+                    max={2026}
                     placeholder="e.g., 1985"
                     className="h-12 bg-secondary/30 border-border/50 focus:bg-background"
                     value={builtYear}
@@ -190,6 +210,8 @@ export default function Onboarding() {
                   <Input 
                     id="sqft"
                     type="number"
+                    min={100}
+                    max={100000}
                     placeholder="e.g., 2400"
                     className="h-12 bg-secondary/30 border-border/50 focus:bg-background"
                     value={sqFt}

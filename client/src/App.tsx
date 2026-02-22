@@ -16,12 +16,13 @@ import Chat from "@/pages/chat";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
-import Budget from "@/pages/budget";
+
 import Contact from "@/pages/contact";
 import Inspections from "@/pages/inspections";
 import Terms, { TermsContent } from "@/pages/terms";
 import MaintenanceLog from "@/pages/maintenance-log";
 import Profile from "@/pages/profile";
+import Documents from "@/pages/documents";
 
 function PublicTermsPage() {
   return (
@@ -95,9 +96,10 @@ function Router() {
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/chat" component={Chat} />
-      <Route path="/budget" component={Budget} />
+
       <Route path="/maintenance-log" component={MaintenanceLog} />
       <Route path="/inspections" component={Inspections} />
+      <Route path="/documents" component={Documents} />
       <Route path="/profile" component={Profile} />
       <Route path="/contact" component={Contact} />
       <Route path="/terms" component={Terms} />

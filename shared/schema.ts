@@ -269,6 +269,26 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true,
 export type InsertExpense = Omit<typeof expenses.$inferInsert, 'id' | 'createdAt'>;
 export type Expense = typeof expenses.$inferSelect;
 
+// Home documents table - stores uploaded document metadata
+export const homeDocuments = pgTable("home_documents", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  fileType: varchar("file_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  objectPath: text("object_path").notNull(),
+  category: varchar("category", { length: 100 }).default("general"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("home_documents_home_id_idx").on(table.homeId),
+]);
+
+// @ts-expect-error drizzle-zod omit type inference
+export const insertHomeDocumentSchema = createInsertSchema(homeDocuments).omit({ id: true, createdAt: true });
+export type InsertHomeDocument = Omit<typeof homeDocuments.$inferInsert, 'id' | 'createdAt'>;
+export type HomeDocument = typeof homeDocuments.$inferSelect;
+
 // Contact messages table - stores contact form submissions
 export const contactMessages = pgTable("contact_messages", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
