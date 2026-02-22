@@ -32,7 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     trackEvent('logout', 'auth', 'logout_button');
-    window.location.href = "/api/logout";
+    (window.top || window).location.href = "/api/logout";
   };
 
   return (
