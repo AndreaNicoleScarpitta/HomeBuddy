@@ -28,9 +28,10 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+const isDev = process.env.NODE_ENV !== "production";
 app.use(
   helmet({
-    contentSecurityPolicy: {
+    contentSecurityPolicy: isDev ? false : {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
@@ -49,6 +50,7 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: false,
     frameguard: false,
+    hsts: false,
   }),
 );
 
