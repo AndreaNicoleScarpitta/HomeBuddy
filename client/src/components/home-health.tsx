@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Info, ShieldCheck, AlertTriangle, AlertCircle, HelpCircle } from "lucide-react";
+import { Link } from "wouter";
 
 interface HomeHealthProps {
   score: number;
@@ -20,25 +21,35 @@ function getHealthTier(
   urgentTasksCount: number = 0,
   overdueTasksCount: number = 0,
   poorSystemsCount: number = 0
-): { tier: HealthTier; label: string; description: string } {
+): { tier: HealthTier; label: string; description: string; actionParts: { text: string; link?: string }[] } {
   if (systemsCount === 0) {
     return {
       tier: "unknown",
       label: "Getting Started",
-      description: "Add your home systems to see your health status"
+      description: "Add your home systems to see your health status",
+      actionParts: []
     };
   }
   
   if (urgentTasksCount > 0 || overdueTasksCount > 0 || poorSystemsCount > 0) {
-    const issues = [];
-    if (urgentTasksCount > 0) issues.push(`${urgentTasksCount} urgent task${urgentTasksCount > 1 ? 's' : ''}`);
-    if (overdueTasksCount > 0) issues.push(`${overdueTasksCount} overdue`);
-    if (poorSystemsCount > 0) issues.push(`${poorSystemsCount} system${poorSystemsCount > 1 ? 's' : ''} in poor condition`);
+    const actionParts: { text: string; link?: string }[] = [];
+    if (urgentTasksCount > 0) {
+      actionParts.push({ text: `${urgentTasksCount} urgent task${urgentTasksCount > 1 ? 's' : ''}`, link: "/maintenance-log" });
+    }
+    if (overdueTasksCount > 0) {
+      if (actionParts.length > 0) actionParts.push({ text: ", " });
+      actionParts.push({ text: `${overdueTasksCount} overdue`, link: "/maintenance-log" });
+    }
+    if (poorSystemsCount > 0) {
+      if (actionParts.length > 0) actionParts.push({ text: ", " });
+      actionParts.push({ text: `${poorSystemsCount} system${poorSystemsCount > 1 ? 's' : ''} in poor condition`, link: "/chat" });
+    }
     
     return {
       tier: "needs-attention",
       label: "Needs Attention",
-      description: issues.join(", ")
+      description: "",
+      actionParts
     };
   }
   
@@ -46,7 +57,8 @@ function getHealthTier(
     return {
       tier: "healthy",
       label: "Healthy",
-      description: "Your home is well-maintained with no urgent concerns"
+      description: "Your home is well-maintained with no urgent concerns",
+      actionParts: []
     };
   }
   
@@ -54,14 +66,16 @@ function getHealthTier(
     return {
       tier: "watch",
       label: "Watch List",
-      description: "A few items need attention soon, but nothing critical"
+      description: "A few items need attention soon, but nothing critical",
+      actionParts: [{ text: "View maintenance tasks", link: "/maintenance-log" }]
     };
   }
   
   return {
     tier: "needs-attention",
     label: "Needs Attention",
-    description: "Some repairs should be addressed to protect your home"
+    description: "Some repairs should be addressed to protect your home",
+    actionParts: [{ text: "View tasks", link: "/maintenance-log" }]
   };
 }
 
@@ -110,7 +124,7 @@ export function HomeHealth({
   overdueTasksCount = 0,
   poorSystemsCount = 0
 }: HomeHealthProps) {
-  const { tier, label, description } = getHealthTier(score, systemsCount, urgentTasksCount, overdueTasksCount, poorSystemsCount);
+  const { tier, label, description, actionParts } = getHealthTier(score, systemsCount, urgentTasksCount, overdueTasksCount, poorSystemsCount);
   const styles = getTierStyles(tier);
   const TierIcon = styles.icon;
 
@@ -139,9 +153,29 @@ export function HomeHealth({
             <Badge variant="outline" className={`text-sm font-medium px-3 py-1 ${styles.badgeClass}`}>
               {label}
             </Badge>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              {description}
-            </p>
+            {description && (
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {description}
+              </p>
+            )}
+            {actionParts.length > 0 && (
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {actionParts.map((part, i) => 
+                  part.link ? (
+                    <Link 
+                      key={i} 
+                      href={part.link} 
+                      className="font-medium text-foreground underline underline-offset-2 decoration-primary/40 hover:decoration-primary transition-colors"
+                      data-testid={`link-health-action-${i}`}
+                    >
+                      {part.text}
+                    </Link>
+                  ) : (
+                    <span key={i}>{part.text}</span>
+                  )
+                )}
+              </p>
+            )}
           </div>
         </div>
 
@@ -158,7 +192,15 @@ export function HomeHealth({
             <p className="text-xs text-muted-foreground">
               {systemsCount > 0 && `Tracking ${systemsCount} system${systemsCount > 1 ? 's' : ''}`}
               {systemsCount > 0 && tasksCount > 0 && ' • '}
-              {tasksCount > 0 && `${tasksCount} active task${tasksCount > 1 ? 's' : ''}`}
+              {tasksCount > 0 && (
+                <Link 
+                  href="/maintenance-log" 
+                  className="hover:text-foreground transition-colors underline underline-offset-2"
+                  data-testid="link-health-tasks"
+                >
+                  {tasksCount} active task{tasksCount > 1 ? 's' : ''}
+                </Link>
+              )}
               {systemsCount === 0 && tasksCount === 0 && 'Add systems to improve accuracy'}
             </p>
             <p className="text-xs text-muted-foreground mt-1 italic">

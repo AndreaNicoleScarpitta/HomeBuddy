@@ -7,20 +7,27 @@ import { useAuth } from "@/hooks/use-auth";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 import { trackEvent } from "@/lib/analytics";
 
+const navItems = [
+  { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention", tourId: "nav-overview" },
+  { href: "/maintenance-log", icon: ClipboardList, label: "History", sublabel: "What you've done", tourId: "nav-history" },
+  { href: "/budget", icon: Wallet, label: "Budget", sublabel: "What you can afford", tourId: "nav-budget" },
+  { href: "/inspections", icon: FileText, label: "Inspections", sublabel: "What's wrong", tourId: "nav-inspections" },
+  { href: "/chat", icon: MessageSquare, label: "Assistant", sublabel: "Get guidance", tourId: "nav-assistant" },
+  { href: "/profile", icon: User, label: "Profile", sublabel: "Your settings", tourId: "nav-profile" },
+  { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us", tourId: "nav-contact" },
+];
+
+const bottomNavItems = [
+  { href: "/dashboard", icon: Home, label: "Home" },
+  { href: "/maintenance-log", icon: ClipboardList, label: "History" },
+  { href: "/chat", icon: MessageSquare, label: "Assistant" },
+  { href: "/inspections", icon: FileText, label: "Inspections" },
+];
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-
-  const navItems = [
-    { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention", tourId: "nav-overview" },
-    { href: "/maintenance-log", icon: ClipboardList, label: "History", sublabel: "What you've done", tourId: "nav-history" },
-    { href: "/budget", icon: Wallet, label: "Budget", sublabel: "What you can afford", tourId: "nav-budget" },
-    { href: "/inspections", icon: FileText, label: "Inspections", sublabel: "What's wrong", tourId: "nav-inspections" },
-    { href: "/chat", icon: MessageSquare, label: "Assistant", sublabel: "Get guidance", tourId: "nav-assistant" },
-    { href: "/profile", icon: User, label: "Profile", sublabel: "Your settings", tourId: "nav-profile" },
-    { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us", tourId: "nav-contact" },
-  ];
 
   const handleLogout = () => {
     trackEvent('logout', 'auth', 'logout_button');
@@ -139,11 +146,38 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">
         <div className="max-w-5xl mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t z-50 safe-area-bottom">
+        <div className="flex items-center justify-around h-16">
+          {bottomNavItems.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => trackEvent('navigate', 'bottom_nav', item.label.toLowerCase())}
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
+                  isActive 
+                    ? "text-primary" 
+                    : "text-muted-foreground"
+                }`}
+                data-testid={`bottom-nav-${item.label.toLowerCase()}`}
+              >
+                <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
+                <span className={`text-[10px] font-medium ${isActive ? 'text-primary' : ''}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

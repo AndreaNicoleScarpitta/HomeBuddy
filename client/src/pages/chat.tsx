@@ -1,18 +1,16 @@
 import { Layout } from "@/components/layout";
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Camera, Loader2, AlertCircle, X, Info, Plus, ListTodo, Wrench } from "lucide-react";
+import { Send, Bot, User, Camera, Loader2, AlertCircle, X, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getHome, getChatMessages } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoConsentModal, usePhotoConsent } from "@/components/photo-consent-modal";
-import { AddSystemWizard } from "@/components/add-system-wizard";
 import { Link } from "wouter";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 import { trackEvent } from "@/lib/analytics";
@@ -124,7 +122,6 @@ export default function Chat() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
-  const [showAddSystem, setShowAddSystem] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -312,14 +309,6 @@ export default function Chat() {
         onCancel={handleConsentCancel}
       />
       
-      {home && (
-        <AddSystemWizard 
-          isOpen={showAddSystem} 
-          onClose={() => setShowAddSystem(false)} 
-          homeId={home.id} 
-        />
-      )}
-      
       <div className="h-[calc(100vh-8rem)] flex flex-col max-w-3xl mx-auto">
         <div className="mb-4">
           <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Assistant</h1>
@@ -376,33 +365,6 @@ export default function Chat() {
                   <p className="text-xs text-muted-foreground mt-6 italic">
                     Estimates are general ranges, not quotes. You're always in control.
                   </p>
-                  
-                  {/* Quick Actions */}
-                  <div className="mt-6 pt-4 border-t border-muted">
-                    <p className="text-xs text-muted-foreground mb-3">Quick Actions</p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => { trackEvent('click', 'chat', 'quick_add_task'); setInput("Help me add a maintenance task for my home"); }}
-                        className="text-xs"
-                        data-testid="button-add-task-quick"
-                      >
-                        <ListTodo className="h-3 w-3 mr-1.5" />
-                        Add Task
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => { trackEvent('click', 'chat', 'quick_add_system'); setShowAddSystem(true); }}
-                        className="text-xs"
-                        data-testid="button-add-system-quick"
-                      >
-                        <Wrench className="h-3 w-3 mr-1.5" />
-                        Add System
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : (

@@ -25,6 +25,16 @@ import {
   Sparkles,
   Info
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { V2Report } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
@@ -376,6 +386,7 @@ function ReportDetail({ reportId, onBack }: { reportId: string | number; onBack:
 
 export default function Inspections() {
   const [selectedReportId, setSelectedReportId] = useState<string | number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -543,10 +554,9 @@ export default function Inspections() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        trackEvent('click', 'inspections', 'delete_report');
-                        deleteMutation.mutate(report.id);
+                        setDeleteConfirmId(report.id);
                       }}
-                      className="p-2 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-2 text-muted-foreground hover:text-red-600 md:opacity-50 md:group-hover:opacity-100 transition-opacity"
                       data-testid={`button-delete-${report.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -558,6 +568,33 @@ export default function Inspections() {
             ))}
           </div>
         )}
+
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this report?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove the report and all its findings. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deleteConfirmId) {
+                    trackEvent('click', 'inspections', 'delete_report_confirmed');
+                    deleteMutation.mutate(deleteConfirmId);
+                    setDeleteConfirmId(null);
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="button-confirm-delete"
+              >
+                Delete Report
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

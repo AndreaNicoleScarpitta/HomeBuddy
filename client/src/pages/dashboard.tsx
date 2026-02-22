@@ -9,13 +9,20 @@ import { ContractorSchedule } from "@/components/contractor-schedule";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, ArrowRight, ListTodo, CheckCircle2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getHome, getTasks, getSystems } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getHome, getTasks, getSystems, createTask, updateTask, createLogEntry } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
+import { format } from "date-fns";
+import type { V2Task } from "@/lib/api";
 
 function DashboardSkeleton() {
   return (
@@ -36,11 +43,233 @@ function DashboardSkeleton() {
   );
 }
 
+function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onClose: () => void; homeId: string }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    title: "",
+    urgency: "soon",
+    category: "",
+    diyLevel: "DIY-Safe",
+    estimatedCost: "",
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: typeof formData) => createTask(homeId, {
+      title: data.title,
+      urgency: data.urgency as any,
+      category: data.category || undefined,
+      diyLevel: data.diyLevel as any,
+      estimatedCost: data.estimatedCost || undefined,
+      status: "pending",
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task added", description: "Your maintenance task has been created." });
+      onClose();
+      setFormData({ title: "", urgency: "soon", category: "", diyLevel: "DIY-Safe", estimatedCost: "" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not create task.", variant: "destructive" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim()) {
+      toast({ title: "Error", description: "Please enter a task name.", variant: "destructive" });
+      return;
+    }
+    trackEvent('submit_form', 'dashboard', 'quick_add_task');
+    createMutation.mutate(formData);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Maintenance Task</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="task-title">What needs to be done?</Label>
+            <Input
+              id="task-title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g., Replace furnace filter, Clean gutters..."
+              data-testid="input-task-title"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={formData.urgency} onValueChange={(v) => setFormData({ ...formData, urgency: v })}>
+                <SelectTrigger data-testid="select-task-urgency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="now">Fix Now</SelectItem>
+                  <SelectItem value="soon">Plan Soon</SelectItem>
+                  <SelectItem value="later">Address Later</SelectItem>
+                  <SelectItem value="monitor">Monitor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>DIY Level</Label>
+              <Select value={formData.diyLevel} onValueChange={(v) => setFormData({ ...formData, diyLevel: v })}>
+                <SelectTrigger data-testid="select-task-diy">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DIY-Safe">DIY-Safe</SelectItem>
+                  <SelectItem value="Caution">Caution</SelectItem>
+                  <SelectItem value="Pro-Only">Pro-Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <SelectTrigger data-testid="select-task-category">
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HVAC">HVAC</SelectItem>
+                  <SelectItem value="Plumbing">Plumbing</SelectItem>
+                  <SelectItem value="Electrical">Electrical</SelectItem>
+                  <SelectItem value="Roof">Roof</SelectItem>
+                  <SelectItem value="Windows">Windows</SelectItem>
+                  <SelectItem value="Siding/Exterior">Siding/Exterior</SelectItem>
+                  <SelectItem value="Foundation">Foundation</SelectItem>
+                  <SelectItem value="Appliances">Appliances</SelectItem>
+                  <SelectItem value="Water Heater">Water Heater</SelectItem>
+                  <SelectItem value="Landscaping">Landscaping</SelectItem>
+                  <SelectItem value="Pest">Pest</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Est. Cost</Label>
+              <Input
+                value={formData.estimatedCost}
+                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
+                placeholder="e.g., $50-100"
+                data-testid="input-task-cost"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-save-task">
+              {createMutation.isPending ? "Adding..." : "Add Task"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CompleteTaskDialog({ isOpen, onClose, task, homeId }: { isOpen: boolean; onClose: () => void; task: V2Task | null; homeId: number }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [cost, setCost] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (task) {
+      setCost("");
+      setNotes("");
+    }
+  }, [task]);
+
+  const completeMutation = useMutation({
+    mutationFn: async () => {
+      if (!task) return;
+      await createLogEntry(homeId, {
+        title: task.title,
+        date: new Date().toISOString(),
+        cost: cost ? Math.round(parseFloat(cost) * 100) : undefined,
+        notes: notes || undefined,
+      });
+      await updateTask(task.id, { status: "completed" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["logEntries"] });
+      toast({ title: "Task completed!", description: "Nice work — this has been logged." });
+      onClose();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not complete task.", variant: "destructive" });
+    },
+  });
+
+  if (!task) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Complete: {task.title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="complete-cost">What did it cost? (optional)</Label>
+            <Input
+              id="complete-cost"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              data-testid="input-complete-cost"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="complete-notes">Any notes? (optional)</Label>
+            <Input
+              id="complete-notes"
+              placeholder="e.g., Hired ABC Plumbing, took 2 hours..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              data-testid="input-complete-notes"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button 
+              onClick={() => { trackEvent('submit_form', 'dashboard', 'complete_task'); completeMutation.mutate(); }} 
+              disabled={completeMutation.isPending}
+              data-testid="button-confirm-complete"
+            >
+              {completeMutation.isPending ? "Saving..." : "Complete Task"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const { hasSeenTour, showTour, tourKey, startTour, completeTour } = useTourState();
   const [showAddSystem, setShowAddSystem] = useState(false);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [completingTask, setCompletingTask] = useState<V2Task | null>(null);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
@@ -151,6 +380,14 @@ export default function Dashboard() {
               <Plus className="h-4 w-4" />
               <span>Add system</span>
             </button>
+            <button 
+              onClick={() => { trackEvent('click', 'dashboard', 'add_task'); setShowAddTask(true); }}
+              className="flex items-center gap-1.5 px-4 py-2 text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+              data-testid="button-add-task"
+            >
+              <ListTodo className="h-4 w-4" />
+              <span>Add task</span>
+            </button>
           </div>
         </section>
         
@@ -161,11 +398,26 @@ export default function Dashboard() {
           homeId={home.id} 
         />
 
+        {/* Quick Add Task Dialog */}
+        <QuickAddTaskDialog
+          isOpen={showAddTask}
+          onClose={() => setShowAddTask(false)}
+          homeId={home.id}
+        />
+
+        {/* Complete Task Dialog */}
+        <CompleteTaskDialog
+          isOpen={!!completingTask}
+          onClose={() => setCompletingTask(null)}
+          task={completingTask}
+          homeId={home.legacyId!}
+        />
+
         {/* Tasks Section */}
         <section className="space-y-6" data-tour="maintenance-plan">
           <div className="flex justify-between items-baseline">
             <h2 className="text-lg font-heading font-semibold">Maintenance Plan</h2>
-            <Link href="/budget">
+            <Link href="/maintenance-log">
               <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid="button-view-plan">
                 View all <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
@@ -177,7 +429,7 @@ export default function Dashboard() {
               <div className="max-w-md mx-auto text-center">
                 <h3 className="text-lg font-medium mb-2">No maintenance tasks yet</h3>
                 <p className="text-muted-foreground text-sm mb-6">
-                  Chat with your assistant to identify what needs attention, or upload an inspection report.
+                  Chat with your assistant to identify what needs attention, or add a task manually.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/chat">
@@ -185,6 +437,10 @@ export default function Dashboard() {
                       Chat with Assistant
                     </Button>
                   </Link>
+                  <Button variant="outline" onClick={() => setShowAddTask(true)} data-testid="button-add-task-empty">
+                    <ListTodo className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
                   <Link href="/inspections">
                     <Button variant="outline" data-testid="button-upload-inspection">
                       Upload Report
@@ -218,7 +474,11 @@ export default function Dashboard() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {urgencyTasks.map((task) => (
-                        <MaintenanceCard key={task.id} task={task} />
+                        <MaintenanceCard 
+                          key={task.id} 
+                          task={task} 
+                          onComplete={(t) => setCompletingTask(t)}
+                        />
                       ))}
                     </div>
                   </div>
