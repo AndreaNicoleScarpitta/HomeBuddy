@@ -21,6 +21,7 @@ async function logout(): Promise<void> {
   const link = document.createElement('a');
   link.href = '/api/logout';
   link.target = '_top';
+  link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

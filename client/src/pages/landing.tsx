@@ -1,14 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, MessageSquare, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { trackEvent } from "@/lib/analytics";
+import { Link } from "wouter";
 
 export default function Landing() {
-  const handleLogin = () => {
-    trackEvent('click', 'landing', 'sign_in_button');
-    window.location.href = "/login";
-  };
-
   const features = [
     { icon: Calendar, title: "Smart Scheduling", desc: "Now, Soon, Later priorities" },
     { icon: Shield, title: "Safety First", desc: "DIY vs Pro guidance" },
@@ -36,8 +31,10 @@ export default function Landing() {
             />
             <span className="text-xl font-heading font-bold">Home Buddy</span>
           </div>
-          <Button onClick={handleLogin} variant="outline" className="font-medium" data-testid="button-login">
-            Sign In
+          <Button asChild variant="outline" className="font-medium">
+            <Link href="/login" data-testid="button-login">
+              Sign In
+            </Link>
           </Button>
         </div>
       </header>
@@ -71,13 +68,14 @@ export default function Landing() {
                 
                 <div className="flex items-center gap-4 pt-4">
                   <Button 
-                    onClick={handleLogin} 
+                    asChild
                     size="lg" 
                     className="h-14 px-8 text-lg font-medium shadow-lg shadow-primary/25"
-                    data-testid="button-hero-login"
                   >
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <Link href="/login" data-testid="button-hero-login">
+                      Get Started Free
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
                   </Button>
                   <span className="text-sm text-muted-foreground">No credit card required</span>
                 </div>
