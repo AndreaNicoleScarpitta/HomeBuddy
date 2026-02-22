@@ -42,7 +42,7 @@ export default function Login() {
             <Button
               onClick={() => {
                 trackEvent('login_attempt', 'auth', 'replit');
-                (window.top || window).location.href = "/api/login";
+                window.open("/api/login", "_top");
               }}
               className="w-full h-14 text-base font-medium gap-3 justify-center"
               data-testid="button-login"
