@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -419,10 +420,8 @@ function EditFundDialog({
   };
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this fund? This action cannot be undone.")) {
-      trackEvent('delete_fund', 'budget', fund?.name);
-      deleteFundMutation.mutate();
-    }
+    trackEvent('delete_fund', 'budget', fund?.name);
+    deleteFundMutation.mutate();
   };
 
   if (!fund) return null;
@@ -522,14 +521,31 @@ function EditFundDialog({
         </div>
         
         <div className="flex justify-between gap-3">
-          <Button 
-            variant="destructive" 
-            onClick={handleDelete}
-            disabled={deleteFundMutation.isPending}
-            data-testid="button-delete-fund"
-          >
-            Delete
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="destructive" 
+                disabled={deleteFundMutation.isPending}
+                data-testid="button-delete-fund"
+              >
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this fund?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove "{fund?.name}" and its history. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Delete Fund
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button 

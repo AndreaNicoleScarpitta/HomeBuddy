@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { Send, CheckCircle2 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
@@ -31,12 +32,23 @@ async function submitContactForm(data: {
 }
 
 export default function Contact() {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user && !prefilled) {
+      const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+      if (fullName) setName(fullName);
+      if (user.email) setEmail(user.email);
+      setPrefilled(true);
+    }
+  }, [user, prefilled]);
 
   const submitMutation = useMutation({
     mutationFn: submitContactForm,

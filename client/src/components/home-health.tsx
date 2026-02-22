@@ -84,26 +84,26 @@ function getTierStyles(tier: HealthTier) {
     case "healthy":
       return {
         icon: ShieldCheck,
-        iconColor: "text-green-600",
-        bgColor: "bg-green-50",
-        borderColor: "border-green-200",
-        badgeClass: "bg-green-100 text-green-700 border-green-200"
+        iconColor: "text-green-600 dark:text-green-400",
+        bgColor: "bg-green-50 dark:bg-green-950/30",
+        borderColor: "border-green-200 dark:border-green-800",
+        badgeClass: "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
       };
     case "watch":
       return {
         icon: AlertTriangle,
-        iconColor: "text-amber-600",
-        bgColor: "bg-amber-50",
-        borderColor: "border-amber-200",
-        badgeClass: "bg-amber-100 text-amber-700 border-amber-200"
+        iconColor: "text-amber-600 dark:text-amber-400",
+        bgColor: "bg-amber-50 dark:bg-amber-950/30",
+        borderColor: "border-amber-200 dark:border-amber-800",
+        badgeClass: "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
       };
     case "needs-attention":
       return {
         icon: AlertCircle,
-        iconColor: "text-orange-600",
-        bgColor: "bg-orange-50",
-        borderColor: "border-orange-200",
-        badgeClass: "bg-orange-100 text-orange-700 border-orange-200"
+        iconColor: "text-orange-600 dark:text-orange-400",
+        bgColor: "bg-orange-50 dark:bg-orange-950/30",
+        borderColor: "border-orange-200 dark:border-orange-800",
+        badgeClass: "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
       };
     default:
       return {
@@ -180,7 +180,7 @@ export function HomeHealth({
         </div>
 
         {tier === "unknown" && (
-          <div className="p-3 rounded-lg bg-white/60 border border-muted">
+          <div className="p-3 rounded-lg bg-background/60 border border-muted">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Tip:</span> Add your HVAC, roof, plumbing, and other systems to get a personalized home health assessment.
             </p>
@@ -188,7 +188,7 @@ export function HomeHealth({
         )}
 
         {tier !== "unknown" && (
-          <div className="p-3 rounded-lg bg-white/60 border border-muted">
+          <div className="p-3 rounded-lg bg-background/60 border border-muted">
             <p className="text-xs text-muted-foreground">
               {systemsCount > 0 && `Tracking ${systemsCount} system${systemsCount > 1 ? 's' : ''}`}
               {systemsCount > 0 && tasksCount > 0 && ' • '}

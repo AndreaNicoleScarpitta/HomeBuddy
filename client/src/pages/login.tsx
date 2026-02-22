@@ -134,11 +134,7 @@ export default function Login() {
           <p className="text-center text-xs text-muted-foreground leading-relaxed pt-4">
             By continuing, you agree to our{" "}
             <a href="/terms" className="underline hover:text-foreground" data-testid="link-terms">
-              Terms & Conditions
-            </a>
-            {" "}and{" "}
-            <a href="/terms" className="underline hover:text-foreground" data-testid="link-privacy">
-              Privacy Policy
+              Terms of Service & Privacy Policy
             </a>
           </p>
         </motion.div>

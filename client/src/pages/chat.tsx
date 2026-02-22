@@ -309,7 +309,7 @@ export default function Chat() {
         onCancel={handleConsentCancel}
       />
       
-      <div className="h-[calc(100vh-8rem)] flex flex-col max-w-3xl mx-auto">
+      <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] flex flex-col max-w-3xl mx-auto pb-16 md:pb-0">
         <div className="mb-4">
           <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">Assistant</h1>
           <p className="text-muted-foreground">Expert guidance for your home, 24/7.</p>
@@ -323,7 +323,7 @@ export default function Chat() {
           </div>
         </div>
 
-        <Card className="flex-1 flex flex-col overflow-hidden border-none shadow-md bg-white/50 backdrop-blur-sm">
+        <Card className="flex-1 flex flex-col overflow-hidden border-none shadow-md bg-card/50 backdrop-blur-sm">
           <ScrollArea className="flex-1 p-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
@@ -394,17 +394,12 @@ export default function Chat() {
                         className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed ${
                           msg.role === "user"
                             ? "bg-primary text-primary-foreground rounded-tr-none"
-                            : "bg-white border text-foreground rounded-tl-none"
+                            : "bg-card border text-foreground rounded-tl-none"
                         }`}
                       >
                         <div className={msg.role === "assistant" ? "" : "whitespace-pre-wrap"}>
                         {msg.role === "assistant" ? renderRichText(msg.content) : msg.content}
                       </div>
-                        {msg.role === "assistant" && (
-                          <div className="mt-3 pt-2 border-t border-muted/30 text-xs text-muted-foreground italic">
-                            This is general guidance only. Consult a professional for your specific situation.
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -422,7 +417,7 @@ export default function Chat() {
                       <span className="text-xs text-muted-foreground font-medium mb-1">
                         Home Buddy
                       </span>
-                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-white border text-foreground rounded-tl-none">
+                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-card border text-foreground rounded-tl-none">
                         <div>{renderRichText(streamingMessage)}</div>
                         <span className="inline-block w-2 h-4 bg-primary/50 animate-pulse ml-1" />
                       </div>
@@ -442,7 +437,7 @@ export default function Chat() {
                       <span className="text-xs text-muted-foreground font-medium mb-1">
                         Home Buddy
                       </span>
-                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-white border text-foreground rounded-tl-none">
+                      <div className="p-4 rounded-2xl shadow-sm text-sm leading-relaxed bg-card border text-foreground rounded-tl-none">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       </div>
                     </div>
@@ -454,7 +449,7 @@ export default function Chat() {
             )}
           </ScrollArea>
 
-          <div className="p-4 bg-white/80 border-t backdrop-blur-md">
+          <div className="p-4 bg-card/80 border-t backdrop-blur-md">
             {imagePreview && (
               <div className="mb-3 flex items-start gap-2">
                 <div className="relative">

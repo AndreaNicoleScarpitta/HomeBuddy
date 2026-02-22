@@ -21,7 +21,8 @@ const bottomNavItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/maintenance-log", icon: ClipboardList, label: "History" },
   { href: "/chat", icon: MessageSquare, label: "Assistant" },
-  { href: "/inspections", icon: FileText, label: "Inspections" },
+  { href: "/budget", icon: Wallet, label: "Budget" },
+  { href: "/inspections", icon: FileText, label: "Reports" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

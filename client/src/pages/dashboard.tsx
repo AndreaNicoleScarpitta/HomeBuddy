@@ -363,12 +363,20 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full">
               <span className="text-muted-foreground">Next up:</span>
               <span className="font-medium" data-testid="text-next-service">
-                {tasks.length > 0 ? tasks[0].title : "Nothing scheduled"}
+                {(() => {
+                  const nextTask = tasks
+                    .filter(t => t.status === "pending" || t.status === "scheduled")
+                    .sort((a, b) => {
+                      const order: Record<string, number> = { now: 0, soon: 1, later: 2, monitor: 3 };
+                      return (order[a.urgency] ?? 4) - (order[b.urgency] ?? 4);
+                    })[0];
+                  return nextTask ? nextTask.title : "Nothing scheduled";
+                })()}
               </span>
             </div>
             {highPriorityTasks.length > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-700 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-orange-500" />
                 <span className="font-medium">{highPriorityTasks.length} high priority</span>
               </div>
             )}
@@ -465,7 +473,7 @@ export default function Dashboard() {
                 return (
                   <div key={urgency} className="space-y-3">
                     <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
+                      <span className={`w-2 h-2 rounded-full ${
                         urgency === 'now' ? 'bg-red-500' : 
                         urgency === 'soon' ? 'bg-orange-500' : 
                         urgency === 'monitor' ? 'bg-blue-400' : 'bg-green-500'

@@ -39,9 +39,9 @@ export function MaintenanceCard({ task, onComplete }: TaskProps) {
   
   const getDiyBadgeColor = (level: string | null | undefined) => {
     switch (level) {
-      case "DIY-Safe": return "bg-green-100 text-green-700 hover:bg-green-200 border-green-200";
-      case "Caution": return "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200";
-      case "Pro-Only": return "bg-red-100 text-red-700 hover:bg-red-200 border-red-200";
+      case "DIY-Safe": return "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-950/60 border-green-200 dark:border-green-800";
+      case "Caution": return "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-950/60 border-yellow-200 dark:border-yellow-800";
+      case "Pro-Only": return "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-950/60 border-red-200 dark:border-red-800";
       default: return "bg-secondary text-secondary-foreground";
     }
   };
@@ -96,7 +96,7 @@ export function MaintenanceCard({ task, onComplete }: TaskProps) {
         </div>
 
         {task.safetyWarning && (
-           <div className="mb-3 flex items-start gap-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100">
+           <div className="mb-3 flex items-start gap-2 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 p-2 rounded border border-orange-100 dark:border-orange-800">
              <ShieldAlert className="h-3 w-3 mt-0.5 shrink-0" />
              {task.safetyWarning}
            </div>
@@ -131,7 +131,7 @@ export function MaintenanceCard({ task, onComplete }: TaskProps) {
                     trackEvent('click', 'task_card', 'mark_done');
                     onComplete(task);
                   }}
-                  className="text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800"
+                  className="text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950/30 hover:text-green-800 dark:hover:text-green-300"
                   data-testid={`button-complete-task-${task.id}`}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-1.5" />
@@ -144,7 +144,7 @@ export function MaintenanceCard({ task, onComplete }: TaskProps) {
                   href={buildAngiesListUrl(task.category || "Other")}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-md transition-colors border border-blue-200 dark:border-blue-800"
                   data-testid={`link-find-pro-task-${task.id}`}
                 >
                   Find a Pro on Angi
@@ -160,7 +160,7 @@ export function MaintenanceCard({ task, onComplete }: TaskProps) {
             href={buildAngiesListUrl(task.category || "Other")}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+            className="mt-3 flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-md transition-colors"
             data-testid={`link-find-pro-task-${task.id}`}
           >
             Find a Pro on Angi
