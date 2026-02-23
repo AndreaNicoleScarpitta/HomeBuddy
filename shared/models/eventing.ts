@@ -144,6 +144,8 @@ export type EventLogRow = typeof eventLog.$inferSelect;
 /** Projection: Home aggregate current state. */
 export const projectionHome = pgTable("projection_home", {
   homeId: text("home_id").primaryKey(),
+  userId: text("user_id"),
+  legacyId: integer("legacy_id"),
   attrs: jsonb("attrs").notNull().default({}),
   lastEventSeq: bigint("last_event_seq", { mode: "number" }).notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
