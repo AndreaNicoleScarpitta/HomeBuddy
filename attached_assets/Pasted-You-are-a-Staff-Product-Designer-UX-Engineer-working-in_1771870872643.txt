@@ -1,0 +1,152 @@
+You are a Staff Product Designer + UX Engineer working inside the existing Home Buddy app. Your task: add an in-product **Tooltip + Definitions** system that helps average homeowners understand unfamiliar terms, especially dropdown options, WITHOUT cluttering the UI or changing core workflows.
+
+GOAL
+Reduce confusion and abandonment by providing “what does this mean?” help everywhere a typical homeowner might not know:
+- a term
+- a dropdown option
+- the difference between two similar choices
+- a measurement/field expectation
+
+This must feel native to Home Buddy: calm, professional, anxiety-aware.
+
+CONSTRAINTS (NON-NEGOTIABLE)
+- Do NOT redesign the information architecture or navigation.
+- Do NOT add new required steps to onboarding.
+- Tooltips must be optional and unobtrusive (progressive disclosure).
+- Reuse existing component library and styling tokens (dark mode compatible).
+- Must work on mobile (touch) and desktop (hover/focus).
+- Accessibility required (keyboard + screen reader).
+- Do NOT send user-entered values (like address) to the definitions system or analytics.
+
+FEATURES TO ADD
+
+1) UNIVERSAL TOOLTIP PATTERN
+Implement a standard, reusable tooltip pattern:
+- A small (i) icon or “?” icon next to labels and dropdowns.
+- Hover on desktop; tap on mobile to open.
+- Content is concise (1–3 lines). If longer, include “Learn more” which opens a Definitions Drawer.
+
+Rules:
+- Tooltips explain “what this is” and “how to choose,” not policy/legal text.
+- Use plain language. Avoid jargon. Provide examples when helpful.
+- If there are paired/confusable options, explicitly clarify the difference.
+
+2) DEFINITIONS DRAWER (REFERENCE / SEARCH)
+Add a “Definitions” experience that supports:
+- Search (typeahead)
+- Categorization (e.g., Electrical, Plumbing, HVAC, Documents, Inspections, Tasks)
+- Richer explanations (short paragraphs + examples + “When to use”)
+- Cross-links (“Related terms”)
+- A persistent entry point from:
+  - Help icon in header (or existing menu spot)
+  - AND contextual deep-links from tooltips (“Learn more” opens the drawer focused on that term)
+
+No new global nav item if you can avoid it. Prefer adding to an existing “Help/Contact” area or a subtle icon in the top bar. If the app has no top bar slot, add a “Definitions” link inside the Profile/Settings page under a new “Help” section.
+
+3) CONTEXTUAL TOOLTIP COVERAGE (WHAT TO INSTRUMENT)
+Add tooltips anywhere a typical homeowner may hesitate, especially:
+- Onboarding fields (year built, square footage, beds/baths if present)
+- Systems dropdowns (system types, component types)
+- Task fields (urgency, DIY level, estimated cost)
+- Inspection findings fields (severity, urgency, category, DIY level)
+- Document categories (warranty vs permit vs appraisal, etc.)
+- Any dropdown with non-obvious options
+
+Also add “What’s the difference?” tooltips for paired terms like:
+- Inspection vs Document
+- Urgent vs Soon vs Upcoming vs Routine
+- Major vs Moderate severity
+- DIY vs Pro recommendation
+- Brand/Model vs System Type
+(Use the existing app vocabulary.)
+
+4) CONTENT MODEL (STRUCTURED DEFINITIONS)
+Create a structured data model for definitions so it’s maintainable:
+
+DefinitionTerm:
+- id (slug)
+- title
+- short_definition (tooltip text)
+- long_definition (drawer content)
+- examples (optional)
+- category (enum)
+- related_terms (list of slugs)
+- synonyms (list of strings for search)
+- last_updated
+
+Store as:
+- a JSON file in the repo for v1 (fastest)
+OR
+- a DB table if the app already has admin/content infrastructure
+
+Prefer JSON first unless there’s already a content DB pattern.
+
+5) “EXPLAIN THIS” MICRO-ACTION (OPTIONAL BUT STRONGLY PREFERRED)
+Wherever tooltips exist, support a micro-action:
+- “Explain” button in the tooltip or a small link
+When tapped, it opens the Definitions Drawer at that term.
+No chat required. This is reference, not conversation.
+
+6) SECURITY + PRIVACY
+- The Definitions system must not capture user field values.
+- Analytics should only track generic events:
+  - tooltip_opened (term_slug, screen_name)
+  - definitions_search_used (query_length only, not query text unless approved)
+  - definition_viewed (term_slug)
+Do not log queries verbatim unless privacy-reviewed; default to NOT logging them.
+
+7) ACCESSIBILITY REQUIREMENTS
+- Tooltip icons must be focusable with keyboard
+- Tooltips must announce via aria-describedby
+- Drawer must trap focus when open and restore focus when closed
+- Tap targets >= 44px on mobile
+
+IMPLEMENTATION PLAN (DO THIS IN ORDER)
+1) Add shared Tooltip component:
+   - Supports hover/focus/tap
+   - Works in dark mode
+   - Uses existing portal/modal layering rules
+2) Add Definitions Drawer:
+   - Slide-over panel
+   - Search + list + detail
+3) Create definitions content seed:
+   - Populate with the top 30 terms used today (minimum)
+   - Include all dropdown choices that are likely confusing
+4) Instrument key screens:
+   - Onboarding
+   - Add System Wizard
+   - Task creation/edit
+   - Inspection findings detail
+   - Documents upload/category
+5) Add analytics hooks (generic only)
+6) Add tests:
+   - Tooltip opens on focus
+   - Drawer search returns expected results
+   - Drawer deep-link from tooltip loads correct term
+   - No PII in analytics payloads
+
+DELIVERABLES
+1) A “Definitions Coverage Map” table:
+   - Screen
+   - Field/Dropdown
+   - Term slug
+   - Tooltip text
+2) Code:
+   - Tooltip component
+   - Definitions Drawer
+   - Definitions data source (JSON or DB)
+   - Integration points across UI
+3) QA checklist:
+   - Desktop hover, mobile tap
+   - Screen reader behavior
+   - Dark mode
+   - No layout shifts / no clipped tooltips
+4) Minimal UX copy guidelines for future terms.
+
+START NOW
+Scan the app for:
+- Dropdown components
+- Field labels
+- Enums used for urgency/severity/category/DIY level/document type/system type
+
+Then implement the Tooltip + Definitions system exactly as above.

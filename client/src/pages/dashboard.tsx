@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowRight, ListTodo, CheckCircle2 } from "lucide-react";
+import { FieldTooltip } from "@/components/field-tooltip";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems, createTask, updateTask, createLogEntry } from "@/lib/api";
@@ -104,7 +105,7 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Priority</Label>
+              <Label className="flex items-center gap-1">Priority <FieldTooltip termSlug="urgency-soon" screenName="dashboard" /></Label>
               <Select value={formData.urgency} onValueChange={(v) => setFormData({ ...formData, urgency: v })}>
                 <SelectTrigger data-testid="select-task-urgency">
                   <SelectValue />
@@ -118,7 +119,7 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>DIY Level</Label>
+              <Label className="flex items-center gap-1">DIY Level <FieldTooltip termSlug="diy-level-safe" screenName="dashboard" /></Label>
               <Select value={formData.diyLevel} onValueChange={(v) => setFormData({ ...formData, diyLevel: v })}>
                 <SelectTrigger data-testid="select-task-diy">
                   <SelectValue />
@@ -156,7 +157,7 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Est. Cost</Label>
+              <Label className="flex items-center gap-1">Est. Cost <FieldTooltip termSlug="estimated-cost" screenName="dashboard" /></Label>
               <Input
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}

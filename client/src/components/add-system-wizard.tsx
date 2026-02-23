@@ -32,6 +32,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSystem, identifySystemFromImage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { systemCategories, systemConditions } from "@shared/schema";
+import { FieldTooltip } from "@/components/field-tooltip";
 
 interface AddSystemWizardProps {
   isOpen: boolean;
@@ -330,7 +331,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="name">System Name</Label>
+              <Label htmlFor="name" className="flex items-center gap-1">System Name <FieldTooltip termSlug="system-category" screenName="add-system" /></Label>
               <Input
                 id="name"
                 placeholder={`e.g., Main ${formData.category} - Carrier`}
@@ -342,7 +343,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="installYear">Install Year (optional)</Label>
+                <Label htmlFor="installYear" className="flex items-center gap-1">Install Year <span className="text-muted-foreground text-xs">(opt.)</span> <FieldTooltip termSlug="install-year" screenName="add-system" /></Label>
                 <Input
                   id="installYear"
                   type="number"
@@ -354,7 +355,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
               </div>
               {showsCondition(formData.category) && (
                 <div className="space-y-2">
-                  <Label htmlFor="condition">Condition</Label>
+                  <Label htmlFor="condition" className="flex items-center gap-1">Condition <FieldTooltip termSlug="system-condition" screenName="add-system" /></Label>
                   <Select value={formData.condition} onValueChange={(v) => setFormData({ ...formData, condition: v })}>
                     <SelectTrigger data-testid="select-condition">
                       <SelectValue />
@@ -372,7 +373,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
             {showsMakeModel(formData.category) && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="make">Make/Brand</Label>
+                  <Label htmlFor="make" className="flex items-center gap-1">Make/Brand <FieldTooltip termSlug="make-brand" screenName="add-system" /></Label>
                   <Input
                     id="make"
                     placeholder="e.g., Carrier, Lennox"
@@ -382,7 +383,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="model">Model</Label>
+                  <Label htmlFor="model" className="flex items-center gap-1">Model <FieldTooltip termSlug="system-model" screenName="add-system" /></Label>
                   <Input
                     id="model"
                     placeholder="Model number"
@@ -396,7 +397,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
             
             {showsMaterial(formData.category) && (
               <div className="space-y-2">
-                <Label htmlFor="material">Material</Label>
+                <Label htmlFor="material" className="flex items-center gap-1">Material <FieldTooltip termSlug="system-material" screenName="add-system" /></Label>
                 <Input
                   id="material"
                   placeholder={formData.category === "Roof" ? "e.g., Asphalt Shingle, Metal" : "e.g., Vinyl, Wood, Aluminum"}
@@ -409,7 +410,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
             
             {showsEnergyRating(formData.category) && (
               <div className="space-y-2">
-                <Label htmlFor="energyRating">Energy Rating (optional)</Label>
+                <Label htmlFor="energyRating" className="flex items-center gap-1">Energy Rating <span className="text-muted-foreground text-xs">(opt.)</span> <FieldTooltip termSlug="energy-rating" screenName="add-system" /></Label>
                 <Input
                   id="energyRating"
                   placeholder="e.g., SEER 16, Energy Star"
@@ -444,7 +445,7 @@ export function AddSystemWizard({ isOpen, onClose, homeId }: AddSystemWizardProp
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="recurrenceInterval">Service Frequency</Label>
+                    <Label htmlFor="recurrenceInterval" className="flex items-center gap-1">Service Frequency <FieldTooltip termSlug="service-cadence" screenName="add-system" /></Label>
                     <Select value={formData.recurrenceInterval} onValueChange={(v) => setFormData({ ...formData, recurrenceInterval: v })}>
                       <SelectTrigger data-testid="select-recurrence">
                         <SelectValue placeholder="Select..." />

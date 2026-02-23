@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { trackEvent } from "@/lib/analytics";
+import { FieldTooltip } from "@/components/field-tooltip";
 import type { HomeDocument } from "@shared/schema";
 
 const documentCategories = [
@@ -255,6 +256,7 @@ export default function Documents() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <FieldTooltip termSlug="doc-insurance" screenName="documents" />
             <Select
               value={uploadCategory}
               onValueChange={setUploadCategory}

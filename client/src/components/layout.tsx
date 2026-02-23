@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { Home, MessageSquare, Mail, Menu, LogOut, FileText, ClipboardList, User, FolderOpen } from "lucide-react";
+import { Home, MessageSquare, Mail, Menu, LogOut, FileText, ClipboardList, User, FolderOpen, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDefinitions } from "@/hooks/use-definitions";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
 import { trackEvent } from "@/lib/analytics";
 
@@ -28,6 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const { openDefinitions } = useDefinitions();
 
   const handleLogout = () => {
     trackEvent('logout', 'auth', 'logout_button');
@@ -41,6 +43,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
            <img src={logoImage} alt="Home Buddy Logo" className="w-8 h-8 rounded-lg" />
            <span className="font-heading font-bold text-lg text-primary">Home Buddy</span>
         </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => { trackEvent('click', 'layout', 'definitions_help'); openDefinitions(); }}
+            aria-label="Definitions & Help"
+            data-testid="button-help-mobile"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" data-testid="button-menu">
@@ -94,6 +106,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </SheetContent>
         </Sheet>
+        </div>
       </header>
 
       {/* Desktop Sidebar */}
@@ -128,6 +141,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="p-4 border-t space-y-3">
+          <button
+            type="button"
+            onClick={() => { trackEvent('click', 'layout', 'definitions_help'); openDefinitions(); }}
+            className="flex items-center gap-3 px-4 py-2.5 w-full rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Definitions & Help"
+            data-testid="button-help-desktop"
+          >
+            <HelpCircle className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-medium">Definitions</span>
+          </button>
           {user && (
             <div className="px-3 py-2 text-sm">
               <p className="font-medium text-foreground truncate">{user.email || "User"}</p>

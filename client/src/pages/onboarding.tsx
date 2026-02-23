@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, ArrowLeft, Home, Shield } from "lucide-react";
+import { FieldTooltip } from "@/components/field-tooltip";
 import { useMutation } from "@tanstack/react-query";
 import { createHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -222,8 +223,9 @@ export default function Onboarding() {
                 </div>
 
                 <div className="space-y-2 max-w-[200px]">
-                  <Label htmlFor="zip" className="text-sm font-medium">
+                  <Label htmlFor="zip" className="text-sm font-medium flex items-center gap-1">
                     ZIP Code <span className="text-destructive">*</span>
+                    <FieldTooltip termSlug="zip-code" screenName="onboarding" />
                   </Label>
                   <Input
                     id="zip"
@@ -278,8 +280,9 @@ export default function Onboarding() {
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="year" className="text-sm font-medium">
+                  <Label htmlFor="year" className="text-sm font-medium flex items-center gap-1">
                     Year Built <span className="text-muted-foreground text-xs">(optional)</span>
+                    <FieldTooltip termSlug="year-built" screenName="onboarding" />
                   </Label>
                   <Input 
                     id="year"
@@ -295,8 +298,9 @@ export default function Onboarding() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="sqft" className="text-sm font-medium">
+                  <Label htmlFor="sqft" className="text-sm font-medium flex items-center gap-1">
                     Square Footage <span className="text-muted-foreground text-xs">(optional)</span>
+                    <FieldTooltip termSlug="square-footage" screenName="onboarding" />
                   </Label>
                   <Input 
                     id="sqft"

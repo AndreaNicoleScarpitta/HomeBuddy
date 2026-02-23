@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SplashScreen } from "@/components/splash-screen";
+import { DefinitionsProvider } from "@/hooks/use-definitions";
+import { DefinitionsDrawer } from "@/components/definitions-drawer";
 import { useAuth } from "@/hooks/use-auth";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { initGA } from "@/lib/analytics";
@@ -119,8 +121,11 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <DefinitionsProvider>
+            <Toaster />
+            <DefinitionsDrawer />
+            <Router />
+          </DefinitionsProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
