@@ -651,3 +651,86 @@ export async function updateNotificationPreferences(data: Partial<NotificationPr
   });
   return handleResponse<NotificationPreferences>(response);
 }
+
+// ---------------------------------------------------------------------------
+// Circuit Panel Map API (v2)
+// ---------------------------------------------------------------------------
+export interface Breaker {
+  number: number;
+  label: string;
+  room: string;
+  notes: string;
+  amperage?: number;
+}
+
+export interface CircuitMap {
+  id: string;
+  homeId: string;
+  systemId?: string | null;
+  imageUrl?: string | null;
+  storeImage: boolean;
+  state: string;
+  breakers: Breaker[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getCircuitMaps(homeId: string): Promise<CircuitMap[]> {
+  const response = await fetch(`/v2/homes/${homeId}/circuit-maps`);
+  return handleResponse<CircuitMap[]>(response);
+}
+
+export async function getCircuitMap(mapId: string): Promise<CircuitMap> {
+  const response = await fetch(`/v2/circuit-maps/${mapId}`);
+  return handleResponse<CircuitMap>(response);
+}
+
+export async function createCircuitMap(homeId: string, data: {
+  systemId?: string;
+  imageUrl?: string;
+  storeImage?: boolean;
+  breakers?: Breaker[];
+}): Promise<CircuitMap> {
+  const response = await fetch(`/v2/homes/${homeId}/circuit-maps`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<CircuitMap>(response);
+}
+
+export async function updateCircuitMap(mapId: string, data: {
+  breakers?: Breaker[];
+  imageUrl?: string;
+  storeImage?: boolean;
+}): Promise<any> {
+  const response = await fetch(`/v2/circuit-maps/${mapId}`, {
+    method: "PATCH",
+    headers: v2Headers(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<any>(response);
+}
+
+export async function deleteCircuitMap(mapId: string): Promise<void> {
+  const response = await fetch(`/v2/circuit-maps/${mapId}`, {
+    method: "DELETE",
+    headers: v2Headers(),
+  });
+  return handleResponse<void>(response);
+}
+
+export interface CircuitPanelAnalysis {
+  breakers: Breaker[];
+  confidence: number;
+  notes?: string;
+}
+
+export async function analyzeCircuitPanel(imageBase64: string): Promise<CircuitPanelAnalysis> {
+  const response = await fetch("/api/ai/analyze-circuit-panel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageBase64 }),
+  });
+  return handleResponse<CircuitPanelAnalysis>(response);
+}

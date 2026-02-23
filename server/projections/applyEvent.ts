@@ -390,6 +390,51 @@ export async function applyEvent(tx: DrizzleTx, event: EventRow): Promise<void> 
       `);
       break;
 
+    // ----- Circuit Map -----
+    case EventTypes.CircuitMapCreated:
+      await tx.execute(sql`
+        INSERT INTO projection_circuit_map (map_id, home_id, system_id, image_url, store_image, state, breakers, last_event_seq, created_at, updated_at)
+        VALUES (
+          ${id},
+          ${(data.homeId as string) ?? ""},
+          ${(data.systemId as string) ?? null},
+          ${(data.imageUrl as string) ?? null},
+          ${(data.storeImage as boolean) ? 1 : 0},
+          'saved',
+          ${JSON.stringify(data.breakers ?? [])}::jsonb,
+          ${seq}, now(), now()
+        )
+        ON CONFLICT (map_id) DO UPDATE
+        SET state = 'saved',
+            image_url = COALESCE(${(data.imageUrl as string) ?? null}, projection_circuit_map.image_url),
+            store_image = ${(data.storeImage as boolean) ? 1 : 0},
+            breakers = ${JSON.stringify(data.breakers ?? [])}::jsonb,
+            last_event_seq = ${seq},
+            updated_at = now()
+      `);
+      break;
+
+    case EventTypes.CircuitMapAnnotated:
+      await tx.execute(sql`
+        UPDATE projection_circuit_map
+        SET breakers = ${JSON.stringify(data.breakers ?? [])}::jsonb,
+            image_url = COALESCE(${(data.imageUrl as string) ?? null}, projection_circuit_map.image_url),
+            store_image = CASE WHEN ${(data.storeImage as boolean | undefined) !== undefined ? 1 : null}::int IS NOT NULL
+                          THEN ${(data.storeImage as boolean) ? 1 : 0}
+                          ELSE projection_circuit_map.store_image END,
+            state = 'saved',
+            last_event_seq = ${seq},
+            updated_at = now()
+        WHERE map_id = ${id}
+      `);
+      break;
+
+    case EventTypes.CircuitMapDeleted:
+      await tx.execute(sql`
+        DELETE FROM projection_circuit_map WHERE map_id = ${id}
+      `);
+      break;
+
     // ----- Retry -----
     case EventTypes.RetryRequested:
       break;

@@ -29,6 +29,7 @@ export const AggregateTypes = [
   "notification_pref",
   "assistant_action",
   "chat_session",
+  "circuit_map",
 ] as const;
 export type AggregateType = (typeof AggregateTypes)[number];
 
@@ -77,6 +78,10 @@ export const EventTypes = {
   AssistantActionApproved: "AssistantActionApproved",
   AssistantActionExecuted: "AssistantActionExecuted",
   AssistantActionRejected: "AssistantActionRejected",
+
+  CircuitMapCreated: "CircuitMapCreated",
+  CircuitMapAnnotated: "CircuitMapAnnotated",
+  CircuitMapDeleted: "CircuitMapDeleted",
 
   RetryRequested: "RetryRequested",
 } as const;
@@ -222,6 +227,32 @@ export const DigestFailedData = z.object({
   attemptNumber: z.number().optional(),
 });
 
+export const BreakerSchema = z.object({
+  number: z.number().int().min(1),
+  label: z.string().default(""),
+  room: z.string().default(""),
+  notes: z.string().default(""),
+  amperage: z.number().int().optional(),
+});
+
+export const CircuitMapCreatedData = z.object({
+  homeId: z.string().uuid(),
+  systemId: z.string().uuid().optional(),
+  imageUrl: z.string().optional(),
+  storeImage: z.boolean().default(false),
+  breakers: z.array(BreakerSchema).default([]),
+});
+
+export const CircuitMapAnnotatedData = z.object({
+  breakers: z.array(BreakerSchema),
+  imageUrl: z.string().optional(),
+  storeImage: z.boolean().optional(),
+});
+
+export const CircuitMapDeletedData = z.object({
+  reason: z.string().optional(),
+});
+
 export const RetryRequestedData = z.object({
   targetAggregateType: z.string(),
   targetAggregateId: z.string().uuid(),
@@ -260,6 +291,9 @@ export const EventDataSchemas: Record<string, z.ZodTypeAny> = {
   [EventTypes.AssistantActionApproved]: AssistantActionApprovedData,
   [EventTypes.AssistantActionExecuted]: AssistantActionExecutedData,
   [EventTypes.AssistantActionRejected]: AssistantActionRejectedData,
+  [EventTypes.CircuitMapCreated]: CircuitMapCreatedData,
+  [EventTypes.CircuitMapAnnotated]: CircuitMapAnnotatedData,
+  [EventTypes.CircuitMapDeleted]: CircuitMapDeletedData,
   [EventTypes.RetryRequested]: RetryRequestedData,
 };
 

@@ -1378,6 +1378,182 @@ import { assistantRouter } from "./assistant/assistantRoutes";
 v2Router.use("/assistant", assistantRouter);
 
 // ---------------------------------------------------------------------------
+// Circuit Map routes
+// ---------------------------------------------------------------------------
+
+async function verifyCircuitMapOwnership(mapId: string, userId: string): Promise<string | null> {
+  const result = await db.execute(sql`
+    SELECT cm.home_id, h.user_id
+    FROM projection_circuit_map cm
+    LEFT JOIN projection_home h ON h.home_id = cm.home_id
+    WHERE cm.map_id = ${mapId}
+  `);
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0] as { home_id: string; user_id: string };
+  if (row.user_id !== userId) return null;
+  return row.home_id;
+}
+
+v2Router.get("/homes/:homeId/circuit-maps", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+    if (!(await verifyHomeOwnershipStrict(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const result = await db.execute(sql`
+      SELECT map_id, home_id, system_id, image_url, store_image, state, breakers, created_at, updated_at
+      FROM projection_circuit_map
+      WHERE home_id = ${homeId}
+      ORDER BY created_at DESC
+    `);
+    const maps = result.rows.map((row: any) => ({
+      id: row.map_id,
+      homeId: row.home_id,
+      systemId: row.system_id,
+      imageUrl: row.store_image ? row.image_url : null,
+      storeImage: !!row.store_image,
+      state: row.state,
+      breakers: row.breakers ?? [],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+    res.json(maps);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+v2Router.get("/circuit-maps/:mapId", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { mapId } = req.params;
+    if (!(await verifyCircuitMapOwnership(mapId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const result = await db.execute(sql`
+      SELECT map_id, home_id, system_id, image_url, store_image, state, breakers, created_at, updated_at
+      FROM projection_circuit_map
+      WHERE map_id = ${mapId}
+    `);
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Circuit map not found" });
+      return;
+    }
+    const row = result.rows[0] as any;
+    res.json({
+      id: row.map_id,
+      homeId: row.home_id,
+      systemId: row.system_id,
+      imageUrl: row.store_image ? row.image_url : null,
+      storeImage: !!row.store_image,
+      state: row.state,
+      breakers: row.breakers ?? [],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+v2Router.post("/homes/:homeId/circuit-maps", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+    if (!(await verifyHomeOwnershipStrict(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const mapId = crypto.randomUUID();
+    const result = await db.transaction(async (tx) =>
+      appendAndApply(tx, {
+        aggregateType: "circuit_map",
+        aggregateId: mapId,
+        expectedVersion: 0,
+        eventType: EventTypes.CircuitMapCreated,
+        data: {
+          homeId,
+          systemId: req.body.systemId,
+          imageUrl: req.body.imageUrl,
+          storeImage: req.body.storeImage ?? false,
+          breakers: req.body.breakers ?? [],
+        },
+        meta: {},
+        actor,
+        idempotencyKey: req.idempotencyKey!,
+      }),
+    );
+    res.status(201).json({ id: mapId, mapId, ...result });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+v2Router.patch("/circuit-maps/:mapId", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { mapId } = req.params;
+    if (!(await verifyCircuitMapOwnership(mapId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const result = await db.transaction(async (tx) => {
+      const ver = await getCurrentVersion(tx, "circuit_map", mapId);
+      return appendAndApply(tx, {
+        aggregateType: "circuit_map",
+        aggregateId: mapId,
+        expectedVersion: ver,
+        eventType: EventTypes.CircuitMapAnnotated,
+        data: {
+          breakers: req.body.breakers,
+          imageUrl: req.body.imageUrl,
+          storeImage: req.body.storeImage,
+        },
+        meta: {},
+        actor,
+        idempotencyKey: req.idempotencyKey!,
+      });
+    });
+    res.json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+v2Router.delete("/circuit-maps/:mapId", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { mapId } = req.params;
+    if (!(await verifyCircuitMapOwnership(mapId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const result = await db.transaction(async (tx) => {
+      const ver = await getCurrentVersion(tx, "circuit_map", mapId);
+      return appendAndApply(tx, {
+        aggregateType: "circuit_map",
+        aggregateId: mapId,
+        expectedVersion: ver,
+        eventType: EventTypes.CircuitMapDeleted,
+        data: { reason: "User deleted" },
+        meta: {},
+        actor,
+        idempotencyKey: req.idempotencyKey!,
+      });
+    });
+    res.json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Helper: fetch current aggregate state from projection tables
 // ---------------------------------------------------------------------------
 
@@ -1399,6 +1575,9 @@ async function getAggregateState(
       break;
     case "assistant_action":
       result = await tx.execute(sql`SELECT state FROM projection_assistant_action WHERE assistant_action_id = ${aggregateId}`);
+      break;
+    case "circuit_map":
+      result = await tx.execute(sql`SELECT state FROM projection_circuit_map WHERE map_id = ${aggregateId}`);
       break;
     default:
       return null;

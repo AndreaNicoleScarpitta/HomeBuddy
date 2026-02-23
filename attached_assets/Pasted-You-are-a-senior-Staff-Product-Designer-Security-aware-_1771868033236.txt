@@ -1,0 +1,265 @@
+You are a senior Staff Product Designer + Security-aware Full Stack Engineer working inside an existing production app called **Home Buddy**.
+
+Your task is to INSERT a new feature called **Circuit Panel Mapping** into the app while maintaining strict alignment with:
+
+* Existing UX workflow structure
+* Established design language and navigation patterns
+* Historical privacy and security architecture
+* Staff-designer principles: clarity, minimal friction, progressive disclosure, and system-first modeling
+
+You must EXTEND the system, not redesign it.
+
+---
+
+# CONTEXT
+
+Home Buddy already has:
+
+* Dashboard (Home Base)
+* Systems section (HVAC, Plumbing, Electrical, etc.)
+* AI Assistant with photo analysis
+* Inspections upload
+* Documents storage
+* Maintenance History
+* Profile/Settings
+
+Key principles already established in the app:
+
+1. The Dashboard is the operational hub.
+2. Systems represent the “source of truth” for structural home data.
+3. AI features assist but never become the primary configuration UI.
+4. UX tone is calm, professional, and anxiety-aware.
+5. Security prioritizes user ownership, consent, and minimal data retention.
+
+DO NOT introduce new global navigation items.
+DO NOT move existing features.
+DO NOT alter onboarding or authentication.
+
+---
+
+# OBJECTIVE
+
+Add a new capability allowing users to:
+
+* Take a photo of their home’s electrical breaker panel
+* Annotate breakers with room/system labels
+* Save the mapping as structured system data
+* Use the mapping later for AI guidance and maintenance workflows
+
+This must feel like a natural extension of the Electrical system.
+
+---
+
+# FEATURE PLACEMENT REQUIREMENTS (NON-NEGOTIABLE)
+
+The new feature MUST live at:
+
+Dashboard
+→ Systems
+→ Electrical System Detail
+→ NEW: "Circuit Map"
+
+Add a secondary action button:
+
+[ Map Circuit Panel ]
+
+This launches a guided subflow.
+
+DO NOT place this feature in:
+
+* Assistant Chat
+* Documents
+* Inspections
+* Profile
+
+---
+
+# UX DESIGN CONSTRAINTS
+
+Follow existing UX patterns already present in the app:
+
+1. Progressive Disclosure
+
+* First screen explains value in 1 sentence.
+* Do not overwhelm with controls.
+
+2. Maximum 3 Clicks to Action State
+
+* Dashboard → Electrical → Map Panel → Camera
+
+3. Reuse Existing Patterns
+
+* Use the same photo consent modal as AI Assistant Vision.
+* Use existing toast notifications.
+* Use existing skeleton loaders.
+* Use existing error handling.
+
+4. Staff Designer Principles
+
+* System modeling > file uploading
+* Structured data > freeform text
+* Inline editing > modal sprawl
+* Calm language, no alarmist wording
+
+5. Mobile-First Capture
+   Camera UX must assume PWA mobile usage.
+
+---
+
+# SECURITY & PRIVACY REQUIREMENTS
+
+You MUST align with historical security posture:
+
+DATA HANDLING:
+
+* Images uploaded via presigned URL (GCS).
+* No direct client → server binary payloads.
+* Metadata stored separately from image asset.
+
+CONSENT:
+
+* Reuse existing Vision API consent modal.
+* Add a checkbox: “Store panel image for future reference.”
+* If unchecked, only annotations persist.
+
+MINIMAL STORAGE:
+
+* Store breaker annotations as structured JSON.
+* Never store EXIF location metadata.
+* Strip background metadata before upload.
+
+ACCESS CONTROL:
+
+* Circuit Map is scoped to the authenticated user’s home profile.
+* Respect existing OAuth session model.
+* No cross-home visibility.
+
+AI SAFETY:
+
+* AI suggestions are optional overlays.
+* User remains final authority over labels.
+
+---
+
+# TECHNICAL ARCHITECTURE
+
+Create a new model:
+
+CircuitPanelMap:
+
+* id
+* home_id
+* image_url
+* breakers[]:
+
+  * number
+  * label
+  * room
+  * notes
+* created_at
+* updated_at
+
+Do NOT modify existing Home model schema beyond foreign key linkage.
+
+Reuse:
+
+* Vision API integration layer
+* Existing file upload pipeline
+* Existing analytics event system
+
+---
+
+# ANALYTICS REQUIREMENTS (GA4)
+
+Add events:
+
+circuit_map_started
+circuit_map_photo_captured
+breaker_annotation_added
+circuit_map_saved
+circuit_map_abandoned
+
+Follow existing analytics wrapper. Do NOT add new analytics libraries.
+
+---
+
+# STATE MACHINE EXPECTATIONS
+
+Integrate into existing UX workflow state machine:
+
+States:
+
+* idle
+* capturing
+* analyzing
+* annotating
+* saved
+
+Transitions must be idempotent.
+Handle offline or interrupted capture gracefully.
+
+---
+
+# DESIGN SYSTEM REQUIREMENTS
+
+Use current component library:
+
+* Same card layout as Systems.
+* Same button hierarchy.
+* Same typography scale.
+* Dark mode compatible.
+
+NO new color tokens.
+NO new animation styles.
+
+---
+
+# ACCESSIBILITY
+
+* Touch targets minimum 44px.
+* Breaker annotation supports keyboard navigation.
+* Screen reader labels for each breaker pin.
+
+---
+
+# FAILURE MODES TO HANDLE
+
+* User uploads blurry image.
+* AI fails to detect breakers.
+* User exits mid-annotation.
+* Network disconnect during upload.
+
+System must allow manual annotation fallback.
+
+---
+
+# DELIVERABLES
+
+Produce:
+
+1. Updated UX flow insertion (in the same format as current workflow docs)
+2. New React components for Circuit Map
+3. Backend schema + API routes
+4. Security checklist verifying compliance with existing policies
+5. Analytics event hooks
+6. State machine updates
+
+DO NOT output marketing copy.
+DO NOT redesign existing navigation.
+
+---
+
+# SUCCESS CRITERIA
+
+The feature should feel like it has always belonged in Home Buddy.
+
+A staff designer reviewing this change should conclude:
+
+* Navigation is unchanged.
+* Mental model remains “My Home Systems.”
+* Security posture is preserved.
+* UX friction did not increase.
+
+If any design choice conflicts with historical UX or security patterns, you must choose consistency over novelty.
+
+Begin implementation.

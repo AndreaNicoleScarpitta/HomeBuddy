@@ -17,9 +17,10 @@ The application employs a robust architecture featuring social login authenticat
 
 Core features include:
 - **Authentication**: Passport.js for OAuth, session-based with PostgreSQL session store.
-- **Data Management**: Event-sourced architecture for critical aggregates (Homes, Systems, Tasks, Reports, Findings, Assistant Actions). Data immutability enforced on the event log.
+- **Data Management**: Event-sourced architecture for critical aggregates (Homes, Systems, Tasks, Reports, Findings, Assistant Actions, Circuit Maps). Data immutability enforced on the event log.
 - **API**: Versioned API endpoints (`/v2`) with idempotency keys, state machine guards, and ownership verification for data security.
-- **AI Integration**: AI chat with streaming responses (GPT-4o), vision API capabilities for photo analysis, privacy controls for data storage opt-out, and chat session management with history sidebar.
+- **AI Integration**: AI chat with streaming responses (GPT-4o), vision API capabilities for photo analysis and circuit panel identification, privacy controls for data storage opt-out, and chat session management with history sidebar.
+- **Circuit Panel Mapping**: Photograph breaker panels, AI-powered breaker identification (GPT-4o vision), structured annotation editor with room/amperage fields, event-sourced with CircuitMapCreated/Annotated/Deleted events. Accessible from Dashboard → Home Info → Circuit Panel Map button (requires Electrical system).
 - **Document Storage**: Object storage integration (GCS) for home documents (insurance, warranties, permits, receipts) with presigned URL upload flow.
 - **Background Processing**: A job queue system handles asynchronous tasks like report analysis, digest generation, and reconciliation checks for overdue tasks.
 - **PWA Capabilities**: Service worker, manifest, and app icons for installability and offline access.

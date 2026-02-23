@@ -1092,5 +1092,85 @@ Only include fields you can reasonably determine from the image. If unsure, omit
     }
   });
 
+  const circuitPanelSchema = z.object({
+    imageBase64: z.string().min(1, "Image is required"),
+  });
+
+  app.post("/api/ai/analyze-circuit-panel", isAuthenticated, async (req, res) => {
+    try {
+      const { imageBase64 } = circuitPanelSchema.parse(req.body);
+
+      logInfo("ai.circuit-panel", "Analyzing circuit breaker panel image");
+
+      const OpenAI = (await import("openai")).default;
+      const openai = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a home electrical system analyst. You are examining a photo of a residential circuit breaker panel (electrical panel / load center).
+
+Your job is to identify individual breakers visible in the image and provide structured data for each one.
+
+Return a JSON object with these fields:
+- breakers: An array of objects, each with:
+  - number: The breaker position number (1, 2, 3, etc., top to bottom, left to right)
+  - label: Any visible label text on or near the breaker (e.g., "Kitchen", "Master Bed"). Use "" if not readable.
+  - room: Your best guess of what room/area this breaker serves based on the label. Use "" if unknown.
+  - notes: Any observations (e.g., "double-pole breaker", "GFCI", "appears tripped")
+  - amperage: The amperage rating if visible (e.g., 15, 20, 30). Omit if not visible.
+- confidence: A number 0-1 indicating how clearly you can read the panel (1 = very clear, 0 = unreadable)
+- notes: General observations about the panel (brand, age estimate, condition)
+
+IMPORTANT:
+- This analysis is for informational reference only, not a professional electrical inspection.
+- If the image is blurry or unclear, set confidence low and provide fewer breakers.
+- Number breakers sequentially based on their physical position.
+- Only include breakers you can actually see in the image.
+- Do NOT guess amperage values — only include if clearly visible on the breaker.`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Please analyze this circuit breaker panel and identify each breaker. Return structured JSON."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageBase64.startsWith("data:") ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+                }
+              }
+            ]
+          }
+        ],
+        max_completion_tokens: 2000,
+      });
+
+      const content = response.choices[0]?.message?.content || "{}";
+      let result;
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        result = jsonMatch ? JSON.parse(jsonMatch[0]) : { breakers: [], confidence: 0, notes: "Could not parse response" };
+      } catch {
+        result = { breakers: [], confidence: 0, notes: content };
+      }
+
+      if (!result.breakers) result.breakers = [];
+      if (result.confidence === undefined) result.confidence = 0.5;
+
+      logInfo("ai.circuit-panel", "Panel analyzed", { breakerCount: result.breakers.length, confidence: result.confidence });
+      res.json(result);
+    } catch (error) {
+      return handleApiError(res, "ai.circuit-panel", error, 500);
+    }
+  });
+
   return httpServer;
 }

@@ -255,6 +255,21 @@ export const projectionChatMessage = pgTable(
 );
 export type ProjectionChatMessage = typeof projectionChatMessage.$inferSelect;
 
+/** Projection: Circuit panel map — breaker annotations for a home's electrical system. */
+export const projectionCircuitMap = pgTable("projection_circuit_map", {
+  mapId: text("map_id").primaryKey(),
+  homeId: text("home_id").notNull(),
+  systemId: text("system_id"),
+  imageUrl: text("image_url"),
+  storeImage: integer("store_image").notNull().default(0),
+  state: text("state").notNull().default("idle"),
+  breakers: jsonb("breakers").notNull().default([]),
+  lastEventSeq: bigint("last_event_seq", { mode: "number" }).notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type ProjectionCircuitMap = typeof projectionCircuitMap.$inferSelect;
+
 /**
  * Projection checkpoint — tracks how far each projector has consumed the
  * event_log.  Used by the catch-up / rebuild loop so it can resume from
