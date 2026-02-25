@@ -328,6 +328,20 @@ export default function Dashboard() {
   }).length;
   const poorSystemsCount = systems.filter(s => s.condition === "Poor").length;
 
+  const computedHealthScore = (() => {
+    const stored = home.healthScore;
+    if (stored && stored > 0) return stored;
+    if (systems.length === 0) return 0;
+    const conditionScores: Record<string, number> = {
+      "Great": 100, "Good": 90, "Fair": 70, "Poor": 40, "Unknown": 80
+    };
+    const avg = systems.reduce((sum, s) => {
+      return sum + (conditionScores[s.condition || "Unknown"] || 80);
+    }, 0) / systems.length;
+    const taskPenalty = Math.min(urgentTasksCount * 10 + overdueTasksCount * 5, 30);
+    return Math.max(0, Math.round(avg - taskPenalty));
+  })();
+
   return (
     <Layout>
       <OnboardingTour key={tourKey} isOpen={showTour} onComplete={completeTour} />
@@ -350,7 +364,7 @@ export default function Dashboard() {
         <section className="space-y-4" data-tour="home-status">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HomeHealth 
-              score={home.healthScore || 0} 
+              score={computedHealthScore} 
               systemsCount={systems.length}
               tasksCount={activeTasks.length}
               urgentTasksCount={urgentTasksCount}

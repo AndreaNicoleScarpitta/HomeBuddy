@@ -711,6 +711,54 @@ v2Router.post("/tasks", async (req: Request, res: Response) => {
   }
 });
 
+v2Router.post("/systems/suggest-tasks", async (req: Request, res: Response) => {
+  try {
+    const { systemName, systemCategory, notes } = req.body;
+    if (!systemName) {
+      res.status(400).json({ error: "systemName is required" });
+      return;
+    }
+
+    const OpenAI = (await import("openai")).default;
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    const prompt = `You are a home maintenance expert. A homeowner has added a "${systemCategory || 'Other'}" system called "${systemName}"${notes ? ` with notes: "${notes}"` : ''}.
+
+Generate a JSON array of 3-6 best-practice maintenance tasks for this system. Each task should have:
+- "title": concise task name
+- "description": 1-2 sentence explanation of why this task matters
+- "urgency": one of "now", "soon", "later", "monitor"
+- "diyLevel": one of "DIY-Safe", "Caution", "Pro-Only"
+- "cadence": recommended frequency like "monthly", "quarterly", "semi-annually", "annually", "every-2-years", "every-5-years", "as-needed"
+- "monthsUntilDue": how many months from now until first due (integer)
+- "estimatedCost": rough cost range string like "$0-50" or "$100-300"
+- "safetyWarning": any safety notes or null
+
+Focus on practical, actionable tasks that a homeowner would actually need. Be specific to the system type.
+
+Return ONLY a valid JSON array, no markdown or explanation.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 1500,
+    });
+
+    const content = completion.choices[0]?.message?.content || "[]";
+    const cleaned = content.replace(/```json\n?|\n?```/g, "").trim();
+    const tasks = JSON.parse(cleaned);
+
+    res.json({ tasks });
+  } catch (err) {
+    console.error("AI task suggestion error:", err);
+    res.status(500).json({ error: "Failed to generate task suggestions" });
+  }
+});
+
 v2Router.patch("/tasks/:taskId", async (req: Request, res: Response) => {
   try {
     const actor = getActor(req);

@@ -259,6 +259,45 @@ export async function deleteTask(id: string | number): Promise<void> {
   return handleResponse<void>(response);
 }
 
+export interface SuggestedTask {
+  title: string;
+  description: string;
+  urgency: "now" | "soon" | "later" | "monitor";
+  diyLevel: "DIY-Safe" | "Caution" | "Pro-Only";
+  cadence: string;
+  monthsUntilDue: number;
+  estimatedCost: string;
+  safetyWarning: string | null;
+}
+
+export async function suggestMaintenanceTasks(systemName: string, systemCategory: string, notes?: string): Promise<SuggestedTask[]> {
+  const response = await fetch(`/v2/systems/suggest-tasks`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify({ systemName, systemCategory, notes }),
+  });
+  const data = await handleResponse<{ tasks: SuggestedTask[] }>(response);
+  return data.tasks;
+}
+
+export async function createTasksBatch(homeId: string | number, tasks: Array<{
+  title: string;
+  systemId?: string;
+  estimates?: Record<string, unknown>;
+  dueAt?: string;
+}>): Promise<V2Task[]> {
+  const results: V2Task[] = [];
+  for (const task of tasks) {
+    const response = await fetch(`/v2/tasks`, {
+      method: "POST",
+      headers: v2Headers(),
+      body: JSON.stringify({ homeId, ...task }),
+    });
+    results.push(await handleResponse<V2Task>(response));
+  }
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // Maintenance Log API (legacy — stays on CRUD)
 // ---------------------------------------------------------------------------
