@@ -292,6 +292,10 @@ export interface SuggestedTask {
   safetyWarning: string | null;
 }
 
+/**
+ * AI-determined task properties returned by the analyze endpoint.
+ * Used in QuickAddTaskDialog to auto-fill urgency, DIY level, and cost.
+ */
 export interface TaskAnalysis {
   urgency: string;
   diyLevel: string;
@@ -300,6 +304,11 @@ export interface TaskAnalysis {
   safetyWarning: string | null;
 }
 
+/**
+ * Calls GPT-4o to analyze a task title and return urgency, DIY level,
+ * cost estimate, description, and safety warnings.
+ * Debounced in the UI to avoid excessive calls while typing.
+ */
 export async function analyzeTask(title: string, category?: string): Promise<TaskAnalysis> {
   const response = await fetch("/v2/tasks/analyze", {
     method: "POST",

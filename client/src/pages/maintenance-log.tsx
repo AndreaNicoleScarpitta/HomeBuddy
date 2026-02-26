@@ -34,6 +34,14 @@ import type { V2Task, V2System } from "@/lib/api";
 import type { MaintenanceLogEntry } from "@shared/schema";
 import { trackEvent } from "@/lib/analytics";
 
+/**
+ * Filter categories for the Maintenance Log task list.
+ * Tasks are categorized by their due date relative to today:
+ * - upcoming: due date > 7 days out or no due date
+ * - due: due today or within the next 7 days
+ * - past_due: due date is in the past
+ * - completed: task status is "completed"
+ */
 type FilterTab = "upcoming" | "due" | "past_due" | "completed";
 
 const filterTabs: { key: FilterTab; label: string; icon: React.ElementType }[] = [
@@ -43,6 +51,11 @@ const filterTabs: { key: FilterTab; label: string; icon: React.ElementType }[] =
   { key: "completed", label: "Completed", icon: CheckCircle2 },
 ];
 
+/**
+ * Sorts tasks into four buckets based on due date and completion status.
+ * Each bucket is sorted by due date (earliest first, except completed which is newest first).
+ * Tasks without a due date are placed in "upcoming" by default.
+ */
 function categorizeTasks(tasks: V2Task[]) {
   const now = new Date();
   const upcoming: V2Task[] = [];

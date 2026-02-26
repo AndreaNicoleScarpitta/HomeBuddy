@@ -1,3 +1,20 @@
+/**
+ * Report Analyzer Job Handler
+ *
+ * Processes report_analyze jobs by reading the uploaded file from object storage,
+ * sending the content to GPT-4o for analysis, and emitting an
+ * InspectionReportAnalyzedDraft event with structured findings.
+ *
+ * Each finding includes title, description, severity, urgency, category,
+ * location, estimated cost range, and DIY safety level.
+ *
+ * Idempotency: Uses the job's report_id + a deterministic idempotency key
+ * to ensure that retries do not create duplicate draft events.
+ *
+ * Fallback: If AI analysis fails, emits an InspectionReportAnalysisFailed
+ * event so the UI can display the failure state.
+ */
+
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
 import { append } from "../eventing/eventStore";
@@ -7,27 +24,44 @@ import { getCurrentVersion } from "../eventing/eventStore";
 
 type Tx = Parameters<Parameters<typeof import("../db").db.transaction>[0]>[0];
 
-async function fetchAndAnalyzeReport(storageRef: string): Promise<{
+/** Shape of a single AI-generated finding from report analysis. */
+interface AnalysisFinding {
+  findingId: string;
+  title: string;
+  description: string;
+  severity: string;
+  urgency: string;
+  category: string;
+  location: string;
+  estimatedCost: string;
+  diyLevel: string;
+}
+
+/** Result returned by fetchAndAnalyzeReport. */
+interface AnalysisResult {
   summary: string;
   issuesFound: number;
-  findings: Array<{
-    findingId: string;
-    title: string;
-    description: string;
-    severity: string;
-    urgency: string;
-    category: string;
-    location: string;
-    estimatedCost: string;
-    diyLevel: string;
-  }>;
-}> {
+  findings: AnalysisFinding[];
+}
+
+/**
+ * Reads the uploaded report file from object storage (if available),
+ * then calls GPT-4o to extract structured findings.
+ *
+ * @param storageRef - The object storage path (e.g., "/objects/uploads/<id>")
+ * @returns Structured analysis with summary, issue count, and findings array
+ */
+async function fetchAndAnalyzeReport(storageRef: string): Promise<AnalysisResult> {
   let textContent = "";
   if (storageRef) {
     try {
-      const { objectStorageService } = await import("../replit_integrations/object_storage/objectStorage");
+      const { objectStorageClient } = await import("../replit_integrations/object_storage/objectStorage");
       const objectName = storageRef.replace(/^\/objects\//, "");
-      const buffer = await objectStorageService.downloadObject(objectName);
+      const parts = objectName.split("/");
+      const bucketName = parts[0];
+      const filePath = parts.slice(1).join("/");
+      const bucket = objectStorageClient.bucket(bucketName);
+      const [buffer] = await bucket.file(filePath).download();
       if (buffer) {
         const isPdf = objectName.toLowerCase().endsWith(".pdf") || storageRef.includes("pdf");
         if (isPdf) {
@@ -100,6 +134,16 @@ Be realistic and practical. Return ONLY valid JSON, no markdown.`;
   };
 }
 
+/**
+ * Main job handler for report analysis.
+ *
+ * Validates the report is in "queued" state, calls fetchAndAnalyzeReport
+ * to get AI-generated findings, then emits InspectionReportAnalyzedDraft.
+ * On failure, emits InspectionReportAnalysisFailed so the UI shows the error.
+ *
+ * @param tx - Active database transaction
+ * @param payload - Must contain { reportId: string }
+ */
 export async function handleReportAnalyze(
   tx: Tx,
   payload: Record<string, unknown>,

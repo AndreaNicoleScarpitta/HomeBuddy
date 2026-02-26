@@ -584,7 +584,7 @@ export default function Dashboard() {
                     .filter(t => t.status === "pending" || t.status === "scheduled")
                     .sort((a, b) => {
                       const order: Record<string, number> = { now: 0, soon: 1, later: 2, monitor: 3 };
-                      return (order[a.urgency] ?? 4) - (order[b.urgency] ?? 4);
+                      return (order[a.urgency ?? ""] ?? 4) - (order[b.urgency ?? ""] ?? 4);
                     })[0];
                   return nextTask ? nextTask.title : "Nothing scheduled";
                 })()}
