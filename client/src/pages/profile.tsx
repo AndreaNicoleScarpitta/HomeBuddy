@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { User, MapPin, Home, Save, Shield, Trash2 } from "lucide-react";
+import { User, MapPin, Home, Save, Shield, Trash2, Wrench } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getHome, updateHome } from "@/lib/api";
+import { getHome, updateHome, getNotificationPreferences, updateNotificationPreferences } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
@@ -35,6 +35,62 @@ function ProfileSkeleton() {
       <Skeleton className="h-48" />
       <Skeleton className="h-96" />
     </div>
+  );
+}
+
+function ContractorModeCard() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: prefs, isLoading } = useQuery({
+    queryKey: ["notificationPreferences"],
+    queryFn: getNotificationPreferences,
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (contractorMode: boolean) => updateNotificationPreferences({ contractorMode } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notificationPreferences"] });
+      toast({ title: "Settings saved" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not update settings.", variant: "destructive" });
+    },
+  });
+
+  const isOn = (prefs as any)?.contractorMode ?? false;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-heading flex items-center gap-2">
+          <Wrench className="h-5 w-5 text-primary" />
+          Contractor Mode
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="contractor-mode" className="text-sm font-medium">
+              Enable Contractor Mode
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              When enabled, you can manually override the AI-determined DIY safety level on tasks. This is intended for licensed contractors or experienced homeowners who can safely perform work that would normally require a professional.
+            </p>
+          </div>
+          <Switch
+            id="contractor-mode"
+            checked={isOn}
+            disabled={isLoading || toggleMutation.isPending}
+            onCheckedChange={(checked) => {
+              trackEvent("toggle_contractor_mode", "settings", checked ? "enable" : "disable");
+              toggleMutation.mutate(checked);
+            }}
+            data-testid="switch-contractor-mode"
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -211,6 +267,8 @@ export default function Profile() {
           </Card>
 
           <NotificationSettings />
+
+          <ContractorModeCard />
 
           <Card>
             <CardHeader className="pb-3">

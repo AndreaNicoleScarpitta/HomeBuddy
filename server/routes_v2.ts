@@ -711,6 +711,60 @@ v2Router.post("/tasks", async (req: Request, res: Response) => {
   }
 });
 
+v2Router.post("/tasks/analyze", async (req: Request, res: Response) => {
+  try {
+    const { title, category } = req.body;
+    if (!title || typeof title !== "string" || title.trim().length < 3) {
+      res.status(400).json({ error: "Task title is required (min 3 characters)" });
+      return;
+    }
+
+    const OpenAI = (await import("openai")).default;
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    const prompt = `You are a home maintenance expert. A homeowner wants to add this task: "${title.trim()}"${category ? ` (category: ${category})` : ""}.
+
+Analyze this task and return a JSON object with:
+- "urgency": one of "now", "soon", "later", "monitor" — based on typical safety/damage risk if delayed
+- "diyLevel": one of "DIY-Safe", "Caution", "Pro-Only" — based on skill/licensing/safety requirements
+- "estimatedCost": a realistic cost range string like "$0-25", "$50-150", "$200-500" — include both DIY and pro costs if applicable
+- "description": 1-2 sentence explanation of this task and why it matters
+- "safetyWarning": a brief safety note if relevant, or null if the task is straightforward
+
+Be practical and realistic. Most routine cleaning/filter tasks are DIY-Safe with low urgency. Electrical, gas, structural, and roofing work is typically Pro-Only. Consider permits, licensing requirements, and physical danger.
+
+Return ONLY a valid JSON object, no markdown or explanation.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+      max_tokens: 400,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+
+    const validUrgencies = ["now", "soon", "later", "monitor"];
+    const validDiy = ["DIY-Safe", "Caution", "Pro-Only"];
+
+    res.json({
+      urgency: validUrgencies.includes(parsed.urgency) ? parsed.urgency : "later",
+      diyLevel: validDiy.includes(parsed.diyLevel) ? parsed.diyLevel : "Caution",
+      estimatedCost: parsed.estimatedCost || "TBD",
+      description: parsed.description || "",
+      safetyWarning: parsed.safetyWarning || null,
+    });
+  } catch (err) {
+    console.error("AI task analysis error:", err);
+    res.status(500).json({ error: "Failed to analyze task" });
+  }
+});
+
 v2Router.post("/systems/suggest-tasks", async (req: Request, res: Response) => {
   try {
     const { systemName, systemCategory, notes } = req.body;
@@ -1219,6 +1273,7 @@ v2Router.get("/notifications/preferences", async (req: Request, res: Response) =
         weeklyDigest: false,
         pushEnabled: false,
         emailEnabled: true,
+        contractorMode: false,
       });
       return;
     }
@@ -1232,6 +1287,7 @@ v2Router.get("/notifications/preferences", async (req: Request, res: Response) =
       weeklyDigest: flatPrefs.weeklyDigest ?? false,
       pushEnabled: flatPrefs.pushEnabled ?? false,
       emailEnabled: flatPrefs.emailEnabled ?? true,
+      contractorMode: flatPrefs.contractorMode ?? false,
     });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

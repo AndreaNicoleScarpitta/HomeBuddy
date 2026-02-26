@@ -292,6 +292,23 @@ export interface SuggestedTask {
   safetyWarning: string | null;
 }
 
+export interface TaskAnalysis {
+  urgency: string;
+  diyLevel: string;
+  estimatedCost: string;
+  description: string;
+  safetyWarning: string | null;
+}
+
+export async function analyzeTask(title: string, category?: string): Promise<TaskAnalysis> {
+  const response = await fetch("/v2/tasks/analyze", {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify({ title, category: category || undefined }),
+  });
+  return handleResponse<TaskAnalysis>(response);
+}
+
 export async function suggestMaintenanceTasks(systemName: string, systemCategory: string, notes?: string): Promise<SuggestedTask[]> {
   const response = await fetch(`/v2/systems/suggest-tasks`, {
     method: "POST",

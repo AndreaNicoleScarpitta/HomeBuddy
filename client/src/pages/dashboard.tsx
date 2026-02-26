@@ -14,13 +14,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowRight, ListTodo, CheckCircle2 } from "lucide-react";
+import { Plus, ArrowRight, ListTodo, CheckCircle2, Loader2, Sparkles, Wrench, AlertTriangle, ShieldCheck, ShieldAlert, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { FieldTooltip } from "@/components/field-tooltip";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getHome, getTasks, getSystems, createTask, updateTask, createLogEntry } from "@/lib/api";
+import { getHome, getTasks, getSystems, createTask, updateTask, createLogEntry, analyzeTask, getNotificationPreferences } from "@/lib/api";
+import type { TaskAnalysis } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { format } from "date-fns";
@@ -48,28 +50,97 @@ function DashboardSkeleton() {
 function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onClose: () => void; homeId: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    title: "",
-    urgency: "soon",
-    category: "",
-    diyLevel: "DIY-Safe",
-    estimatedCost: "",
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [analysis, setAnalysis] = useState<TaskAnalysis | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisFailed, setAnalysisFailed] = useState(false);
+  const [diyOverride, setDiyOverride] = useState<string | null>(null);
+  const [showDiyOverride, setShowDiyOverride] = useState(false);
+  const [manualUrgency, setManualUrgency] = useState("soon");
+  const [manualDiy, setManualDiy] = useState("Caution");
+  const [manualCost, setManualCost] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
+
+  const { data: prefs } = useQuery({
+    queryKey: ["notificationPreferences"],
+    queryFn: getNotificationPreferences,
   });
+  const contractorMode = (prefs as any)?.contractorMode ?? false;
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const runAnalysis = useCallback(async (taskTitle: string, taskCategory: string) => {
+    if (taskTitle.trim().length < 3) return;
+    const thisRequest = ++requestIdRef.current;
+    setAnalyzing(true);
+    setAnalysisFailed(false);
+    try {
+      const result = await analyzeTask(taskTitle, taskCategory || undefined);
+      if (thisRequest !== requestIdRef.current) return;
+      setAnalysis(result);
+      setDiyOverride(null);
+      setShowDiyOverride(false);
+    } catch {
+      if (thisRequest !== requestIdRef.current) return;
+      setAnalysis(null);
+      setAnalysisFailed(true);
+    } finally {
+      if (thisRequest === requestIdRef.current) setAnalyzing(false);
+    }
+  }, []);
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length >= 3) {
+      debounceRef.current = setTimeout(() => runAnalysis(value, category), 800);
+    } else {
+      setAnalysis(null);
+      setAnalysisFailed(false);
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    if (title.trim().length >= 3) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => runAnalysis(title, value), 500);
+    }
+  };
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof formData) => createTask(homeId, {
-      title: data.title,
-      urgency: data.urgency as any,
-      category: data.category || undefined,
-      diyLevel: data.diyLevel as any,
-      estimatedCost: data.estimatedCost || undefined,
-      status: "pending",
-    }),
+    mutationFn: () => {
+      const useManual = analysisFailed || !analysis;
+      return createTask(homeId, {
+        title: title.trim(),
+        urgency: (useManual ? manualUrgency : analysis?.urgency || "later") as any,
+        category: category || undefined,
+        diyLevel: (useManual ? manualDiy : (diyOverride || analysis?.diyLevel || "Caution")) as any,
+        estimatedCost: useManual ? (manualCost || undefined) : (analysis?.estimatedCost || undefined),
+        description: analysis?.description || undefined,
+        safetyWarning: analysis?.safetyWarning || undefined,
+        status: "pending",
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({ title: "Task added", description: "Your maintenance task has been created." });
       onClose();
-      setFormData({ title: "", urgency: "soon", category: "", diyLevel: "DIY-Safe", estimatedCost: "" });
+      setTitle("");
+      setCategory("");
+      setAnalysis(null);
+      setAnalysisFailed(false);
+      setDiyOverride(null);
+      setShowDiyOverride(false);
+      setManualUrgency("soon");
+      setManualDiy("Caution");
+      setManualCost("");
     },
     onError: () => {
       toast({ title: "Error", description: "Could not create task.", variant: "destructive" });
@@ -78,99 +149,228 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
+    if (!title.trim()) {
       toast({ title: "Error", description: "Please enter a task name.", variant: "destructive" });
       return;
     }
     trackEvent('submit_form', 'dashboard', 'quick_add_task');
-    createMutation.mutate(formData);
+    createMutation.mutate();
   };
+
+  const getDiyIcon = (level: string) => {
+    switch (level) {
+      case "DIY-Safe": return <ShieldCheck className="h-3.5 w-3.5" />;
+      case "Caution": return <Shield className="h-3.5 w-3.5" />;
+      case "Pro-Only": return <ShieldAlert className="h-3.5 w-3.5" />;
+      default: return <Shield className="h-3.5 w-3.5" />;
+    }
+  };
+
+  const getDiyColor = (level: string) => {
+    switch (level) {
+      case "DIY-Safe": return "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800";
+      case "Caution": return "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800";
+      case "Pro-Only": return "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800";
+      default: return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const getUrgencyLabel = (u: string) => {
+    switch (u) {
+      case "now": return "Fix Now";
+      case "soon": return "Plan Soon";
+      case "later": return "Address Later";
+      case "monitor": return "Monitor";
+      default: return u;
+    }
+  };
+
+  const getUrgencyColor = (u: string) => {
+    switch (u) {
+      case "now": return "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800";
+      case "soon": return "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800";
+      case "later": return "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800";
+      case "monitor": return "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800";
+      default: return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const activeDiy = diyOverride || analysis?.diyLevel;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Maintenance Task</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5 text-primary" />
+            Add Maintenance Task
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="task-title">What needs to be done?</Label>
             <Input
               id="task-title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="e.g., Replace furnace filter, Clean gutters..."
               data-testid="input-task-title"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1">Priority <FieldTooltip termSlug="urgency-soon" screenName="dashboard" /></Label>
-              <Select value={formData.urgency} onValueChange={(v) => setFormData({ ...formData, urgency: v })}>
-                <SelectTrigger data-testid="select-task-urgency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="now">Fix Now</SelectItem>
-                  <SelectItem value="soon">Plan Soon</SelectItem>
-                  <SelectItem value="later">Address Later</SelectItem>
-                  <SelectItem value="monitor">Monitor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1">DIY Level <FieldTooltip termSlug="diy-level-safe" screenName="dashboard" /></Label>
-              <Select value={formData.diyLevel} onValueChange={(v) => setFormData({ ...formData, diyLevel: v })}>
-                <SelectTrigger data-testid="select-task-diy">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DIY-Safe">DIY-Safe</SelectItem>
-                  <SelectItem value="Caution">Caution</SelectItem>
-                  <SelectItem value="Pro-Only">Pro-Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Category (optional)</Label>
+            <Select value={category} onValueChange={handleCategoryChange}>
+              <SelectTrigger data-testid="select-task-category">
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HVAC">HVAC</SelectItem>
+                <SelectItem value="Plumbing">Plumbing</SelectItem>
+                <SelectItem value="Electrical">Electrical</SelectItem>
+                <SelectItem value="Roof">Roof</SelectItem>
+                <SelectItem value="Windows">Windows</SelectItem>
+                <SelectItem value="Siding/Exterior">Siding/Exterior</SelectItem>
+                <SelectItem value="Foundation">Foundation</SelectItem>
+                <SelectItem value="Appliances">Appliances</SelectItem>
+                <SelectItem value="Water Heater">Water Heater</SelectItem>
+                <SelectItem value="Landscaping">Landscaping</SelectItem>
+                <SelectItem value="Pest">Pest</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                <SelectTrigger data-testid="select-task-category">
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HVAC">HVAC</SelectItem>
-                  <SelectItem value="Plumbing">Plumbing</SelectItem>
-                  <SelectItem value="Electrical">Electrical</SelectItem>
-                  <SelectItem value="Roof">Roof</SelectItem>
-                  <SelectItem value="Windows">Windows</SelectItem>
-                  <SelectItem value="Siding/Exterior">Siding/Exterior</SelectItem>
-                  <SelectItem value="Foundation">Foundation</SelectItem>
-                  <SelectItem value="Appliances">Appliances</SelectItem>
-                  <SelectItem value="Water Heater">Water Heater</SelectItem>
-                  <SelectItem value="Landscaping">Landscaping</SelectItem>
-                  <SelectItem value="Pest">Pest</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+          {analyzing && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-3 px-4 bg-muted/50 rounded-lg border border-dashed">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>Analyzing task...</span>
             </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1">Est. Cost <FieldTooltip termSlug="estimated-cost" screenName="dashboard" /></Label>
-              <Input
-                value={formData.estimatedCost}
-                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
-                placeholder="e.g., $50-100"
-                data-testid="input-task-cost"
-              />
+          )}
+
+          {analysis && !analyzing && (
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <Sparkles className="h-3 w-3 text-primary" />
+                AI Assessment
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Badge className={`text-xs border shadow-none ${getUrgencyColor(analysis.urgency)}`}>
+                  {getUrgencyLabel(analysis.urgency)}
+                </Badge>
+                <Badge className={`text-xs border shadow-none flex items-center gap-1 ${getDiyColor(activeDiy || analysis.diyLevel)}`}>
+                  {getDiyIcon(activeDiy || analysis.diyLevel)}
+                  {activeDiy || analysis.diyLevel}
+                </Badge>
+                {analysis.estimatedCost && (
+                  <Badge variant="outline" className="text-xs shadow-none">
+                    {analysis.estimatedCost}
+                  </Badge>
+                )}
+              </div>
+
+              {analysis.description && (
+                <p className="text-sm text-muted-foreground leading-relaxed">{analysis.description}</p>
+              )}
+
+              {analysis.safetyWarning && (
+                <div className="flex items-start gap-2 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 p-2 rounded border border-orange-100 dark:border-orange-800">
+                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                  {analysis.safetyWarning}
+                </div>
+              )}
+
+              {contractorMode && !showDiyOverride && (
+                <button
+                  type="button"
+                  onClick={() => setShowDiyOverride(true)}
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                  data-testid="button-override-diy"
+                >
+                  <Wrench className="h-3 w-3" />
+                  Override DIY level (Contractor Mode)
+                </button>
+              )}
+
+              {contractorMode && showDiyOverride && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Wrench className="h-3 w-3" />
+                    DIY Override
+                  </Label>
+                  <Select value={diyOverride || analysis.diyLevel} onValueChange={(v) => setDiyOverride(v)}>
+                    <SelectTrigger data-testid="select-task-diy-override" className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DIY-Safe">DIY-Safe</SelectItem>
+                      <SelectItem value="Caution">Caution</SelectItem>
+                      <SelectItem value="Pro-Only">Pro-Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {analysisFailed && !analyzing && (
+            <div className="space-y-3 p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-orange-600 dark:text-orange-400">
+                <AlertTriangle className="h-3 w-3" />
+                Couldn't analyze automatically — set details manually
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Priority</Label>
+                  <Select value={manualUrgency} onValueChange={setManualUrgency}>
+                    <SelectTrigger data-testid="select-task-urgency-manual" className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="now">Fix Now</SelectItem>
+                      <SelectItem value="soon">Plan Soon</SelectItem>
+                      <SelectItem value="later">Address Later</SelectItem>
+                      <SelectItem value="monitor">Monitor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">DIY Level</Label>
+                  <Select value={manualDiy} onValueChange={setManualDiy}>
+                    <SelectTrigger data-testid="select-task-diy-manual" className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DIY-Safe">DIY-Safe</SelectItem>
+                      <SelectItem value="Caution">Caution</SelectItem>
+                      <SelectItem value="Pro-Only">Pro-Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Est. Cost</Label>
+                <Input
+                  value={manualCost}
+                  onChange={(e) => setManualCost(e.target.value)}
+                  placeholder="e.g., $50-100"
+                  className="h-8 text-sm"
+                  data-testid="input-task-cost-manual"
+                />
+              </div>
+            </div>
+          )}
+
+          {!analysisFailed && (
+            <p className="text-xs text-muted-foreground">
+              Priority, safety level, and cost estimate are determined automatically. {contractorMode ? "You can override DIY level in Contractor Mode." : "Enable Contractor Mode in Settings to override DIY level."}
+            </p>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending} data-testid="button-save-task">
+            <Button type="submit" disabled={createMutation.isPending || analyzing || (!analysis && !analysisFailed)} data-testid="button-save-task">
               {createMutation.isPending ? "Adding..." : "Add Task"}
             </Button>
           </div>
