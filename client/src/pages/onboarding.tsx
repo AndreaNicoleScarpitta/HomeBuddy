@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, ArrowLeft, Home, Shield } from "lucide-react";
 import { FieldTooltip } from "@/components/field-tooltip";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
@@ -23,6 +23,7 @@ const US_STATES = [
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
 
@@ -37,7 +38,9 @@ export default function Onboarding() {
 
   const createHomeMutation = useMutation({
     mutationFn: createHome,
-    onSuccess: () => {
+    onSuccess: (newHome) => {
+      queryClient.setQueryData(["home"], newHome);
+      queryClient.invalidateQueries({ queryKey: ["home"] });
       toast({
         title: "Home profile created!",
         description: "Your home maintenance plan is ready.",
@@ -128,12 +131,12 @@ export default function Onboarding() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-start md:items-center justify-center p-6 overflow-y-auto">
         <motion.div 
           key={step}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-md space-y-8"
+          className="w-full max-w-md space-y-8 my-auto py-8"
         >
           <div className="lg:hidden flex items-center gap-2 mb-4">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -213,7 +216,7 @@ export default function Onboarding() {
                       <SelectTrigger className="h-12 bg-secondary/30 border-border/50 focus:bg-background" data-testid="select-state">
                         <SelectValue placeholder="State" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-60">
                         {US_STATES.map((s) => (
                           <SelectItem key={s} value={s}>{s}</SelectItem>
                         ))}
