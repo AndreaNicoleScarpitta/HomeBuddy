@@ -10,6 +10,7 @@ import { logEnvironmentStatus } from "./lib/env-validation";
 import { bootstrapMigrationTracking } from "./lib/db-bootstrap";
 import { WebhookHandlers } from "./webhookHandlers";
 import { registerDonationRoutes } from "./donation-routes";
+import { startNotificationScheduler } from "./jobs/notificationScheduler";
 
 const app = express();
 const httpServer = createServer(app);
@@ -226,6 +227,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      startNotificationScheduler();
     },
   );
 })();

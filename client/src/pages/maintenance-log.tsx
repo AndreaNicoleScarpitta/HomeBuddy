@@ -324,10 +324,12 @@ export default function MaintenanceLog() {
 
   const swipeCompleteMutation = useMutation({
     mutationFn: async (task: V2Task) => {
-      await createLogEntry(home!.legacyId!, {
-        title: task.title,
-        date: new Date().toISOString(),
-      });
+      if (home?.legacyId) {
+        await createLogEntry(home.legacyId, {
+          title: task.title,
+          date: new Date().toISOString(),
+        });
+      }
       await updateTask(task.id, { status: "completed" });
     },
     onMutate: async (task) => {
@@ -662,6 +664,10 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, system
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (task) {
+        await updateTask(task.id, { status: "completed" });
+      }
+
       if (legacyHomeId) {
         await createLogEntry(legacyHomeId, {
           title: data.title,
@@ -671,14 +677,10 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, system
           notes: data.notes || undefined,
         });
       }
-
-      if (task) {
-        await updateTask(task.id, { status: "completed" });
-      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["logEntries"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["logEntries"] });
       toast({ title: "Logged!", description: "Maintenance work has been recorded." });
       onClose();
       setFormData({

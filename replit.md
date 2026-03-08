@@ -42,6 +42,9 @@ Core features include:
 - **System Detail Related Tasks**: Tasks show a hoverable "Done" button for inline completion via `completeTaskMutation`.
 - **Add System Wizard**: Accepts `initialCategory` prop to pre-select category and skip step 1 when navigating from a filtered system type view.
 - **Onboarding Guard**: Dashboard redirect to `/onboarding` is gated by `homeQuerySettled` to prevent false redirects before data loads.
+- **Maintenance Log Fix**: Task completion reorders operations (complete task first, then create log entry) and gracefully handles missing `legacyId` (skips legacy log entry if null). Swipe completion also guarded.
+- **Test Login**: `POST /api/auth/test-login` with `{"username":"test","password":"password123"}` creates/upserts test-user-001 and establishes session. Login page at `/login` has username/password form + Replit OAuth option.
+- **Daily Notification Digest**: `server/jobs/notificationScheduler.ts` runs hourly via setInterval, checks for users with `email_enabled` + `maintenance_reminders` enabled, collects overdue/due-today/due-soon tasks, batches into max 1 email per user per day (20-hour minimum gap tracked via `lastDigestSentAt` on `notification_preferences`). Uses Resend API via `sendEmail()`. Branded HTML email template with task sections color-coded by urgency. Links to `/maintenance-log`. Scheduler starts on server boot.
 
 ## External Dependencies
 - **PostgreSQL**: Primary database for all application data.

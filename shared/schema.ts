@@ -417,6 +417,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   pushEnabled: boolean("push_enabled").default(false),
   emailEnabled: boolean("email_enabled").default(true),
   contractorMode: boolean("contractor_mode").default(false),
+  lastDigestSentAt: timestamp("last_digest_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
