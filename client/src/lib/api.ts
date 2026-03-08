@@ -444,6 +444,120 @@ export async function confirmDocumentTasks(
 }
 
 // ---------------------------------------------------------------------------
+// File Analysis Pipeline API (V2)
+// ---------------------------------------------------------------------------
+
+export interface ProposedTaskV2 {
+  id: string;
+  title: string;
+  description: string;
+  systemId?: string;
+  suggestionId?: string;
+  category: string;
+  priority: string;
+  urgency: string;
+  diyLevel: string;
+  estimatedCost?: string;
+  safetyWarning?: string;
+  timing?: string;
+  sourceRef: string;
+  isInferred: boolean;
+  inferenceReason?: string;
+}
+
+export interface MatchedSystemUpdateV2 {
+  systemId: string;
+  systemName: string;
+  systemCategory: string;
+  attributes: Record<string, string>;
+  sourceRef: string;
+}
+
+export interface SuggestedSystemV2 {
+  id: string;
+  name: string;
+  category: string;
+  reason: string;
+  status: "pending" | "approved" | "declined";
+  sourceRef: string;
+  pendingAttributes: Record<string, string>;
+  pendingTasks: ProposedTaskV2[];
+}
+
+export interface FileAnalysisResultV2 {
+  analysisId: string;
+  matchedSystemUpdates: MatchedSystemUpdateV2[];
+  matchedSystemTasks: ProposedTaskV2[];
+  suggestedSystems: SuggestedSystemV2[];
+  analysisWarnings: string[];
+  sourceFiles: Array<{ fileName: string; fileType: string; textLength: number }>;
+}
+
+export async function runFileAnalysis(
+  homeId: string,
+  files: File[]
+): Promise<FileAnalysisResultV2> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append("files", file);
+  }
+  const response = await fetch(`/v2/homes/${homeId}/file-analysis`, {
+    method: "POST",
+    headers: { "Idempotency-Key": idempotencyKey() },
+    body: formData,
+  });
+  return handleResponse<FileAnalysisResultV2>(response);
+}
+
+export async function approveSuggestion(
+  suggestionId: string,
+  data: {
+    homeId: string;
+    systemName: string;
+    systemCategory: string;
+    pendingTasks: ProposedTaskV2[];
+    pendingAttributes: Record<string, string>;
+  }
+): Promise<{ approved: boolean; systemId: string; taskIds: string[] }> {
+  const response = await fetch(`/v2/suggestions/${suggestionId}/approve`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function declineSuggestion(
+  suggestionId: string,
+  data: {
+    homeId: string;
+    reason?: string;
+    pendingTaskIds?: string[];
+    pendingAttributeKeys?: string[];
+  }
+): Promise<{ declined: boolean }> {
+  const response = await fetch(`/v2/suggestions/${suggestionId}/decline`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function confirmMatchedTasks(
+  homeId: string,
+  tasks: ProposedTaskV2[],
+  systemUpdates?: MatchedSystemUpdateV2[]
+): Promise<{ created: number; taskIds: string[] }> {
+  const response = await fetch(`/v2/homes/${homeId}/confirm-matched-tasks`, {
+    method: "POST",
+    headers: v2Headers(),
+    body: JSON.stringify({ tasks, systemUpdates }),
+  });
+  return handleResponse(response);
+}
+
+// ---------------------------------------------------------------------------
 // Funds API (legacy — stays on CRUD)
 // ---------------------------------------------------------------------------
 export async function getFunds(homeId: number): Promise<Fund[]> {

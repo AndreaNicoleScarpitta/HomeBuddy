@@ -30,6 +30,8 @@ export const AggregateTypes = [
   "assistant_action",
   "chat_session",
   "circuit_map",
+  "file_analysis",
+  "suggested_system",
 ] as const;
 export type AggregateType = (typeof AggregateTypes)[number];
 
@@ -82,6 +84,10 @@ export const EventTypes = {
   CircuitMapCreated: "CircuitMapCreated",
   CircuitMapAnnotated: "CircuitMapAnnotated",
   CircuitMapDeleted: "CircuitMapDeleted",
+
+  FileAnalysisCompleted: "FileAnalysisCompleted",
+  SuggestedSystemApproved: "SuggestedSystemApproved",
+  SuggestedSystemDeclined: "SuggestedSystemDeclined",
 
   RetryRequested: "RetryRequested",
 } as const;
@@ -253,6 +259,37 @@ export const CircuitMapDeletedData = z.object({
   reason: z.string().optional(),
 });
 
+export const FileAnalysisCompletedData = z.object({
+  homeId: z.string().uuid(),
+  sourceFiles: z.array(z.object({
+    fileName: z.string(),
+    fileType: z.string(),
+    textLength: z.number(),
+  })),
+  matchedSystemUpdates: z.array(z.record(z.unknown())).default([]),
+  matchedSystemTasks: z.array(z.record(z.unknown())).default([]),
+  suggestedSystems: z.array(z.record(z.unknown())).default([]),
+  pendingTasks: z.array(z.record(z.unknown())).default([]),
+  pendingAttributes: z.array(z.record(z.unknown())).default([]),
+  analysisWarnings: z.array(z.string()).default([]),
+});
+
+export const SuggestedSystemApprovedData = z.object({
+  homeId: z.string().uuid(),
+  systemName: z.string(),
+  systemCategory: z.string(),
+  createdSystemId: z.string().uuid(),
+  migratedTaskIds: z.array(z.string()).default([]),
+  migratedAttributes: z.record(z.unknown()).default({}),
+});
+
+export const SuggestedSystemDeclinedData = z.object({
+  homeId: z.string().uuid(),
+  reason: z.string().optional(),
+  deletedTaskIds: z.array(z.string()).default([]),
+  deletedAttributeKeys: z.array(z.string()).default([]),
+});
+
 export const RetryRequestedData = z.object({
   targetAggregateType: z.string(),
   targetAggregateId: z.string().uuid(),
@@ -294,6 +331,9 @@ export const EventDataSchemas: Record<string, z.ZodTypeAny> = {
   [EventTypes.CircuitMapCreated]: CircuitMapCreatedData,
   [EventTypes.CircuitMapAnnotated]: CircuitMapAnnotatedData,
   [EventTypes.CircuitMapDeleted]: CircuitMapDeletedData,
+  [EventTypes.FileAnalysisCompleted]: FileAnalysisCompletedData,
+  [EventTypes.SuggestedSystemApproved]: SuggestedSystemApprovedData,
+  [EventTypes.SuggestedSystemDeclined]: SuggestedSystemDeclinedData,
   [EventTypes.RetryRequested]: RetryRequestedData,
 };
 

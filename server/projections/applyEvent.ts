@@ -435,6 +435,12 @@ export async function applyEvent(tx: DrizzleTx, event: EventRow): Promise<void> 
       `);
       break;
 
+    // ----- File Analysis -----
+    case EventTypes.FileAnalysisCompleted:
+    case EventTypes.SuggestedSystemApproved:
+    case EventTypes.SuggestedSystemDeclined:
+      break;
+
     // ----- Retry -----
     case EventTypes.RetryRequested:
       break;

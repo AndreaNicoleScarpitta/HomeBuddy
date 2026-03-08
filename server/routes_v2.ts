@@ -1860,6 +1860,503 @@ async function guardedAppendAndApply(
 // ---------------------------------------------------------------------------
 // Error handler — translates status-bearing errors into HTTP responses
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// File Upload & Analysis Pipeline
+// ---------------------------------------------------------------------------
+
+import multer from "multer";
+import { runAnalysisPipeline } from "./lib/analysis-pipeline";
+import type { AnalysisResult, SuggestedSystem } from "./lib/analysis-pipeline";
+import { extractTextFromDocument } from "./lib/document-analysis";
+
+async function extractTextFromImage(
+  buffer: Buffer,
+  fileName: string,
+  mimeType: string
+): Promise<string> {
+  const OpenAI = (await import("openai")).default;
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.AI_PROXY_URL,
+  });
+
+  const base64 = buffer.toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: "You are a document text extractor. Extract ALL readable text from this image. Include labels, numbers, dates, descriptions, and any other visible text. If the image contains a home inspection report, receipt, invoice, or maintenance document, extract every detail. Return ONLY the extracted text, no commentary.",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: `Extract all text from this image (${fileName}):` },
+          { type: "image_url", image_url: { url: dataUrl, detail: "high" } },
+        ],
+      },
+    ],
+    max_tokens: 4000,
+    temperature: 0,
+  });
+
+  return response.choices[0]?.message?.content || "";
+}
+
+const fileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      "application/pdf",
+      "text/plain",
+      "text/csv",
+      "text/markdown",
+      "image/png",
+      "image/jpeg",
+      "image/heic",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file type. Supported: PDF, PNG, JPG, JPEG, HEIC, DOCX, TXT"));
+    }
+  },
+});
+
+v2Router.post(
+  "/homes/:homeId/file-analysis",
+  fileUpload.array("files", 10),
+  async (req: Request, res: Response) => {
+    try {
+      const actor = getActor(req);
+      const userId = getUserId(req);
+      const { homeId } = req.params;
+      if (!(await verifyHomeOwnership(homeId, userId))) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
+
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        res.status(400).json({ error: "No files provided" });
+        return;
+      }
+
+      const extractedFiles: Array<{ text: string; fileName: string; fileType: string }> = [];
+      const extractionErrors: string[] = [];
+
+      for (const file of files) {
+        try {
+          let text: string;
+          if (file.mimetype.startsWith("image/")) {
+            text = await extractTextFromImage(file.buffer, file.originalname, file.mimetype);
+          } else if (file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+            const mammoth = await import("mammoth");
+            const result = await mammoth.default.extractRawText({ buffer: file.buffer });
+            text = result.value || "";
+          } else {
+            text = await extractTextFromDocument(file.buffer, file.mimetype);
+          }
+          if (text.trim()) {
+            extractedFiles.push({
+              text,
+              fileName: file.originalname,
+              fileType: file.mimetype,
+            });
+          }
+        } catch (err) {
+          extractionErrors.push(`${file.originalname}: ${err instanceof Error ? err.message : "extraction failed"}`);
+        }
+      }
+
+      if (extractedFiles.length === 0) {
+        res.status(400).json({
+          error: "Upload Failed. Please try again.",
+          details: extractionErrors,
+        });
+        return;
+      }
+
+      const systemsResult = await db.execute(sql`
+        SELECT system_id, system_type, attrs FROM projection_system
+        WHERE home_id = ${homeId}
+      `);
+      const existingSystems = systemsResult.rows.map((row: any) => ({
+        id: row.system_id,
+        category: row.attrs?.category || row.system_type || "Other",
+        name: row.attrs?.name || row.attrs?.category || row.system_type || "Other",
+        condition: row.attrs?.condition,
+        attrs: row.attrs,
+      }));
+
+      const tasksResult = await db.execute(sql`
+        SELECT task_id, title, system_id, state, estimates FROM projection_task
+        WHERE home_id = ${homeId} AND state NOT IN ('done', 'skipped', 'rejected')
+      `);
+      const existingTasks = tasksResult.rows.map((row: any) => ({
+        id: row.task_id,
+        title: row.title,
+        systemId: row.system_id,
+        status: row.state,
+        category: row.estimates?.category,
+      }));
+
+      const openaiConfig = {
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "",
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || "https://api.openai.com/v1",
+      };
+
+      const analysisResult = await runAnalysisPipeline(
+        extractedFiles,
+        existingSystems,
+        existingTasks,
+        homeId,
+        openaiConfig
+      );
+
+      const analysisId = crypto.randomUUID();
+      await db.transaction(async (tx) =>
+        appendAndApply(tx, {
+          aggregateType: "file_analysis",
+          aggregateId: analysisId,
+          expectedVersion: 0,
+          eventType: EventTypes.FileAnalysisCompleted,
+          data: {
+            homeId,
+            sourceFiles: analysisResult.sourceFiles,
+            matchedSystemUpdates: analysisResult.matchedSystemUpdates,
+            matchedSystemTasks: analysisResult.matchedSystemTasks,
+            suggestedSystems: analysisResult.suggestedSystems,
+            pendingTasks: analysisResult.suggestedSystems.flatMap((s) => s.pendingTasks),
+            pendingAttributes: analysisResult.suggestedSystems.map((s) => ({
+              suggestionId: s.id,
+              attributes: s.pendingAttributes,
+            })),
+            analysisWarnings: analysisResult.analysisWarnings,
+          },
+          meta: {},
+          actor,
+          idempotencyKey: req.idempotencyKey!,
+        })
+      );
+
+      if (extractionErrors.length > 0) {
+        analysisResult.analysisWarnings.push(
+          ...extractionErrors.map((e) => `File extraction warning: ${e}`)
+        );
+      }
+
+      res.json({
+        analysisId,
+        ...analysisResult,
+      });
+    } catch (err) {
+      console.error("[file-analysis error]", err);
+      handleError(res, err);
+    }
+  }
+);
+
+v2Router.get("/homes/:homeId/suggestions", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+    if (!(await verifyHomeOwnership(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    const result = await db.execute(sql`
+      SELECT e.aggregate_id, e.data, e.occurred_at
+      FROM event_log e
+      WHERE e.aggregate_type = 'file_analysis'
+        AND (e.data->>'homeId') = ${homeId}
+        AND e.event_type = 'FileAnalysisCompleted'
+      ORDER BY e.occurred_at DESC
+      LIMIT 10
+    `);
+
+    const approvedIds = new Set<string>();
+    const declinedIds = new Set<string>();
+
+    const decisionResult = await db.execute(sql`
+      SELECT e.event_type, e.aggregate_id, e.data
+      FROM event_log e
+      WHERE e.aggregate_type = 'suggested_system'
+        AND e.event_type IN ('SuggestedSystemApproved', 'SuggestedSystemDeclined')
+        AND (e.data->>'homeId') = ${homeId}
+    `);
+    for (const row of decisionResult.rows as any[]) {
+      if (row.event_type === "SuggestedSystemApproved") {
+        approvedIds.add(row.aggregate_id);
+      } else {
+        declinedIds.add(row.aggregate_id);
+      }
+    }
+
+    const suggestions: SuggestedSystem[] = [];
+    for (const row of result.rows as any[]) {
+      const data = row.data;
+      if (data.suggestedSystems) {
+        for (const s of data.suggestedSystems) {
+          if (!approvedIds.has(s.id) && !declinedIds.has(s.id)) {
+            suggestions.push(s);
+          }
+        }
+      }
+    }
+
+    res.json(suggestions);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+v2Router.post("/suggestions/:suggestionId/approve", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { suggestionId } = req.params;
+    const { homeId, systemName, systemCategory, pendingTasks, pendingAttributes } = req.body;
+
+    if (!homeId) {
+      res.status(400).json({ error: "homeId is required" });
+      return;
+    }
+    if (!(await verifyHomeOwnership(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    const systemId = crypto.randomUUID();
+    const taskIds: string[] = [];
+
+    await db.transaction(async (tx) => {
+      await appendAndApply(tx, {
+        aggregateType: "system",
+        aggregateId: systemId,
+        expectedVersion: 0,
+        eventType: EventTypes.SystemAttributesUpserted,
+        data: {
+          homeId,
+          systemType: systemCategory || systemName,
+          attrs: {
+            category: systemCategory || systemName,
+            name: systemName,
+            source: "file-analysis",
+            condition: "Unknown",
+            ...(pendingAttributes || {}),
+          },
+        },
+        meta: {},
+        actor,
+        idempotencyKey: `${req.idempotencyKey!}-system`,
+      });
+
+      if (pendingTasks && Array.isArray(pendingTasks)) {
+        for (const task of pendingTasks) {
+          const taskId = crypto.randomUUID();
+          taskIds.push(taskId);
+          await appendAndApply(tx, {
+            aggregateType: "task",
+            aggregateId: taskId,
+            expectedVersion: 0,
+            eventType: EventTypes.TaskCreated,
+            data: {
+              homeId,
+              systemId,
+              title: task.title,
+              estimates: {
+                description: task.description,
+                urgency: task.urgency || task.priority,
+                diyLevel: task.diyLevel,
+                category: task.category,
+                estimatedCost: task.estimatedCost,
+                safetyWarning: task.safetyWarning,
+                createdFrom: "file-analysis",
+                sourceRef: task.sourceRef,
+                isInferred: task.isInferred,
+              },
+              dueAt: null,
+            },
+            meta: {},
+            actor,
+            idempotencyKey: `${req.idempotencyKey!}-task-${task.id || taskId}`,
+          });
+        }
+      }
+
+      await appendAndApply(tx, {
+        aggregateType: "suggested_system",
+        aggregateId: suggestionId,
+        expectedVersion: 0,
+        eventType: EventTypes.SuggestedSystemApproved,
+        data: {
+          homeId,
+          systemName,
+          systemCategory: systemCategory || systemName,
+          createdSystemId: systemId,
+          migratedTaskIds: taskIds,
+          migratedAttributes: pendingAttributes || {},
+        },
+        meta: {},
+        actor,
+        idempotencyKey: `${req.idempotencyKey!}-approve`,
+      });
+    });
+
+    res.json({
+      approved: true,
+      systemId,
+      taskIds,
+      suggestionId,
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+v2Router.post("/suggestions/:suggestionId/decline", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { suggestionId } = req.params;
+    const { homeId, reason, pendingTaskIds, pendingAttributeKeys } = req.body;
+
+    if (!homeId) {
+      res.status(400).json({ error: "homeId is required" });
+      return;
+    }
+    if (!(await verifyHomeOwnership(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      await appendAndApply(tx, {
+        aggregateType: "suggested_system",
+        aggregateId: suggestionId,
+        expectedVersion: 0,
+        eventType: EventTypes.SuggestedSystemDeclined,
+        data: {
+          homeId,
+          reason: reason || "User declined",
+          deletedTaskIds: pendingTaskIds || [],
+          deletedAttributeKeys: pendingAttributeKeys || [],
+        },
+        meta: {},
+        actor,
+        idempotencyKey: `${req.idempotencyKey!}-decline`,
+      });
+    });
+
+    res.json({
+      declined: true,
+      suggestionId,
+      deletedTaskIds: pendingTaskIds || [],
+      deletedAttributeKeys: pendingAttributeKeys || [],
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Matched system task confirmation (bulk create tasks for matched systems)
+// ---------------------------------------------------------------------------
+v2Router.post("/homes/:homeId/confirm-matched-tasks", async (req: Request, res: Response) => {
+  try {
+    const actor = getActor(req);
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+    if (!(await verifyHomeOwnership(homeId, userId))) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    const { tasks, systemUpdates } = req.body;
+    const taskIds: string[] = [];
+
+    await db.transaction(async (tx) => {
+      if (systemUpdates && Array.isArray(systemUpdates)) {
+        for (const update of systemUpdates) {
+          if (update.systemId && update.attributes) {
+            await appendAndApply(tx, {
+              aggregateType: "system",
+              aggregateId: update.systemId,
+              expectedVersion: await getCurrentVersion(tx, "system", update.systemId),
+              eventType: EventTypes.SystemAttributesUpserted,
+              data: {
+                homeId,
+                attrs: update.attributes,
+              },
+              meta: {},
+              actor,
+              idempotencyKey: `${req.idempotencyKey!}-sysupdate-${update.systemId}`,
+            });
+          }
+        }
+      }
+
+      if (tasks && Array.isArray(tasks)) {
+        for (const task of tasks) {
+          const taskId = crypto.randomUUID();
+          taskIds.push(taskId);
+
+          let nsPrefix = "unknown_system";
+          if (task.systemId) {
+            const sysResult = await tx.execute(
+              sql`SELECT system_id, system_type, attrs FROM projection_system WHERE system_id = ${task.systemId} LIMIT 1`
+            );
+            if (sysResult.rows.length > 0) {
+              const row = sysResult.rows[0] as any;
+              const category = row.attrs?.category || row.system_type || "other";
+              const name = row.attrs?.name || category;
+              nsPrefix = generateInstancePrefix(category, name, row.system_id);
+            }
+          }
+
+          await appendAndApply(tx, {
+            aggregateType: "task",
+            aggregateId: taskId,
+            expectedVersion: 0,
+            eventType: EventTypes.TaskCreated,
+            data: {
+              homeId,
+              systemId: task.systemId,
+              title: task.title,
+              estimates: {
+                description: task.description,
+                urgency: task.urgency || task.priority,
+                diyLevel: task.diyLevel,
+                category: task.category,
+                estimatedCost: task.estimatedCost,
+                safetyWarning: task.safetyWarning,
+                createdFrom: "file-analysis",
+                sourceRef: task.sourceRef,
+                isInferred: task.isInferred,
+                namespacePrefix: nsPrefix,
+              },
+              dueAt: null,
+            },
+            meta: {},
+            actor,
+            idempotencyKey: `${req.idempotencyKey!}-task-${task.id || taskId}`,
+          });
+        }
+      }
+    });
+
+    res.json({ created: taskIds.length, taskIds });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 function handleError(res: Response, err: unknown): void {
   if (err instanceof TransitionError) {
     res.status(409).json({
