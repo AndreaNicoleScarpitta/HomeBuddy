@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { logInfo, logError, logWarn } from "./lib/logger";
-import { streamAIResponse, type AIResponseMeta } from "./lib/ai-chat";
 import { authStorage } from "./replit_integrations/auth/storage";
+import multer from "multer";
+import { extractTextFromDocument, analyzeDocumentWithLLM, convertIssuesToTasks } from "./lib/document-analysis";
 import { sendContactFormNotification } from "./lib/email";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -17,7 +18,6 @@ import {
   type InsertMaintenanceTask,
   insertMaintenanceLogEntrySchema,
   type InsertMaintenanceLogEntry,
-  insertChatMessageSchema,
   insertFundSchema,
   type InsertFund,
   insertFundAllocationSchema,
@@ -347,8 +347,20 @@ export async function registerRoutes(
     }
   });
   
-  // Chat message routes
-  app.get("/api/home/:homeId/chat", isAuthenticated, async (req: any, res) => {
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = ["application/pdf", "text/plain", "text/csv", "text/markdown"];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error("Unsupported file type. Please upload a PDF or text document."));
+      }
+    },
+  });
+
+  app.post("/api/home/:homeId/analyze-document", isAuthenticated, upload.single("document"), async (req: any, res) => {
     try {
       const homeId = validateIntParam(req.params.homeId);
       if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
@@ -356,14 +368,36 @@ export async function registerRoutes(
       if (!await storage.verifyHomeOwnership(homeId, userId)) {
         return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
       }
-      const messages = await storage.getChatMessagesByHomeId(homeId);
-      res.json(messages);
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No document file provided", code: "VALIDATION_ERROR" });
+      }
+
+      const text = await extractTextFromDocument(req.file.buffer, req.file.mimetype);
+      if (!text.trim()) {
+        return res.status(400).json({ message: "The document appears to be empty or could not be read", code: "VALIDATION_ERROR" });
+      }
+
+      const analysis = await analyzeDocumentWithLLM(text, homeId);
+      const tasks = convertIssuesToTasks(analysis.issues, homeId);
+
+      logInfo("document-analysis.route", "Document analyzed successfully", {
+        homeId,
+        fileName: req.file.originalname,
+        issuesFound: tasks.length,
+      });
+
+      res.json({
+        fileName: req.file.originalname,
+        extractedTextLength: text.length,
+        tasks,
+      });
     } catch (error) {
-      return handleApiError(res, "chat.get", error, 500);
+      return handleApiError(res, "document-analysis", error, 500);
     }
   });
-  
-  app.post("/api/home/:homeId/chat", isAuthenticated, async (req: any, res) => {
+
+  app.post("/api/home/:homeId/confirm-document-tasks", isAuthenticated, async (req: any, res) => {
     try {
       const homeId = validateIntParam(req.params.homeId);
       if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
@@ -371,70 +405,52 @@ export async function registerRoutes(
       if (!await storage.verifyHomeOwnership(homeId, userId)) {
         return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
       }
-      
-      const { content, image, imageType } = req.body;
-      if (!content && !image) {
-        return res.status(400).json({ message: "Message content or image is required", code: "VALIDATION_ERROR" });
+
+      const { tasks } = req.body;
+      if (!Array.isArray(tasks) || tasks.length === 0) {
+        return res.status(400).json({ message: "No tasks provided", code: "VALIDATION_ERROR" });
       }
 
-      const user = await authStorage.getUser(userId);
-      const optedOut = user?.dataStorageOptOut ?? false;
-      
-      const rawContent = content || "What can you tell me about this?";
-      const messageContent = image 
-        ? `${rawContent} [Photo attached]`
-        : rawContent;
-      const sanitizedContent = sanitizeText(messageContent);
+      const taskSchema = z.object({
+        title: z.string().min(1),
+        description: z.string().nullable().optional(),
+        category: z.string().nullable().optional(),
+        urgency: z.enum(["now", "soon", "later", "monitor"]).optional().default("later"),
+        diyLevel: z.enum(["DIY-Safe", "Caution", "Pro-Only"]).optional().default("Caution"),
+        estimatedCost: z.string().nullable().optional(),
+        safetyWarning: z.string().nullable().optional(),
+      });
 
-      if (!optedOut) {
-        await storage.createChatMessage({
-          homeId,
-          role: "user",
-          content: sanitizedContent,
-          imageData: image || null,
-          imageType: imageType || null,
-        });
-      }
-      
-      const history = optedOut ? [] : await storage.getChatMessagesByHomeId(homeId);
-      const conversationHistory = history.slice(-10).map(m => ({ role: m.role, content: m.content }));
-      
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
-      res.setHeader("Connection", "keep-alive");
-      
-      try {
-        const aiResult = await streamAIResponse(
-          homeId,
-          content || "What can you tell me about this photo?",
-          conversationHistory.slice(0, -1),
-          (chunk) => res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`),
-          () => {},
-          image,
-          imageType
-        );
-
-        if (!optedOut) {
-          await storage.createChatMessage({
-            homeId,
-            role: "assistant",
-            content: aiResult.fullResponse,
-            model: aiResult.model,
-            promptTokens: aiResult.promptTokens ?? null,
-            completionTokens: aiResult.completionTokens ?? null,
-          });
+      const created = [];
+      for (const rawTask of tasks) {
+        const parsed = taskSchema.safeParse(rawTask);
+        if (!parsed.success) {
+          return res.status(400).json({ message: "Invalid task data", details: parsed.error.flatten(), code: "VALIDATION_ERROR" });
         }
-        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-        res.end();
-      } catch (aiError) {
-        logError("chat.ai", aiError);
-        res.write(`data: ${JSON.stringify({ error: "Failed to get AI response" })}\n\n`);
-        res.end();
+        const task = parsed.data;
+        const result = await storage.createMaintenanceTask({
+          homeId,
+          title: sanitizeText(task.title),
+          description: task.description ? sanitizeText(task.description) : null,
+          category: task.category || null,
+          urgency: task.urgency || "later",
+          diyLevel: task.diyLevel || "Caution",
+          estimatedCost: task.estimatedCost || null,
+          safetyWarning: task.safetyWarning || null,
+          createdFrom: "document-analysis",
+          status: "pending",
+        });
+        created.push(result);
       }
+
+      logInfo("document-analysis.confirm", "Tasks created from document analysis", {
+        homeId,
+        taskCount: created.length,
+      });
+
+      res.json({ created });
     } catch (error) {
-      if (!res.headersSent) {
-        return handleApiError(res, "chat.create", error);
-      }
+      return handleApiError(res, "document-analysis.confirm", error, 500);
     }
   });
   

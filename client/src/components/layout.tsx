@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, MessageSquare, Mail, Menu, LogOut, FileText, ClipboardList, User, FolderOpen, HelpCircle } from "lucide-react";
+import { Home, FileSearch, Mail, Menu, LogOut, FileText, ClipboardList, User, FolderOpen, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -13,7 +13,7 @@ const navItems = [
   { href: "/maintenance-log", icon: ClipboardList, label: "Maintenance Log", sublabel: "What you've done", tourId: "nav-history" },
   { href: "/inspections", icon: FileText, label: "Inspections", sublabel: "What's wrong", tourId: "nav-inspections" },
   { href: "/documents", icon: FolderOpen, label: "Documents", sublabel: "Your files", tourId: "nav-documents" },
-  { href: "/chat", icon: MessageSquare, label: "Assistant", sublabel: "Get guidance", tourId: "nav-assistant" },
+  { href: "/document-analysis", icon: FileSearch, label: "Document Analysis", sublabel: "Scan documents", tourId: "nav-document-analysis" },
   { href: "/profile", icon: User, label: "Profile", sublabel: "Your settings", tourId: "nav-profile" },
   { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us", tourId: "nav-contact" },
 ];
@@ -21,7 +21,7 @@ const navItems = [
 const bottomNavItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/maintenance-log", icon: ClipboardList, label: "Log" },
-  { href: "/chat", icon: MessageSquare, label: "Assistant" },
+  { href: "/document-analysis", icon: FileSearch, label: "Analyze" },
   { href: "/inspections", icon: FileText, label: "Reports" },
 ];
 

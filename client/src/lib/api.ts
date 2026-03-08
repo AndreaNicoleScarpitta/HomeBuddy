@@ -1,4 +1,4 @@
-import type { Home, System, MaintenanceTask, MaintenanceLogEntry, ChatMessage, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding, ContractorAppointment, NotificationPreferences, HomeDocument } from "@shared/schema";
+import type { Home, System, MaintenanceTask, MaintenanceLogEntry, Fund, FundAllocation, Expense, InspectionReport, InspectionFinding, ContractorAppointment, NotificationPreferences, HomeDocument } from "@shared/schema";
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
@@ -102,14 +102,6 @@ export interface V2Task {
   isRecurring?: boolean;
   recurrenceCadence?: string | null;
   completedAt?: string | null;
-}
-
-export interface V2ChatMessage {
-  id: string;
-  homeId: string;
-  role: string;
-  content: string;
-  createdAt: string;
 }
 
 export interface V2Report {
@@ -389,61 +381,50 @@ export async function deleteLogEntry(id: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Chat API (v2 reads, legacy SSE streaming)
+// Document Analysis API
 // ---------------------------------------------------------------------------
-export async function getChatMessages(homeId: string | number): Promise<V2ChatMessage[]> {
-  const response = await fetch(`/v2/homes/${homeId}/chat`);
-  return handleResponse<V2ChatMessage[]>(response);
+export interface DocumentAnalysisTask {
+  homeId: number;
+  title: string;
+  description: string | null;
+  category: string | null;
+  urgency: string;
+  diyLevel: string;
+  estimatedCost: string | null;
+  safetyWarning: string | null;
+  createdFrom: string;
+  status: string;
 }
 
-export async function createChatMessage(homeId: number, data: {
-  role: string;
-  content: string;
-}): Promise<ChatMessage> {
-  const response = await fetch(`/api/home/${homeId}/chat`, {
+export interface DocumentAnalysisResult {
+  fileName: string;
+  extractedTextLength: number;
+  tasks: DocumentAnalysisTask[];
+}
+
+export async function analyzeDocument(
+  homeId: string | number,
+  file: File
+): Promise<DocumentAnalysisResult> {
+  const formData = new FormData();
+  formData.append("document", file);
+  const response = await fetch(`/api/home/${homeId}/analyze-document`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleResponse<DocumentAnalysisResult>(response);
+}
+
+export async function confirmDocumentTasks(
+  homeId: string | number,
+  tasks: DocumentAnalysisTask[]
+): Promise<{ created: any[] }> {
+  const response = await fetch(`/api/home/${homeId}/confirm-document-tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ tasks }),
   });
-  return handleResponse<ChatMessage>(response);
-}
-
-// ---------------------------------------------------------------------------
-// Chat Sessions API (v2)
-// ---------------------------------------------------------------------------
-export interface ChatSession {
-  id: string;
-  homeId: string;
-  title: string;
-  messageCount: number;
-  createdAt: string;
-}
-
-export async function getChatSessions(homeId: string): Promise<ChatSession[]> {
-  const response = await fetch(`/v2/homes/${homeId}/chat/sessions`);
-  return handleResponse<ChatSession[]>(response);
-}
-
-export async function createChatSession(homeId: string): Promise<{ sessionId: string }> {
-  const response = await fetch(`/v2/chat/sessions`, {
-    method: "POST",
-    headers: v2Headers(),
-    body: JSON.stringify({ homeId }),
-  });
-  return handleResponse<{ sessionId: string }>(response);
-}
-
-export async function getChatSession(sessionId: string): Promise<{ session: any; messages: V2ChatMessage[] }> {
-  const response = await fetch(`/v2/chat/sessions/${sessionId}`);
-  return handleResponse<{ session: any; messages: V2ChatMessage[] }>(response);
-}
-
-export async function updateChatSessionTitle(sessionId: string, title: string): Promise<void> {
-  await fetch(`/v2/chat/sessions/${sessionId}`, {
-    method: "PATCH",
-    headers: v2Headers(),
-    body: JSON.stringify({ title }),
-  });
+  return handleResponse<{ created: any[] }>(response);
 }
 
 // ---------------------------------------------------------------------------

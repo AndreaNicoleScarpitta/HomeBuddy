@@ -716,12 +716,12 @@ export default function Dashboard() {
               <div className="max-w-md mx-auto text-center">
                 <h3 className="text-lg font-medium mb-2">No maintenance tasks yet</h3>
                 <p className="text-muted-foreground text-sm mb-6">
-                  Chat with your assistant to identify what needs attention, or add a task manually.
+                  Upload a document to detect issues, or add a task manually.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/chat">
-                    <Button data-testid="button-start-chat">
-                      Chat with Assistant
+                  <Link href="/document-analysis">
+                    <Button data-testid="button-analyze-document">
+                      Analyze Document
                     </Button>
                   </Link>
                   <Button variant="outline" onClick={() => setShowAddTask(true)} data-testid="button-add-task-empty">

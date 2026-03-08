@@ -14,7 +14,7 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { initGA } from "@/lib/analytics";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
-import Chat from "@/pages/chat";
+import DocumentAnalysis from "@/pages/document-analysis";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -99,7 +99,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/chat" component={Chat} />
+      <Route path="/document-analysis" component={DocumentAnalysis} />
 
       <Route path="/maintenance-log" component={MaintenanceLog} />
       <Route path="/systems/:id" component={SystemDetail} />

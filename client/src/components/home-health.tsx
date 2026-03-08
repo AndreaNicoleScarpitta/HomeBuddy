@@ -42,7 +42,7 @@ function getHealthTier(
     }
     if (poorSystemsCount > 0) {
       if (actionParts.length > 0) actionParts.push({ text: ", " });
-      actionParts.push({ text: `${poorSystemsCount} system${poorSystemsCount > 1 ? 's' : ''} in poor condition`, link: "/chat" });
+      actionParts.push({ text: `${poorSystemsCount} system${poorSystemsCount > 1 ? 's' : ''} in poor condition`, link: "/systems" });
     }
     
     return {
