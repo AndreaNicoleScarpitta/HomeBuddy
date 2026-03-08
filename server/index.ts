@@ -8,6 +8,8 @@ import { createServer } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { logEnvironmentStatus } from "./lib/env-validation";
 import { bootstrapMigrationTracking } from "./lib/db-bootstrap";
+import { WebhookHandlers } from "./webhookHandlers";
+import { registerDonationRoutes } from "./donation-routes";
 
 const app = express();
 const httpServer = createServer(app);
@@ -17,6 +19,25 @@ declare module "http" {
     rawBody: unknown;
   }
 }
+
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['stripe-signature'];
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing stripe-signature' });
+    }
+    try {
+      const sig = Array.isArray(signature) ? signature[0] : signature;
+      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error('Webhook error:', error.message);
+      res.status(400).json({ error: 'Webhook processing error' });
+    }
+  }
+);
 
 app.use(
   express.json({
@@ -38,7 +59,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:", "https://www.google-analytics.com"],
-        connectSrc: ["'self'", "https://www.google-analytics.com", "https://analytics.google.com"],
+        connectSrc: ["'self'", "https://www.google-analytics.com", "https://analytics.google.com", "https://checkout.stripe.com", "https://api.stripe.com"],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -97,9 +118,33 @@ app.use((req, res, next) => {
   // Bootstrap migration tracking for deployments
   await bootstrapMigrationTracking();
   
+  try {
+    const { runMigrations } = await import('stripe-replit-sync');
+    const { getStripeSync } = await import('./stripeClient');
+    const databaseUrl = process.env.DATABASE_URL;
+    if (databaseUrl) {
+      console.log('Initializing Stripe schema...');
+      await runMigrations({ databaseUrl });
+      console.log('Stripe schema ready');
+      const stripeSync = await getStripeSync();
+      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const webhookResult = await stripeSync.findOrCreateManagedWebhook(
+        `${webhookBaseUrl}/api/stripe/webhook`
+      );
+      console.log('Stripe webhook configured:', webhookResult?.webhook?.url || 'OK');
+      stripeSync.syncBackfill()
+        .then(() => console.log('Stripe data synced'))
+        .catch((err: any) => console.error('Error syncing Stripe data:', err));
+    }
+  } catch (error) {
+    console.error('Failed to initialize Stripe (non-fatal):', error);
+  }
+
   // Setup auth BEFORE registering other routes
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  registerDonationRoutes(app);
 
   const mutationLimiter = rateLimit({
     windowMs: 60 * 1000,

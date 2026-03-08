@@ -12,6 +12,7 @@ import { DefinitionsDrawer } from "@/components/definitions-drawer";
 import { useAuth } from "@/hooks/use-auth";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { initGA } from "@/lib/analytics";
+import { DonationModal } from "@/components/donation-modal";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import DocumentAnalysis from "@/pages/document-analysis";
@@ -96,23 +97,26 @@ function Router() {
   }
   
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/onboarding" component={Onboarding} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/document-analysis" component={DocumentAnalysis} />
-      <Route path="/disclaimer" component={Disclaimer} />
+    <>
+      <DonationModal />
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/onboarding" component={Onboarding} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/document-analysis" component={DocumentAnalysis} />
+        <Route path="/disclaimer" component={Disclaimer} />
 
-      <Route path="/maintenance-log" component={MaintenanceLog} />
-      <Route path="/systems/:id" component={SystemDetail} />
-      <Route path="/systems" component={Systems} />
-      <Route path="/inspections" component={Inspections} />
-      <Route path="/documents" component={Documents} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/terms" component={Terms} />
-      <Route component={NotFound} />
-    </Switch>
+        <Route path="/maintenance-log" component={MaintenanceLog} />
+        <Route path="/systems/:id" component={SystemDetail} />
+        <Route path="/systems" component={Systems} />
+        <Route path="/inspections" component={Inspections} />
+        <Route path="/documents" component={Documents} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/terms" component={Terms} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 

@@ -144,6 +144,8 @@ export async function setupAuth(app: Express) {
         providerId: userInfo.sub,
       });
 
+      await authStorage.incrementLoginCount(user.id);
+
       delete req.session.code_verifier;
       delete req.session.state;
       req.session.userId = user.id;

@@ -476,9 +476,11 @@ export default function DocumentAnalysis() {
         <div>
           <h1 className="text-2xl font-heading font-bold" data-testid="text-page-title">
             File Upload
+            <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary align-middle">Beta</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Upload home inspection reports, maintenance documents, or photos to automatically detect systems, issues, and maintenance tasks.
+            <span className="block mt-1 text-xs italic">This feature is in beta — results may vary. Always verify AI-generated findings.</span>
           </p>
         </div>
 

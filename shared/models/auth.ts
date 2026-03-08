@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const sessions = pgTable(
   "sessions",
@@ -23,6 +23,10 @@ export const users = pgTable("users", {
   disclaimerAccepted: boolean("disclaimer_accepted").default(false),
   disclaimerAcceptedAt: timestamp("disclaimer_accepted_at"),
   disclaimerVersion: varchar("disclaimer_version"),
+  loginCount: integer("login_count").default(0),
+  hasDonated: boolean("has_donated").default(false),
+  donationPromptSnoozeUntilLoginCount: integer("donation_prompt_snooze_until_login_count"),
+  stripeCustomerId: varchar("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

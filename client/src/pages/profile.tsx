@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { User, MapPin, Home, Shield, Trash2, Wrench } from "lucide-react";
+import { User, MapPin, Home, Shield, Trash2, Wrench, Heart, Coffee, Sparkles, CheckCircle2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getNotificationPreferences, updateNotificationPreferences } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { trackEvent } from "@/lib/analytics";
+import { useSearch } from "wouter";
+import { useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +36,134 @@ function ProfileSkeleton() {
       <Skeleton className="h-48" />
       <Skeleton className="h-96" />
     </div>
+  );
+}
+
+function SupportCard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+
+  const { data: config } = useQuery({
+    queryKey: ["donationConfig"],
+    queryFn: async () => {
+      const res = await fetch("/api/donations/config", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load");
+      return res.json() as Promise<{ publishableKey: string; donations: { priceId: string; amount: number; productName: string }[] }>;
+    },
+  });
+
+  const { data: status } = useQuery({
+    queryKey: ["donationStatus"],
+    queryFn: async () => {
+      const res = await fetch("/api/donations/status", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load");
+      return res.json() as Promise<{ hasDonated: boolean }>;
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async (priceId: string) => {
+      const res = await fetch("/api/donations/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ priceId }),
+      });
+      if (!res.ok) throw new Error("Failed to create checkout");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not start checkout. Please try again.", variant: "destructive" });
+    },
+  });
+
+  const verifyDonationMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const res = await fetch("/api/donations/verify-and-mark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sessionId }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["donationStatus"] });
+    },
+  });
+
+  useEffect(() => {
+    const donationParam = params.get("donation");
+    const sessionId = params.get("session_id");
+    if (donationParam === "success" && sessionId) {
+      verifyDonationMutation.mutate(sessionId);
+      toast({ title: "Thank you!", description: "Your donation means a lot. Home Buddy will stay free for everyone." });
+      trackEvent("donation_completed", "donations", "success");
+      window.history.replaceState({}, "", "/profile");
+    } else if (donationParam === "cancelled") {
+      window.history.replaceState({}, "", "/profile");
+    }
+  }, []);
+
+  const tierIcons = [Coffee, Heart, Sparkles];
+  const tierLabels = ["$1", "$5", "$10"];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-heading flex items-center gap-2">
+          <Heart className="h-5 w-5 text-primary" />
+          Support Home Buddy
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {status?.hasDonated ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              Thank you for your support! Your donation helps keep Home Buddy free for everyone.
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Home Buddy is completely free — no ads, no premium tiers, no data selling.
+              If you find it helpful, a small one-time donation helps cover hosting costs and keeps development going.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {(config?.donations || []).map((tier, i) => {
+                const Icon = tierIcons[i] || Heart;
+                return (
+                  <Button
+                    key={tier.priceId}
+                    variant="outline"
+                    className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5 transition-colors"
+                    onClick={() => {
+                      trackEvent("donation_profile_click", "donations", `$${tier.amount / 100}`);
+                      checkoutMutation.mutate(tier.priceId);
+                    }}
+                    disabled={checkoutMutation.isPending}
+                    data-testid={`button-profile-donate-${tier.amount}`}
+                  >
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">{tierLabels[i]}</span>
+                  </Button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              One-time payment via Stripe. No recurring charges.
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -234,6 +364,8 @@ export default function Profile() {
           <NotificationSettings />
 
           <ContractorModeCard />
+
+          <SupportCard />
 
           <Card>
             <CardHeader className="pb-3">

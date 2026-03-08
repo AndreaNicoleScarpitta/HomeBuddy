@@ -1,12 +1,16 @@
 import { users, disclaimerAuditLog, type User, type UpsertUser } from "@shared/models/auth";
 import { db } from "../../db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPrivacy(id: string, dataStorageOptOut: boolean): Promise<User>;
   acceptDisclaimer(id: string, version: string, ipAddress?: string): Promise<User>;
+  incrementLoginCount(id: string): Promise<User>;
+  snoozeDonationPrompt(id: string, snoozeUntilLoginCount: number): Promise<User>;
+  markDonated(id: string): Promise<User>;
+  updateStripeCustomerId(id: string, stripeCustomerId: string): Promise<User>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -33,6 +37,42 @@ class AuthStorage implements IAuthStorage {
       })
       .returning();
     return user;
+  }
+
+  async incrementLoginCount(id: string): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ loginCount: sql`COALESCE(${users.loginCount}, 0) + 1`, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async snoozeDonationPrompt(id: string, snoozeUntilLoginCount: number): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ donationPromptSnoozeUntilLoginCount: snoozeUntilLoginCount, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async markDonated(id: string): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ hasDonated: true, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateStripeCustomerId(id: string, stripeCustomerId: string): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
   }
 
   async updateUserPrivacy(id: string, dataStorageOptOut: boolean): Promise<User> {
