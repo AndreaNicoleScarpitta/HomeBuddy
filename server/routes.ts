@@ -304,7 +304,11 @@ export async function registerRoutes(
       if (!await storage.verifyHomeOwnership(homeId, userId)) {
         return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
       }
-      const entryData = insertMaintenanceLogEntrySchema.parse({ ...req.body, homeId }) as unknown as InsertMaintenanceLogEntry;
+      const body = { ...req.body, homeId };
+      if (body.date && typeof body.date === "string") {
+        body.date = new Date(body.date);
+      }
+      const entryData = insertMaintenanceLogEntrySchema.parse(body) as unknown as InsertMaintenanceLogEntry;
       const entry = await storage.createLogEntry(entryData);
       logInfo("logEntries.create", "Log entry created successfully", { entryId: entry.id, homeId });
       res.json(entry);
