@@ -12,8 +12,8 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention", tourId: "nav-overview" },
   { href: "/systems", icon: Settings2, label: "Systems", sublabel: "Your home systems", tourId: "nav-systems" },
   { href: "/maintenance-log", icon: ClipboardList, label: "Maintenance Log", sublabel: "What you've done", tourId: "nav-history" },
-  { href: "/documents", icon: FolderOpen, label: "Documents", sublabel: "Your files", tourId: "nav-documents" },
   { href: "/document-analysis", icon: FileSearch, label: "Document Analysis (Beta)", sublabel: "Analyze files", tourId: "nav-file-upload" },
+  { href: "/documents", icon: FolderOpen, label: "Documents", sublabel: "Your files", tourId: "nav-documents" },
   { href: "/profile", icon: User, label: "Profile", sublabel: "Your settings", tourId: "nav-profile" },
   { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us", tourId: "nav-contact" },
 ];

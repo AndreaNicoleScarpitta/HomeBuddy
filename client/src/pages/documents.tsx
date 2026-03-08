@@ -178,11 +178,12 @@ export default function Documents() {
 
     const file = result.successful[0];
     try {
+      const objectPath = file.objectPath || `/objects/uploads/${file.id}`;
       await createDocument(homeId, {
         name: file.name,
         fileType: file.type,
-        fileSize: file.size,
-        objectPath: `/objects/uploads/${file.id}`,
+        fileSize: file.size || 0,
+        objectPath,
         category: uploadCategory.toLowerCase(),
       });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
@@ -210,11 +211,15 @@ export default function Documents() {
         contentType: file.type,
       }),
     });
+    if (!response.ok) {
+      throw new Error("Failed to get upload URL");
+    }
     const data = await response.json();
     return {
       method: "PUT" as const,
       url: data.uploadURL,
       headers: { "Content-Type": file.type || "application/octet-stream" },
+      objectPath: data.objectPath as string,
     };
   };
 

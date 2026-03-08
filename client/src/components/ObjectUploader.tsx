@@ -10,8 +10,9 @@ interface ObjectUploaderProps {
     method: "PUT";
     url: string;
     headers?: Record<string, string>;
+    objectPath?: string;
   }>;
-  onComplete?: (result: { successful: Array<{ id: string; name: string; type: string }> }) => void;
+  onComplete?: (result: { successful: Array<{ id: string; name: string; type: string; size: number; objectPath?: string }> }) => void;
   buttonClassName?: string;
   children: ReactNode;
   accept?: string;
@@ -60,6 +61,8 @@ export function ObjectUploader({
           id: crypto.randomUUID(),
           name: file.name,
           type: file.type,
+          size: file.size,
+          objectPath: params.objectPath,
         }],
       });
     } catch (error) {

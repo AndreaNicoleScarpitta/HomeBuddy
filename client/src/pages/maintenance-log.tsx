@@ -324,13 +324,19 @@ export default function MaintenanceLog() {
 
   const swipeCompleteMutation = useMutation({
     mutationFn: async (task: V2Task) => {
+      try {
+        await updateTask(task.id, { status: "completed" });
+      } catch (err: any) {
+        const msg = err?.message?.toLowerCase() || "";
+        const isAlreadyDone = msg.includes("transition") || msg.includes("invalid") || msg.includes("not allowed");
+        if (!isAlreadyDone) throw err;
+      }
       if (home?.legacyId) {
         await createLogEntry(home.legacyId, {
           title: task.title,
           date: new Date().toISOString(),
         });
       }
-      await updateTask(task.id, { status: "completed" });
     },
     onMutate: async (task) => {
       await queryClient.cancelQueries({ queryKey: ["tasks", home?.id] });
@@ -665,13 +671,21 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, system
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (task) {
-        await updateTask(task.id, { status: "completed" });
+        try {
+          await updateTask(task.id, { status: "completed" });
+        } catch (err: any) {
+          const msg = err?.message?.toLowerCase() || "";
+          const isAlreadyDone = msg.includes("transition") || msg.includes("invalid") || msg.includes("not allowed");
+          if (!isAlreadyDone) throw err;
+        }
       }
 
       if (legacyHomeId) {
+        const parsedDate = data.date ? new Date(data.date) : new Date();
+        const dateStr = isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
         await createLogEntry(legacyHomeId, {
           title: data.title,
-          date: new Date(data.date).toISOString(),
+          date: dateStr,
           cost: data.cost ? Math.round(parseFloat(data.cost) * 100) : undefined,
           provider: data.completedBy === "contractor" ? (data.provider || "Contractor") : "DIY (Myself)",
           notes: data.notes || undefined,
@@ -806,14 +820,14 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, system
             <div className="space-y-2">
               <Label htmlFor="system">Related System (optional)</Label>
               <Select 
-                value={formData.systemId} 
-                onValueChange={(v) => setFormData({ ...formData, systemId: v })}
+                value={formData.systemId || "__none__"} 
+                onValueChange={(v) => setFormData({ ...formData, systemId: v === "__none__" ? "" : v })}
               >
                 <SelectTrigger data-testid="select-entry-system">
                   <SelectValue placeholder="Select a system..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {systems.map((system) => (
                     <SelectItem key={system.id} value={system.id.toString()}>
                       {system.name}
