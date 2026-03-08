@@ -315,7 +315,7 @@ export function CircuitMapDialog({ homeId, systemId, isOpen, onClose }: CircuitM
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {flowState === "idle" && (
               <IdleView
                 circuitMaps={circuitMaps}
@@ -663,7 +663,7 @@ function AnnotatingView({
         </Button>
       </div>
 
-      <ScrollArea className="max-h-[45vh]">
+      <ScrollArea className="max-h-[50vh]">
         <div className="space-y-2 pr-2">
           {breakers.map((breaker, index) => (
             <div

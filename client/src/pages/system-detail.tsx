@@ -42,6 +42,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { systemConditions } from "@shared/schema";
+import { CircuitMapDialog } from "@/components/circuit-map";
 
 const categoryIcons: Record<string, any> = {
   "Roof": Home,
@@ -109,6 +110,7 @@ export default function SystemDetail() {
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [editNotes, setEditNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [showCircuitMap, setShowCircuitMap] = useState(false);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
@@ -602,6 +604,46 @@ export default function SystemDetail() {
             )}
           </CardContent>
         </Card>
+
+        {system.category === "Electrical" && home?.id && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Circuit Panel Map</p>
+                    <p className="text-xs text-muted-foreground">
+                      Map your breakers for quick reference during outages
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    trackEvent("circuit_map_opened", "system_detail", "electrical");
+                    setShowCircuitMap(true);
+                  }}
+                  data-testid="button-open-circuit-map"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Open
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showCircuitMap && home?.id && (
+          <CircuitMapDialog
+            homeId={home.id}
+            systemId={system.id}
+            isOpen={showCircuitMap}
+            onClose={() => setShowCircuitMap(false)}
+          />
+        )}
 
         <Card>
           <CardHeader className="pb-3">
