@@ -1,0 +1,1031 @@
+Absolutely. Here is a single comprehensive Replit-ready prompt you can paste into your coding agent. It includes:
+
+fixing the broken Document Upload flow
+
+renaming it to File Upload
+
+preserving the current HomeBuddy paradigm
+
+adding a Pre-Processor Agent
+
+adding a Contractor Analysis Agent
+
+adding a Contractor Reasoning Engine
+
+enforcing approval-first creation
+
+deleting pending tasks if creation is denied
+
+preventing data bleed between systems
+
+including regression and integration tests so the rest of the app doesn’t wobble like a loose ceiling fan blade 🏠🧰
+
+
+
+---
+
+Single Comprehensive Replit Prompt
+
+You are updating the existing HomeBuddy mobile app.
+
+Your job is to fix and enhance the current document analysis experience without breaking the existing app architecture, navigation, data model, or user workflows.
+
+This must be implemented in a deploy-friendly, production-safe, mobile-first way.
+
+Do not introduce a new paradigm.
+Do not redesign the app into a chat experience.
+Do not create free-floating tasks.
+All changes must fit the current HomeBuddy structure and user flow.
+
+
+---
+
+PRIMARY OBJECTIVE
+
+Fix the broken document analysis page and transform it into a File Upload and Home Analysis flow that behaves like an expert home contractor reviewing uploaded files and converting them into:
+
+1. updates to existing home systems
+
+
+2. suggested new home systems requiring approval
+
+
+3. tasks attached to home systems
+
+
+4. attributes attached to the correct system only
+
+
+
+The user should leave the flow knowing:
+
+what systems they have
+
+what condition those systems appear to be in
+
+what work needs to be done
+
+what maintenance should be scheduled
+
+
+
+---
+
+CRITICAL PRODUCT RULES
+
+1. Preserve the current HomeBuddy paradigm
+
+Everything must fit the existing structure:
+
+Home
+
+Home System
+
+Attributes
+
+Tasks
+
+
+
+
+Tasks must always belong to a specific home system.
+
+Tasks must never exist on their own.
+
+Do not introduce a new object model unless absolutely required for temporary suggestion/pending state handling.
+
+
+---
+
+2. Approval-first creation
+
+If uploaded files imply a new home system that does not already exist, do not auto-create it.
+
+Instead:
+
+create a suggested system
+
+attach any related findings/tasks as pending
+
+require user approval before actual creation
+
+
+If the user approves:
+
+create the system
+
+attach its pending tasks
+
+attach its extracted attributes
+
+
+If the user declines:
+
+do not create the system
+
+delete all pending tasks and pending attributes associated with that suggested system
+
+
+This delete behavior must be reliable and complete.
+
+
+---
+
+3. Everything must stay scoped correctly
+
+Prevent attribute bleed and cross-system contamination.
+
+Every stored field, attribute, pending record, form value, and task association must be uniquely scoped to its system instance.
+
+Use a structure equivalent to:
+
+system-{systemId}-attribute-{attributeKey}
+
+system-{systemId}-task-{taskId}
+
+pending-system-{suggestionId}-attribute-{attributeKey}
+
+pending-system-{suggestionId}-task-{taskId}
+
+
+Do not allow values entered for one system to appear prepopulated on another.
+
+Example: If a user enters roofing material for Roof, it must not appear in Siding, Deck, or any other system.
+
+
+---
+
+UI / UX CHANGES
+
+4. Rename the broken feature
+
+Rename all user-facing references of:
+
+"Document Upload"
+
+
+to:
+
+"File Upload"
+
+
+Update:
+
+page title
+
+button labels
+
+empty states
+
+status messages
+
+navigation labels
+
+helper text
+
+analytics/event names if applicable and safe to update
+
+
+Do not leave mixed terminology in the app.
+
+
+---
+
+5. Fix File Upload
+
+The current upload flow is broken. Fix it end to end.
+
+The File Upload flow must:
+
+1. allow user to select one or more files
+
+
+2. upload successfully to backend storage
+
+
+3. create a file record linked to the current Home
+
+
+4. trigger analysis pipeline after successful upload
+
+
+5. display analysis results as suggested actions
+
+
+6. gracefully handle failures
+
+
+
+Supported file types:
+
+PDF
+
+PNG
+
+JPG
+
+JPEG
+
+HEIC
+
+DOCX
+
+TXT
+
+
+If upload fails, show a clear user-safe message:
+
+Upload Failed
+Please try again.
+
+If analysis fails after upload succeeds, preserve the uploaded file record and show a distinct analysis failure state.
+
+
+---
+
+6. Mobile-first interaction
+
+Keep the experience simple and aligned with the current app.
+
+The user flow should feel like:
+
+open File Upload page
+
+upload one or more files
+
+review detected systems/tasks
+
+approve or decline additions
+
+save accepted changes into existing home structure
+
+
+Do not dump raw extraction text onto the screen unless it is inside an optional “details” or “source notes” section.
+
+The primary review UI should focus on:
+
+matched existing systems
+
+suggested new systems
+
+tasks for existing systems
+
+pending tasks for suggested systems
+
+extracted attributes
+
+approve / decline actions
+
+
+
+---
+
+ANALYSIS PIPELINE
+
+Implement the analysis flow using three conceptual stages. These can be separate services, modules, reducers, orchestrators, or pipeline steps depending on the existing codebase.
+
+
+---
+
+7. Stage 1: Pre-Processor Agent
+
+Purpose: extract structured signals from uploaded files.
+
+This stage acts like a technical parser, not a contractor.
+
+It should:
+
+read file text/content
+
+normalize OCR/document text if needed
+
+identify likely home systems referenced
+
+identify equipment and components
+
+identify defects/issues
+
+identify maintenance recommendations
+
+identify install dates
+
+identify material types
+
+identify warranties
+
+identify contractor/manufacturer notes
+
+identify safety issues
+
+identify confidence where possible
+
+
+Return normalized structured data.
+
+Suggested output shape:
+
+{
+  "systemsDetected": [],
+  "equipmentDetected": [],
+  "issuesDetected": [],
+  "maintenanceRecommendations": [],
+  "attributesDetected": [],
+  "safetyFindings": [],
+  "sourceReferences": []
+}
+
+Be conservative. Do not hallucinate unsupported data.
+
+
+---
+
+8. Stage 2: Contractor Analysis Agent
+
+Purpose: behave like an experienced home contractor turning parsed findings into home-system updates and tasks.
+
+This stage should:
+
+match parsed findings to existing systems where possible
+
+create proposed tasks for matched existing systems
+
+identify when a new system is implied
+
+convert findings into meaningful homeowner actions
+
+classify tasks by type
+
+assign reasonable priority/timing
+
+attach source references
+
+
+Task categories must be one of:
+
+Repair
+
+Maintenance
+
+Inspection
+
+Replacement
+
+Improvement
+
+
+Each proposed task should contain at minimum:
+
+task name
+
+system association
+
+description
+
+category
+
+priority
+
+recommended timing
+
+source file reference
+
+
+
+---
+
+9. Stage 3: Contractor Reasoning Engine
+
+Purpose: infer sensible homeowner follow-up tasks from contractor-style language without fabricating unsupported claims.
+
+This stage is the “seasoned contractor brain.”
+
+It should convert phrases like:
+
+“near end of life” → replacement planning task
+
+“monitor for further movement” → recurring inspection / monitor task
+
+“recommend licensed electrician evaluation” → inspection task
+
+“debris present in gutters” → gutter cleaning maintenance task
+
+“roof shingles curling” → repair or replacement-planning task depending on severity/confidence
+
+“unit installed in 2011” → attribute update and likely lifecycle awareness task if relevant
+
+
+Reasoning engine rules:
+
+may suggest implied maintenance only when strongly supported by document context
+
+must not invent expensive projects with no support
+
+should mark inferred items distinctly if needed for traceability
+
+should prefer safe, homeowner-useful next steps over dramatic conclusions
+
+
+
+---
+
+MATCHING AND CREATION RULES
+
+10. Existing system matching
+
+For each parsed or reasoned finding:
+
+first attempt to map it to an existing home system
+
+if matched, attach as a proposed update/task to that system
+
+if no match exists, create a suggested system record, not a real system
+
+
+Use fuzzy matching only where safe and clear.
+
+Examples of common systems:
+
+Roof
+
+HVAC
+
+Plumbing
+
+Electrical
+
+Foundation
+
+Siding
+
+Windows
+
+Doors
+
+Appliances
+
+Garage
+
+Deck
+
+Landscaping
+
+Water Heater
+
+Insulation
+
+Solar
+
+Drainage
+
+
+
+---
+
+11. Suggested system workflow
+
+For a suggested new system, create a temporary/pending structure containing:
+
+suggested system name
+
+reason for suggestion
+
+pending attributes
+
+pending tasks
+
+source file references
+
+
+This structure must remain isolated from live Home data until approved.
+
+When approved:
+
+create real system
+
+migrate pending attributes/tasks onto the real system
+
+remove temporary suggestion state
+
+
+When declined:
+
+delete the suggestion
+
+delete all pending tasks
+
+delete all pending attributes
+
+ensure no orphan records remain
+
+
+
+---
+
+12. Duplicate prevention
+
+Before creating a new task or applying a suggested update:
+
+check for same or very similar existing task on the same system
+
+check for same extracted attribute already stored
+
+merge or update when appropriate
+
+do not create duplicates
+
+
+Examples:
+
+If “Clean gutters” already exists for Roof/Gutters, do not create a second nearly identical task unless timing/source meaningfully differs.
+
+If roof material is already “Asphalt Shingle,” do not add another identical attribute.
+
+
+
+---
+
+DATA CONTRACT REQUIREMENTS
+
+13. Safe structured output
+
+The analysis result should resolve into a structure equivalent to:
+
+{
+  "matchedSystemUpdates": [],
+  "matchedSystemTasks": [],
+  "suggestedSystems": [],
+  "pendingTasks": [],
+  "pendingAttributes": [],
+  "analysisWarnings": [],
+  "sourceFiles": []
+}
+
+Each item should carry stable ids suitable for rendering and approval actions.
+
+
+---
+
+14. Field isolation requirement
+
+This is mandatory.
+
+Fix any existing state management issue where values bleed between systems.
+
+Every system-specific field in forms, state, reducers, cache, local state, backend payloads, and persisted records must be uniquely keyed to the correct system instance.
+
+Do not reuse generic keys like:
+
+material
+
+installDate
+
+notes
+
+
+without system scoping.
+
+Use scoped keys or nested system-specific objects.
+
+This is especially important for:
+
+materials
+
+install dates
+
+condition
+
+manufacturer
+
+notes
+
+tasks
+
+edit forms
+
+suggested system approval state
+
+
+
+---
+
+ERROR HANDLING
+
+15. Failure modes
+
+Handle these separately:
+
+Upload failure
+
+File not stored, no analysis begins.
+
+Analysis failure
+
+File stored successfully, but analysis did not complete.
+
+Partial analysis
+
+One file succeeds, another fails.
+
+Approval failure
+
+Suggested system approval action fails to persist.
+
+Pending cleanup failure
+
+Decline action does not properly clean pending tasks.
+
+For each, show safe user messaging and preserve app stability.
+
+Do not crash the page or poison the rest of the home record.
+
+
+---
+
+PERFORMANCE / DEPLOYMENT
+
+16. Deploy-friendly implementation requirements
+
+Make this deploy-friendly:
+
+use existing architecture patterns where possible
+
+avoid giant rewrites
+
+prefer modular additions over broad refactors
+
+preserve existing routes and major component contracts unless necessary
+
+preserve backward compatibility with current home data
+
+guard new functionality behind safe defaults if needed
+
+do not require manual data migrations unless unavoidable
+
+keep analytics and logging useful but not noisy
+
+
+
+---
+
+TESTING REQUIREMENTS
+
+Implement tests to ensure this functionality works and does not break the rest of the app.
+
+Add or update unit, integration, and regression tests.
+
+
+---
+
+17. Upload tests
+
+Create tests that verify:
+
+1. File Upload page renders correctly with new label
+
+
+2. “Document Upload” no longer appears in user-facing UI
+
+
+3. supported file types are accepted
+
+
+4. unsupported file types are rejected
+
+
+5. single file upload works
+
+
+6. multi-file upload works
+
+
+7. upload failure shows “Upload Failed / Please try again.”
+
+
+8. successful upload creates a file record linked to the correct Home
+
+
+9. successful upload triggers the analysis pipeline
+
+
+
+
+---
+
+18. Pre-Processor tests
+
+Create tests that verify:
+
+1. parser extracts system references from sample text
+
+
+2. parser extracts defects/issues
+
+
+3. parser extracts maintenance recommendations
+
+
+4. parser extracts attributes like material/install date when present
+
+
+5. parser does not invent data when content is vague
+
+
+6. parser handles multiple files
+
+
+7. parser handles empty/low-content files gracefully
+
+
+
+
+---
+
+19. Contractor Analysis tests
+
+Create tests that verify:
+
+1. parsed roof findings attach to existing Roof system
+
+
+2. parsed HVAC findings attach to existing HVAC system
+
+
+3. unknown system references create suggested systems rather than live systems
+
+
+4. generated tasks always belong to a system
+
+
+5. tasks are classified into approved task categories only
+
+
+6. source file references are retained
+
+
+7. duplicate tasks are not created for same system
+
+
+
+
+---
+
+20. Contractor Reasoning Engine tests
+
+Create tests that verify:
+
+1. “near end of life” becomes replacement-planning or inspection logic, not immediate unsupported replacement
+
+
+2. “monitor” becomes inspection/monitor task
+
+
+3. “licensed electrician evaluation” becomes inspection task
+
+
+4. mild contractor language does not produce extreme recommendations
+
+
+5. inference remains traceable to source content
+
+
+6. reasoning engine does not fabricate systems not implied by the documents
+
+
+
+
+---
+
+21. Approval workflow tests
+
+Create tests that verify:
+
+1. suggested systems appear in pending state only
+
+
+2. approving suggested system creates the real system
+
+
+3. approving suggested system migrates pending tasks correctly
+
+
+4. approving suggested system migrates pending attributes correctly
+
+
+5. declining suggested system deletes pending tasks
+
+
+6. declining suggested system deletes pending attributes
+
+
+7. declining suggested system does not create a real system
+
+
+8. no orphaned pending records remain after decline
+
+
+
+
+---
+
+22. Field isolation / no-bleed tests
+
+Create tests that verify:
+
+1. setting Roof material does not populate Siding material
+
+
+2. editing one system’s notes does not alter another system’s notes
+
+
+3. pending system attributes do not appear in existing system forms
+
+
+4. task edits for one system do not affect another system
+
+
+5. repeated renders/navigation do not cause cross-system form pollution
+
+
+6. backend payloads preserve correct system scoping
+
+
+
+This is a high-priority regression suite.
+
+
+---
+
+23. Regression tests across app behavior
+
+Add tests to ensure these existing behaviors remain intact:
+
+1. existing home systems still render correctly
+
+
+2. existing manually created tasks still work
+
+
+3. editing an existing system still works
+
+
+4. deleting a task still works
+
+
+5. home overview still loads without uploaded files
+
+
+6. app navigation to and from Home systems pages still works
+
+
+7. no existing task lists or system detail screens break due to new pending-state logic
+
+
+8. persisted old home records without uploaded files still load normally
+
+
+
+
+---
+
+24. End-to-end happy path
+
+Add at least one end-to-end test covering:
+
+user opens File Upload
+
+uploads inspection PDF
+
+analysis returns one matched existing system and one suggested new system
+
+user approves one suggestion
+
+user declines another suggestion
+
+matched tasks are saved correctly
+
+approved system is created correctly
+
+declined system’s pending tasks are removed
+
+final home view shows only accepted outcomes
+
+
+
+---
+
+IMPLEMENTATION NOTES
+
+25. Suggested sample scenarios for tests
+
+Use sample content like:
+
+Sample A
+
+“Roof shingles are curling and show moderate wear. Recommend replacement within 3-5 years. Gutters contain debris.”
+
+Expected:
+
+Roof matched
+
+replacement-planning task
+
+gutter cleaning task
+
+roof wear notes/attributes if appropriate
+
+
+Sample B
+
+“Water heater installed in 2012. Recommend monitoring for leaks. Unit appears operational.”
+
+Expected:
+
+Water Heater matched or suggested
+
+install date attribute
+
+monitor for leaks inspection task
+
+
+Sample C
+
+“Solar inverter located in garage. Recommend annual inspection.”
+
+Expected:
+
+if Solar does not exist, create suggested Solar system
+
+pending annual inspection task
+
+approval required before real creation
+
+
+
+---
+
+DEFINITION OF DONE
+
+This work is complete only when:
+
+1. File Upload replaces Document Upload in the UI
+
+
+2. upload works end to end
+
+
+3. analysis pipeline runs successfully
+
+
+4. results fit the current HomeBuddy model
+
+
+5. new systems require approval
+
+
+6. declined creations fully delete pending tasks/attributes
+
+
+7. no data bleeds between systems
+
+
+8. tests pass
+
+
+9. existing app functionality remains intact
+
+
+10. implementation is safe to deploy
+
+
+
+
+---
+
+EXECUTION INSTRUCTION
+
+Please inspect the current codebase first, identify the broken upload and document analysis flow, implement the minimum-safe architectural changes required, and add the required tests.
+
+Favor correctness, stability, and compatibility over flashy redesigns.
+
+Return:
+
+1. summary of changes made
+
+
+2. files modified
+
+
+3. any new models/types introduced
+
+
+4. test coverage added
+
+
+5. any follow-up risks or cleanup items
+
+
+
+
+---
+
+If you want, I can also turn this into a tighter engineering-manager version that is even more surgical and less prose-heavy, for agents that perform better with crisp acceptance-criteria formatting.
