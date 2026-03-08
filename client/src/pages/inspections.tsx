@@ -417,10 +417,11 @@ export default function Inspections() {
     
     const file = result.successful[0];
     try {
+      const objectPath = file.objectPath || `/objects/uploads/${file.id}`;
       const report = await createInspectionReport(home.id, {
         fileName: file.name,
         fileType: file.type,
-        objectPath: `/objects/uploads/${file.id}`,
+        objectPath,
       });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       trackEvent('upload', 'inspections', 'report_uploaded');
@@ -429,24 +430,6 @@ export default function Inspections() {
     } catch (error) {
       toast({ title: "Error", description: "Failed to save report", variant: "destructive" });
     }
-  };
-  
-  const getUploadParameters = async (file: any) => {
-    const response = await fetch("/api/uploads/request-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-      }),
-    });
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-    };
   };
   
   if (homeLoading || reportsLoading) {
@@ -498,8 +481,7 @@ export default function Inspections() {
             <TooltipTrigger asChild>
               <ObjectUploader
                 maxNumberOfFiles={1}
-                maxFileSize={20971520}
-                onGetUploadParameters={getUploadParameters}
+                maxFileSize={10485760}
                 onComplete={handleUploadComplete}
                 buttonClassName="shadow-lg shadow-primary/20"
               >

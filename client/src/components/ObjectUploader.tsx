@@ -6,12 +6,6 @@ import { Loader2 } from "lucide-react";
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: (file: { name: string; size: number; type: string }) => Promise<{
-    method: "PUT";
-    url: string;
-    headers?: Record<string, string>;
-    objectPath?: string;
-  }>;
   onComplete?: (result: { successful: Array<{ id: string; name: string; type: string; size: number; objectPath?: string }> }) => void;
   buttonClassName?: string;
   children: ReactNode;
@@ -20,7 +14,6 @@ interface ObjectUploaderProps {
 
 export function ObjectUploader({
   maxFileSize = 10485760,
-  onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
@@ -40,21 +33,20 @@ export function ObjectUploader({
 
     setIsUploading(true);
     try {
-      const params = await onGetUploadParameters({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      });
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const response = await fetch(params.url, {
-        method: params.method,
-        headers: params.headers,
-        body: file,
+      const response = await fetch("/api/uploads/upload", {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Upload failed");
       }
+
+      const data = await response.json();
 
       onComplete?.({
         successful: [{
@@ -62,7 +54,7 @@ export function ObjectUploader({
           name: file.name,
           type: file.type,
           size: file.size,
-          objectPath: params.objectPath,
+          objectPath: data.objectPath,
         }],
       });
     } catch (error) {

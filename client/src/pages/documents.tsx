@@ -201,28 +201,6 @@ export default function Documents() {
     }
   };
 
-  const getUploadParameters = async (file: any) => {
-    const response = await fetch("/api/uploads/request-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to get upload URL");
-    }
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-      objectPath: data.objectPath as string,
-    };
-  };
-
   if (homeLoading || docsLoading) {
     return (
       <Layout>
@@ -282,8 +260,7 @@ export default function Documents() {
             </Select>
             <ObjectUploader
               maxNumberOfFiles={1}
-              maxFileSize={20971520}
-              onGetUploadParameters={getUploadParameters}
+              maxFileSize={10485760}
               onComplete={handleUploadComplete}
               buttonClassName="shadow-lg shadow-primary/20"
               accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv"
