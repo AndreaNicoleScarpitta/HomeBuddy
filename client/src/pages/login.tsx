@@ -140,6 +140,13 @@ export default function Login() {
               Terms of Service & Privacy Policy
             </a>
           </p>
+
+          <p className="text-center text-sm text-muted-foreground pt-2">
+            Don't have an account?{" "}
+            <a href="/signup" className="text-primary font-medium hover:underline no-underline" data-testid="link-login-signup">
+              Sign up free
+            </a>
+          </p>
         </motion.div>
       </div>
     </div>

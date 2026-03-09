@@ -13,7 +13,7 @@ export default function Landing() {
     }
   }, []);
   const stats = [
-    { value: "13", label: "System categories tracked" },
+    { value: "14", label: "System categories tracked" },
     { value: "50+", label: "Recurring task templates" },
     { value: "19", label: "AI detection patterns" },
     { value: "100%", label: "Free, forever" },
@@ -61,7 +61,7 @@ export default function Landing() {
               Sign In
             </a>
             <a
-              href="/login"
+              href="/signup"
               onClick={() => trackEvent('click', 'landing', 'sign_up_header')}
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 no-underline transition-colors"
               data-testid="button-signup-header"
@@ -102,7 +102,7 @@ export default function Landing() {
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <a
-                    href="/login"
+                    href="/signup"
                     onClick={() => trackEvent('click', 'landing', 'cta_hero')}
                     className="inline-flex items-center justify-center h-14 px-8 text-lg font-medium rounded-md bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 no-underline transition-all hover:shadow-primary/35 hover:shadow-xl"
                     data-testid="button-cta-hero"
@@ -372,7 +372,7 @@ export default function Landing() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="/login"
+                  href="/signup"
                   onClick={() => trackEvent('click', 'landing', 'cta_bottom')}
                   className="inline-flex items-center justify-center h-14 px-10 text-lg font-medium rounded-md bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90 no-underline transition-all hover:shadow-primary/35 hover:shadow-xl"
                   data-testid="button-cta-bottom"
@@ -414,6 +414,9 @@ export default function Landing() {
             <div>
               <h4 className="font-heading font-semibold text-foreground mb-3">Links</h4>
               <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/signup" className="text-muted-foreground hover:text-foreground no-underline transition-colors">Sign Up Free</a>
+                </li>
                 <li>
                   <a href="/login" className="text-muted-foreground hover:text-foreground no-underline transition-colors">Sign In</a>
                 </li>

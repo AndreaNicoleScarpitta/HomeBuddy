@@ -19,6 +19,7 @@ import DocumentAnalysis from "@/pages/document-analysis";
 import Onboarding from "@/pages/onboarding";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 
 import Contact from "@/pages/contact";
 import Terms, { TermsContent } from "@/pages/terms";
@@ -88,7 +89,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/login" component={Login} />
-        <Route path="/signup" component={Login} />
+        <Route path="/signup" component={Signup} />
         <Route path="/terms" component={PublicTermsPage} />
         <Route component={Landing} />
       </Switch>
