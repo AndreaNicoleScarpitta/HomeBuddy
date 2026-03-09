@@ -236,6 +236,8 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [enableRecurring, setEnableRecurring] = useState(true);
   const [createdSystemId, setCreatedSystemId] = useState<string | null>(null);
+  const [wizardPaintColors, setWizardPaintColors] = useState<{ room: string; wall: string; color: string; hex: string }[]>([]);
+  const [newWizardPaint, setNewWizardPaint] = useState({ room: "", wall: "", color: "", hex: "" });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -374,13 +376,34 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
     }
   };
 
+  const handleAddWizardPaint = () => {
+    const hasAnyField = newWizardPaint.room.trim() || newWizardPaint.wall.trim() || newWizardPaint.color.trim() || newWizardPaint.hex.trim();
+    if (!hasAnyField) return;
+    setWizardPaintColors([...wizardPaintColors, {
+      room: newWizardPaint.room.trim(),
+      wall: newWizardPaint.wall.trim(),
+      color: newWizardPaint.color.trim(),
+      hex: newWizardPaint.hex.trim(),
+    }]);
+    setNewWizardPaint({ room: "", wall: "", color: "", hex: "" });
+  };
+
+  const handleRemoveWizardPaint = (index: number) => {
+    setWizardPaintColors(wizardPaintColors.filter((_, i) => i !== index));
+  };
+
   const createMutation = useMutation({
-    mutationFn: (data: typeof formData) => createSystem(homeId, {
+    mutationFn: (data: typeof formData) => {
+      let notes = data.notes || undefined;
+      if (data.category === "Paint" && wizardPaintColors.length > 0) {
+        notes = JSON.stringify({ paintColors: wizardPaintColors, textNotes: data.notes || "" });
+      }
+      return createSystem(homeId, {
       category: data.category,
       name: data.name,
       installYear: data.installYear ? parseInt(data.installYear) : undefined,
       condition: data.category === "Pest" ? undefined : data.condition,
-      notes: data.notes || undefined,
+      notes,
       make: data.make || undefined,
       model: data.model || undefined,
       material: data.material || undefined,
@@ -389,7 +412,8 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
       treatmentType: data.treatmentType || undefined,
       recurrenceInterval: data.recurrenceInterval || undefined,
       source: "manual",
-    } as any),
+    } as any);
+    },
     onSuccess: (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["systems", homeId] });
       trackEvent("system_instance_created", "systems", formData.category);
@@ -784,23 +808,125 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
               </>
             )}
             
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder={notesPlaceholders[formData.category] || "Serial number, warranty info, or any relevant details..."}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-                data-testid="input-notes"
-              />
-              {notesHints[formData.category] && (
+            {formData.category === "Paint" ? (
+              <div className="space-y-3">
+                <Label>Add Paint Colors</Label>
+                <div className="overflow-x-auto rounded-lg border" data-testid="wizard-paint-table">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground text-xs">Room</th>
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground text-xs">Wall</th>
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground text-xs">Color</th>
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground text-xs">Hex</th>
+                        <th className="w-8 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {wizardPaintColors.map((entry, index) => (
+                        <tr key={index} className="group border-b border-border/50 hover:bg-muted/30" data-testid={`wizard-paint-row-${index}`}>
+                          <td className="py-2 px-3">{entry.room || <span className="text-muted-foreground/50">—</span>}</td>
+                          <td className="py-2 px-3">{entry.wall || <span className="text-muted-foreground/50">—</span>}</td>
+                          <td className="py-2 px-3">{entry.color || <span className="text-muted-foreground/50">—</span>}</td>
+                          <td className="py-2 px-3 font-mono text-xs">{entry.hex || <span className="text-muted-foreground/50">—</span>}</td>
+                          <td className="py-2 px-1">
+                            <button
+                              onClick={() => handleRemoveWizardPaint(index)}
+                              className="h-6 w-6 rounded-full hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                              data-testid={`wizard-remove-paint-${index}`}
+                            >
+                              <X className="h-3 w-3 text-destructive" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr data-testid="wizard-paint-new-row">
+                        <td className="py-2 px-2">
+                          <Input
+                            value={newWizardPaint.room}
+                            onChange={(e) => setNewWizardPaint({ ...newWizardPaint, room: e.target.value })}
+                            placeholder="e.g., Living Room"
+                            className="h-8 text-sm"
+                            data-testid="wizard-input-paint-room"
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            value={newWizardPaint.wall}
+                            onChange={(e) => setNewWizardPaint({ ...newWizardPaint, wall: e.target.value })}
+                            placeholder="e.g., Accent Wall"
+                            className="h-8 text-sm"
+                            data-testid="wizard-input-paint-wall"
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            value={newWizardPaint.color}
+                            onChange={(e) => setNewWizardPaint({ ...newWizardPaint, color: e.target.value })}
+                            placeholder="e.g., Veranda White"
+                            className="h-8 text-sm"
+                            data-testid="wizard-input-paint-color"
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            value={newWizardPaint.hex}
+                            onChange={(e) => setNewWizardPaint({ ...newWizardPaint, hex: e.target.value })}
+                            placeholder="e.g., #f5e6d3"
+                            className="h-8 text-sm font-mono"
+                            data-testid="wizard-input-paint-hex"
+                          />
+                        </td>
+                        <td className="py-2 px-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={handleAddWizardPaint}
+                            data-testid="wizard-button-add-paint"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
                 <p className="text-xs text-muted-foreground flex items-start gap-1">
                   <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                  {notesHints[formData.category]}
+                  All fields are optional. Fill in any combination and click + to add a row.
                 </p>
-              )}
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Additional Notes (optional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Any other paint-related notes..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    data-testid="input-notes"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes (optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder={notesPlaceholders[formData.category] || "Serial number, warranty info, or any relevant details..."}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                  data-testid="input-notes"
+                />
+                {notesHints[formData.category] && (
+                  <p className="text-xs text-muted-foreground flex items-start gap-1">
+                    <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                    {notesHints[formData.category]}
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>
@@ -886,6 +1012,33 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
                     </div>
                   )}
                 </div>
+                {formData.category === "Paint" && wizardPaintColors.length > 0 && (
+                  <div className="text-sm space-y-2">
+                    <span className="text-muted-foreground">Paint Colors ({wizardPaintColors.length}):</span>
+                    <div className="overflow-x-auto rounded border text-xs">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b bg-muted/30">
+                            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Room</th>
+                            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Wall</th>
+                            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Color</th>
+                            <th className="text-left py-1.5 px-2 font-medium text-muted-foreground">Hex</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {wizardPaintColors.map((entry, i) => (
+                            <tr key={i} className="border-b border-border/50">
+                              <td className="py-1.5 px-2">{entry.room || "—"}</td>
+                              <td className="py-1.5 px-2">{entry.wall || "—"}</td>
+                              <td className="py-1.5 px-2">{entry.color || "—"}</td>
+                              <td className="py-1.5 px-2 font-mono">{entry.hex || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
                 {formData.notes && (
                   <div className="text-sm">
                     <span className="text-muted-foreground">Notes:</span>
