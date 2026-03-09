@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, FileSearch, Mail, Menu, LogOut, ClipboardList, User, FolderOpen, HelpCircle, Settings2 } from "lucide-react";
+import { Home, FileSearch, Mail, Menu, LogOut, ClipboardList, User, FolderOpen, HelpCircle, Settings2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/document-analysis", icon: FileSearch, label: "Document Analysis (Beta)", sublabel: "Analyze files", tourId: "nav-file-upload" },
   { href: "/documents", icon: FolderOpen, label: "Documents", sublabel: "Your files", tourId: "nav-documents" },
   { href: "/profile", icon: User, label: "Profile", sublabel: "Your settings", tourId: "nav-profile" },
+  { href: "/profile?section=support", icon: Heart, label: "Support Home Buddy", sublabel: "Help keep it free", tourId: "nav-donate" },
   { href: "/contact", icon: Mail, label: "Contact", sublabel: "Reach us", tourId: "nav-contact" },
 ];
 

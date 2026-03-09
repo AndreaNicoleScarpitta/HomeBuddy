@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { trackEvent } from "@/lib/analytics";
 import { useSearch } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +44,15 @@ function SupportCard() {
   const queryClient = useQueryClient();
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
+  const supportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (params.get("section") === "support" && supportRef.current) {
+      setTimeout(() => {
+        supportRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [searchString]);
 
   const { data: config } = useQuery({
     queryKey: ["donationConfig"],
@@ -115,7 +124,7 @@ function SupportCard() {
   const tierLabels = ["$1", "$5", "$10"];
 
   return (
-    <Card>
+    <Card ref={supportRef}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-heading flex items-center gap-2">
           <Heart className="h-5 w-5 text-primary" />
