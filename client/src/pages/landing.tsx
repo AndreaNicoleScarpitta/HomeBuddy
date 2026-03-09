@@ -51,14 +51,24 @@ export default function Landing() {
             />
             <span className="text-xl font-heading font-bold text-foreground">Home Buddy</span>
           </a>
-          <a
-            href="/login"
-            onClick={() => trackEvent('click', 'landing', 'sign_in_header')}
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground no-underline"
-            data-testid="button-login"
-          >
-            Sign In
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/login"
+              onClick={() => trackEvent('click', 'landing', 'sign_in_header')}
+              className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground no-underline transition-colors"
+              data-testid="button-login"
+            >
+              Sign In
+            </a>
+            <a
+              href="/login"
+              onClick={() => trackEvent('click', 'landing', 'sign_up_header')}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 no-underline transition-colors"
+              data-testid="button-signup-header"
+            >
+              Sign Up Free
+            </a>
+          </div>
         </nav>
       </header>
 
