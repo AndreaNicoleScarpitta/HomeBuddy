@@ -60,3 +60,10 @@ Core features include:
 - **express-rate-limit**: Middleware for API rate limiting.
 - **pino**: Structured logging library.
 - **Vitest**: Unit testing framework.
+
+## SEO
+- `client/index.html`: Title, meta description, keywords, canonical URL (`https://home-buddy.replit.app/`), Open Graph + Twitter Card tags, JSON-LD structured data (SoftwareApplication + WebApplication with free pricing).
+- `client/public/robots.txt`: Allows `/`, blocks `/api/`, `/v2/`, and authenticated routes. References sitemap.
+- `client/public/sitemap.xml`: Lists `/`, `/terms`, `/login` as crawlable pages.
+- Landing page (`client/src/pages/landing.tsx`): Semantic HTML (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`), aria-labels, dynamic `<title>` override, keyword-rich footer content.
+- Update canonical URL if domain changes.

@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /v2/
+Disallow: /objects/
+Disallow: /dashboard
+Disallow: /systems
+Disallow: /maintenance-log
+Disallow: /documents
+Disallow: /document-analysis
+Disallow: /profile
+Disallow: /contact
+Disallow: /onboarding
+Disallow: /chat
+Disallow: /inspections
+
+Sitemap: https://home-buddy.replit.app/sitemap.xml

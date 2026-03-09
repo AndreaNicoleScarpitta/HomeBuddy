@@ -2,8 +2,16 @@ import { Calendar, MessageSquare, ArrowRight, Sparkles, FileText, Scan, Calendar
 import { motion } from "framer-motion";
 import { DashboardDemo, ChatDemo, DocumentAnalysisDemo, TaskGenerationDemo } from "@/components/landing-demos";
 import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
 
 export default function Landing() {
+  useEffect(() => {
+    document.title = "Home Buddy — Free AI Home Maintenance Planner & Tracker";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Home Buddy builds a personalized maintenance schedule for your home. Upload inspection reports, track HVAC, plumbing, roof and electrical systems, and know what's safe to DIY. Free forever.");
+    }
+  }, []);
   const stats = [
     { value: "13", label: "System categories tracked" },
     { value: "50+", label: "Recurring task templates" },
@@ -31,16 +39,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-background to-background dark:from-orange-950/20 dark:via-background dark:to-background">
-      <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <div className="container mx-auto px-6 h-16 flex justify-between items-center">
-          <div className="flex items-center gap-2">
+      <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40" role="banner">
+        <nav className="container mx-auto px-6 h-16 flex justify-between items-center" aria-label="Main navigation">
+          <a href="/" className="flex items-center gap-2 no-underline" aria-label="Home Buddy - Home">
             <img
               src="/images/home-buddy-icon.png"
-              alt="Home Buddy"
+              alt="Home Buddy logo"
               className="h-8 w-8 rounded-lg object-cover"
+              width="32"
+              height="32"
             />
-            <span className="text-xl font-heading font-bold">Home Buddy</span>
-          </div>
+            <span className="text-xl font-heading font-bold text-foreground">Home Buddy</span>
+          </a>
           <a
             href="/login"
             onClick={() => trackEvent('click', 'landing', 'sign_in_header')}
@@ -49,11 +59,11 @@ export default function Landing() {
           >
             Sign In
           </a>
-        </div>
+        </nav>
       </header>
 
       <main className="pt-16">
-        <section className="min-h-[90vh] flex items-center relative overflow-hidden">
+        <section className="min-h-[90vh] flex items-center relative overflow-hidden" aria-label="Hero - AI Home Maintenance Planner">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
           <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
@@ -109,7 +119,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="py-12 border-y border-border/40 bg-card/50">
+        <section className="py-12 border-y border-border/40 bg-card/50" aria-label="Key metrics">
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, i) => (
@@ -369,12 +379,43 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-border/40 py-8">
-        <div className="container mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <span>&copy; 2026 Home Buddy. Your trusted home maintenance assistant.</span>
-          <a href="/terms" onClick={() => trackEvent('click', 'landing', 'footer_terms')} className="underline hover:text-foreground" data-testid="link-footer-terms">
-            Terms & Conditions
-          </a>
+      <footer className="border-t border-border/40 py-12" role="contentinfo">
+        <div className="container mx-auto px-6">
+          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <img src="/images/home-buddy-icon.png" alt="Home Buddy" className="h-6 w-6 rounded" width="24" height="24" />
+                <span className="font-heading font-bold text-foreground">Home Buddy</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Your AI-powered home maintenance planner. Track systems, schedule tasks, upload inspection reports, and stay ahead of costly repairs.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-heading font-semibold text-foreground mb-3">Features</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>AI document analysis</li>
+                <li>Personalized maintenance schedules</li>
+                <li>DIY safety ratings</li>
+                <li>Circuit breaker panel mapping</li>
+                <li>Home system tracking</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-heading font-semibold text-foreground mb-3">Links</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/login" className="text-muted-foreground hover:text-foreground no-underline transition-colors">Sign In</a>
+                </li>
+                <li>
+                  <a href="/terms" onClick={() => trackEvent('click', 'landing', 'footer_terms')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-footer-terms">Terms & Conditions</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
+            <p>&copy; 2026 Home Buddy. Free AI home maintenance assistant for homeowners.</p>
+          </div>
         </div>
       </footer>
     </div>
