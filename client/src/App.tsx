@@ -54,9 +54,17 @@ function Router() {
 
   useEffect(() => {
     const hasSeenSplash = sessionStorage.getItem("splashShown");
-    if (hasSeenSplash) {
+    const params = new URLSearchParams(window.location.search);
+    const fromAuth = params.get("auth") === "success";
+    if (hasSeenSplash || fromAuth) {
       setShowSplash(false);
       setSplashComplete(true);
+      if (!hasSeenSplash) {
+        sessionStorage.setItem("splashShown", "true");
+      }
+      if (fromAuth) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
     }
   }, []);
 

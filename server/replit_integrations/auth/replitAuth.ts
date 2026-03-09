@@ -155,7 +155,7 @@ export async function setupAuth(app: Express) {
           console.error("Session save error after login:", err);
           return res.status(500).send("Failed to save session");
         }
-        res.redirect("/");
+        res.redirect("/?auth=success");
       });
     } catch (error) {
       console.error("Callback error:", error);
