@@ -1,0 +1,33 @@
+{
+  "name": "Home Buddy",
+  "shortName": "Home Buddy",
+  "description": "Your AI-powered home maintenance planner. Track systems, schedule tasks, upload inspection reports, and know what's safe to DIY. Free forever.",
+  "startUrl": "https://home-buddy.replit.app/",
+  "scope": "https://home-buddy.replit.app/",
+  "display": "standalone",
+  "themeColor": "#f97316",
+  "backgroundColor": "#ffffff",
+  "orientation": "portrait",
+  "lang": "en-US",
+  "categories": ["utilities", "lifestyle"],
+  "icons": {
+    "square44x44Logo": "Square44x44Logo.png",
+    "square71x71Logo": "Square71x71Logo.png",
+    "square150x150Logo": "Square150x150Logo.png",
+    "square310x310Logo": "Square310x310Logo.png",
+    "wide310x150Logo": "Wide310x150Logo.png",
+    "storeLogo": "StoreLogo300.png",
+    "splashScreen": "Square620x620Logo.png"
+  },
+  "publisher": {
+    "displayName": "Home Buddy",
+    "identity": "CN=TODO_YOUR_PUBLISHER_ID"
+  },
+  "packageInfo": {
+    "name": "HomeBuddy",
+    "version": "1.0.0.0",
+    "classicPackage": {
+      "generate": true
+    }
+  }
+}

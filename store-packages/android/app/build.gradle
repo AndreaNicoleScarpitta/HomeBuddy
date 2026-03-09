@@ -1,0 +1,52 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.replit.homebuddy'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.replit.homebuddy"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        manifestPlaceholders = [
+            hostName       : "home-buddy.replit.app",
+            defaultUrl     : "https://home-buddy.replit.app/",
+            launcherName   : "Home Buddy",
+            assetStatements: '[{"relation": ["delegate_permission/common.handle_all_urls"], "target": {"namespace": "web", "site": "https://home-buddy.replit.app"}}]',
+            themeColor     : "#f97316",
+            backgroundColor: "#ffffff",
+            enableNotifications: "true",
+            navigationColor: "#ffffff",
+            navigationColorDark: "#1a1a1a",
+            navigationDividerColor: "#00000000",
+            navigationDividerColorDark: "#00000000",
+            appName        : "Home Buddy",
+            shortName      : "Home Buddy",
+            splashScreenFadeOutDuration: "300",
+            enableSiteSettingsShortcut: "true",
+            orientation    : "portrait",
+            fallbackType   : "customtabs"
+        ]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

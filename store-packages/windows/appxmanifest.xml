@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 uap10 rescap">
+
+  <Identity
+    Name="HomeBuddy"
+    Version="1.0.0.0"
+    Publisher="CN=TODO_YOUR_PUBLISHER_ID" />
+
+  <Properties>
+    <DisplayName>Home Buddy</DisplayName>
+    <PublisherDisplayName>Home Buddy</PublisherDisplayName>
+    <Description>Your AI-powered home maintenance planner. Track systems, schedule tasks, upload inspection reports, and know what's safe to DIY. Free forever.</Description>
+    <Logo>StoreLogo300.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Universal"
+      MinVersion="10.0.17763.0"
+      MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="HomeBuddy"
+      StartPage="https://home-buddy.replit.app/">
+
+      <uap:VisualElements
+        DisplayName="Home Buddy"
+        Description="AI-powered home maintenance planner and tracker"
+        BackgroundColor="#f97316"
+        Square150x150Logo="Square150x150Logo.png"
+        Square44x44Logo="Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Wide310x150Logo.png"
+          Square310x310Logo="Square310x310Logo.png"
+          Square71x71Logo="Square71x71Logo.png"
+          ShortName="Home Buddy" />
+        <uap:SplashScreen
+          Image="Square620x620Logo.png"
+          BackgroundColor="#f97316" />
+      </uap:VisualElements>
+
+      <uap:ApplicationContentUriRules>
+        <uap:Rule Match="https://home-buddy.replit.app/" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="https://home-buddy.replit.app/*" Type="include" WindowsRuntimeAccess="all" />
+      </uap:ApplicationContentUriRules>
+
+      <uap3:Properties>
+        <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+      </uap3:Properties>
+
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
