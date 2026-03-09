@@ -312,7 +312,7 @@ export default function Documents() {
               place.
             </p>
             <p className="text-sm text-muted-foreground mt-4 max-w-sm mx-auto">
-              Accepts PDF, images, Word, Excel, and text files up to 20MB
+              Accepts PDF, images, Word, Excel, and text files up to 10MB
             </p>
           </div>
         ) : (

@@ -507,7 +507,7 @@ export default function Inspections() {
             </p>
             <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-full px-4 py-2 w-fit mx-auto">
               <Info className="h-3.5 w-3.5" />
-              <span>Accepts PDF, PNG, JPG up to 20MB</span>
+              <span>Accepts PDF, PNG, JPG up to 10MB</span>
             </div>
           </div>
         ) : (
