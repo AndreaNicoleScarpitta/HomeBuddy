@@ -145,27 +145,42 @@ function SupportCard() {
               Home Buddy is completely free — no ads, no premium tiers, no data selling.
               If you find it helpful, a small one-time donation helps cover hosting costs and keeps development going.
             </p>
-            <div className="grid grid-cols-3 gap-3">
-              {(config?.donations || []).map((tier, i) => {
-                const Icon = tierIcons[i] || Heart;
-                return (
-                  <Button
-                    key={tier.priceId}
-                    variant="outline"
-                    className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5 transition-colors"
-                    onClick={() => {
-                      trackEvent("donation_profile_click", "donations", `$${tier.amount / 100}`);
-                      checkoutMutation.mutate(tier.priceId);
-                    }}
-                    disabled={checkoutMutation.isPending}
-                    data-testid={`button-profile-donate-${tier.amount}`}
-                  >
-                    <Icon className="h-5 w-5 text-primary" />
-                    <span className="text-lg font-semibold">{tierLabels[i]}</span>
-                  </Button>
-                );
-              })}
-            </div>
+            {config?.donations && config.donations.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {config.donations.map((tier, i) => {
+                  const Icon = tierIcons[i] || Heart;
+                  return (
+                    <Button
+                      key={tier.priceId}
+                      variant="outline"
+                      className="flex flex-col items-center gap-2 h-auto py-4 hover:border-primary hover:bg-primary/5 transition-colors"
+                      onClick={() => {
+                        trackEvent("donation_profile_click", "donations", `$${tier.amount / 100}`);
+                        checkoutMutation.mutate(tier.priceId);
+                      }}
+                      disabled={checkoutMutation.isPending}
+                      data-testid={`button-profile-donate-${tier.amount}`}
+                    >
+                      <Icon className="h-5 w-5 text-primary" />
+                      <span className="text-lg font-semibold">{tierLabels[i]}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                onClick={() => {
+                  trackEvent("donation_profile_click", "donations", "default_$5");
+                  checkoutMutation.mutate("price_1T8mUJCsyvg4oGAnj6XYLAGy");
+                }}
+                disabled={checkoutMutation.isPending}
+                data-testid="button-profile-donate-default"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                {checkoutMutation.isPending ? "Redirecting to Stripe..." : "Donate $5"}
+              </Button>
+            )}
             <p className="text-xs text-muted-foreground text-center">
               One-time payment via Stripe. No recurring charges.
             </p>
