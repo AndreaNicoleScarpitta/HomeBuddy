@@ -80,7 +80,33 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="max-width:960px;margin:0 auto;padding:40px 24px;font-family:system-ui,sans-serif">
+        <header style="display:flex;align-items:center;gap:8px;margin-bottom:32px">
+          <img src="/images/home-buddy-icon.png" alt="Home Buddy logo" width="32" height="32" style="border-radius:8px" />
+          <span style="font-size:20px;font-weight:700">Home Buddy</span>
+        </header>
+        <main>
+          <h1 style="font-size:48px;font-weight:700;line-height:1.1;margin:0 0 16px">Stop guessing. Start maintaining.</h1>
+          <p style="font-size:18px;color:#666;max-width:600px;line-height:1.6">Home Buddy builds a personalized maintenance schedule for your home, tells you what's safe to DIY, and catches problems before they become expensive emergencies.</p>
+          <p style="margin-top:24px"><a href="/login" style="background:#f97316;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600">Get Started Free</a></p>
+          <section style="margin-top:48px">
+            <h2 style="font-size:24px;font-weight:600;margin-bottom:16px">Features</h2>
+            <ul style="color:#666;line-height:2">
+              <li>AI-powered document analysis for inspection reports</li>
+              <li>Personalized home maintenance schedules</li>
+              <li>13 home system categories tracked (HVAC, roof, plumbing, electrical, and more)</li>
+              <li>DIY safety ratings for every maintenance task</li>
+              <li>Circuit breaker panel mapping</li>
+              <li>Maintenance log and task history</li>
+            </ul>
+          </section>
+        </main>
+        <footer style="margin-top:48px;padding-top:24px;border-top:1px solid #eee;color:#999;font-size:14px">
+          <p>&copy; 2026 Home Buddy. Free AI home maintenance assistant for homeowners.</p>
+        </footer>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {

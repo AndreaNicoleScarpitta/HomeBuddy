@@ -73,7 +73,11 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginOpenerPolicy: false,
     frameguard: false,
-    hsts: false,
+    hsts: isDev ? false : {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
   }),
 );
 
