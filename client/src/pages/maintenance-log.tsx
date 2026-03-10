@@ -33,7 +33,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, formatDistanceToNow, isPast, isToday, isFuture, differenceInDays } from "date-fns";
 import type { V2Task, V2System } from "@/lib/api";
 import type { MaintenanceLogEntry } from "@shared/schema";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS, PAGE_SLUGS } from "@/lib/slug-registry";
 
 /**
  * Filter categories for the Maintenance Log task list.
@@ -244,6 +245,8 @@ export default function MaintenanceLog() {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [selectedTask, setSelectedTask] = useState<V2Task | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("upcoming");
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.maintenanceLog); }, []);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],
@@ -631,6 +634,8 @@ interface AddLogEntryDialogProps {
 }
 
 function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, systems }: AddLogEntryDialogProps) {
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.addLogEntry); }, [isOpen]);
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
   

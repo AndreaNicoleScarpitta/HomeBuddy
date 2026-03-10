@@ -30,7 +30,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Skeleton } from "@/components/ui/skeleton";
 import type { V2Task } from "@/lib/api";
 import type { Fund } from "@shared/schema";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 
 function BudgetSkeleton() {
   return (
@@ -566,6 +567,8 @@ export default function Budget() {
   const queryClient = useQueryClient();
   const [editingFund, setEditingFund] = useState<Fund | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.budget); }, []);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],

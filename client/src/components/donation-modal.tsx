@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 import {
   Dialog,
   DialogContent,
@@ -103,6 +104,8 @@ export function DonationModal() {
       }
     },
   });
+
+  useEffect(() => { if (open) trackModalOpen(MODAL_SLUGS.donation); }, [open]);
 
   useEffect(() => {
     if (status && !dismissed && shouldShowModal(status)) {

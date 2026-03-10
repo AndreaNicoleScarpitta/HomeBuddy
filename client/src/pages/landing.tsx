@@ -1,7 +1,8 @@
 import { Calendar, MessageSquare, ArrowRight, Sparkles, FileText, Scan, CalendarClock, Shield, Heart, Zap, ChevronRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { DashboardDemo, ChatDemo, DocumentAnalysisDemo, TaskGenerationDemo } from "@/components/landing-demos";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { useEffect } from "react";
 import { Link } from "wouter";
 
@@ -13,6 +14,9 @@ export default function Landing() {
       metaDesc.setAttribute("content", "Home Buddy builds a personalized maintenance schedule for your home. Upload inspection reports, track HVAC, plumbing, roof and electrical systems, and know what's safe to DIY. Free forever.");
     }
   }, []);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.landing); }, []);
+
   const stats = [
     { value: "14", label: "System categories tracked" },
     { value: "50+", label: "Recurring task templates" },

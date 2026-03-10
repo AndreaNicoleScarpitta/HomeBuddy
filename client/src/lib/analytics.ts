@@ -53,3 +53,12 @@ export const trackEvent = (
     value: value,
   });
 };
+
+export const trackSlugPageView = (slug: string) => {
+  trackEvent('page_view', 'navigation', slug);
+  trackPageView(`/${slug}`);
+};
+
+export const trackModalOpen = (slug: string) => {
+  trackEvent('modal_open', 'ui', slug);
+};

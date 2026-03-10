@@ -1,0 +1,645 @@
+Absolutely. Here’s the stronger version that tells the agent to discover every page and modal in the codebase, generate or normalize unique slugs automatically, wire them into tracking, and add tests.
+
+
+---
+
+Agent Prompt: Auto-Discover and Enforce Unique Slugs for Every Page and Modal
+
+You are updating the app so that every page and every modal has a globally unique slug, even if one does not currently exist.
+
+Your task is to scan the codebase, identify all pages and all modal/dialog/sheet/drawer style UI surfaces, assign each a stable unique slug, centralize those slugs in a registry, wire them into analytics/logging, and add tests to guarantee nothing regresses.
+
+This must be done in a non-breaking, deploy-friendly way.
+
+
+---
+
+Objective
+
+Ensure the application has:
+
+1. A unique slug for every page
+
+
+2. A unique slug for every modal / overlay / dialog / drawer / sheet
+
+
+3. A central source of truth for all slugs
+
+
+4. Validation that fails if duplicates exist
+
+
+5. Tracking hooks for page views and modal opens
+
+
+6. Tests to ensure coverage and uniqueness
+
+
+7. No regressions to navigation, rendering, or modal behavior
+
+
+
+
+---
+
+Discovery Requirements
+
+You must automatically inspect the codebase and identify all relevant UI surfaces.
+
+Discover Pages
+
+Treat as a page anything that is one of the following:
+
+a routed screen
+
+a top-level route component
+
+a screen in the navigation stack
+
+any file in route/page/screen/app-router structures
+
+any full-screen view reachable by navigation
+
+
+Common patterns to inspect:
+
+pages/
+
+app/
+
+routes/
+
+screens/
+
+router config files
+
+navigation definitions
+
+layout route trees
+
+tab/stack/drawer navigation configs
+
+
+Discover Modals
+
+Treat as a modal anything that is one of the following:
+
+modal
+
+dialog
+
+sheet
+
+drawer
+
+overlay
+
+popover if it functions as a distinct workflow surface
+
+confirmation dialog
+
+bottom sheet
+
+file upload overlay
+
+document analysis modal
+
+settings prompt modal
+
+donation prompt modal
+
+
+Common patterns to inspect:
+
+components named *Modal*
+
+components named *Dialog*
+
+components named *Sheet*
+
+components named *Drawer*
+
+portals/overlay wrappers
+
+conditionally rendered full-screen overlays
+
+components using modal/dialog libraries
+
+
+If a UI surface behaves like a modal but is named inconsistently, still classify it and assign a slug.
+
+
+---
+
+Slug Standards
+
+Page Slugs
+
+Use stable, human-readable kebab-case slugs.
+
+Examples:
+
+dashboard
+task-list
+system-details
+document-vault
+profile-settings
+maintenance-calendar
+file-upload
+
+Modal Slugs
+
+Use the prefix modal- followed by a kebab-case purpose.
+
+Examples:
+
+modal-add-system
+modal-edit-system
+modal-add-task
+modal-edit-task
+modal-delete-confirm
+modal-document-analysis
+modal-file-upload
+modal-donation-prompt
+modal-settings
+
+Format Rules
+
+All slugs must:
+
+be lowercase
+
+use only letters, numbers, and hyphens
+
+contain no spaces or underscores
+
+be stable over time
+
+be globally unique across both pages and modals
+
+
+Regex:
+
+^[a-z0-9]+(-[a-z0-9]+)*$
+
+Note: dashboard and modal-dashboard are distinct and valid, but two components may not share the exact same slug.
+
+
+---
+
+Auto-Generation Rules
+
+If an existing page/modal already has a slug-like identifier, normalize and preserve intent where possible.
+
+If a page/modal has no slug:
+
+1. derive it from:
+
+route path
+
+file name
+
+component name
+
+feature context
+
+
+
+2. convert to kebab-case
+
+
+3. ensure uniqueness
+
+
+4. if collision occurs, append a stable disambiguator based on function or route context
+
+
+
+Examples:
+
+ProfilePage.tsx → profile
+
+DocumentAnalysisModal.tsx → modal-document-analysis
+
+SettingsDialog.tsx → modal-settings
+
+TaskEditSheet.tsx → modal-edit-task
+
+
+If two pages would both become settings, disambiguate logically:
+
+profile-settings
+
+notification-settings
+
+
+Do not use random IDs in slugs unless there is absolutely no stable disambiguator.
+
+
+---
+
+Central Registry
+
+Create a single central registry, for example:
+
+src/lib/slugRegistry.ts
+
+Structure example:
+
+export const PAGE_SLUGS = {
+  dashboard: "dashboard",
+  systems: "systems",
+  systemDetails: "system-details",
+  tasks: "task-list",
+  documentVault: "document-vault",
+  profile: "profile",
+};
+
+export const MODAL_SLUGS = {
+  addSystem: "modal-add-system",
+  editSystem: "modal-edit-system",
+  addTask: "modal-add-task",
+  editTask: "modal-edit-task",
+  deleteConfirm: "modal-delete-confirm",
+  fileUpload: "modal-file-upload",
+  documentAnalysis: "modal-document-analysis",
+};
+
+export const ALL_SLUGS = [
+  ...Object.values(PAGE_SLUGS),
+  ...Object.values(MODAL_SLUGS),
+];
+
+Every page and modal should reference this registry rather than duplicating strings inline.
+
+
+---
+
+Component Integration
+
+Pages
+
+Every page component must expose or consume its slug from the registry.
+
+Acceptable patterns:
+
+const PAGE_SLUG = PAGE_SLUGS.dashboard;
+
+or
+
+export const pageSlug = PAGE_SLUGS.dashboard;
+
+On page load or mount, the page should trigger tracking:
+
+trackPageView(PAGE_SLUG);
+
+Modals
+
+Every modal component must expose or consume its slug from the registry.
+
+const MODAL_SLUG = MODAL_SLUGS.addTask;
+
+When the modal opens, trigger:
+
+trackModalView(MODAL_SLUG);
+
+Only fire modal tracking when the modal becomes visible/open, not merely when imported.
+
+
+---
+
+Validation Utility
+
+Create a runtime validation utility that checks slug quality and uniqueness during app startup in development and test environments.
+
+Example:
+
+export function validateUniqueSlugs(slugs: string[]) {
+  const seen = new Set<string>();
+
+  for (const slug of slugs) {
+    if (!slug) {
+      throw new Error("Empty slug detected");
+    }
+
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+      throw new Error(`Invalid slug format: ${slug}`);
+    }
+
+    if (seen.has(slug)) {
+      throw new Error(`Duplicate slug detected: ${slug}`);
+    }
+
+    seen.add(slug);
+  }
+}
+
+Invoke this against the registry.
+
+
+---
+
+Backward Compatibility Rules
+
+Do not break any of the following:
+
+existing routes
+
+deep links
+
+navigation behavior
+
+modal open/close behavior
+
+state management
+
+props/API interfaces unless required and safe
+
+analytics already in place
+
+
+This task is about adding stable identification, not refactoring core UX.
+
+If route paths and slug values differ, that is fine. Slugs are for internal tracking and UI identity, not necessarily route replacement.
+
+
+---
+
+Analytics and Logging
+
+Wire slugs into existing analytics and logs wherever practical.
+
+Preferred integrations:
+
+page load / page focus
+
+modal open
+
+modal close if supported
+
+error logging context
+
+debugging context
+
+telemetry metadata
+
+funnel instrumentation
+
+
+Examples:
+
+trackPageView(PAGE_SLUG);
+trackModalView(MODAL_SLUG);
+logger.info("Modal opened", { slug: MODAL_SLUG });
+logger.error("Page render failed", { slug: PAGE_SLUG, error });
+
+If analytics utilities do not exist yet, create thin wrappers rather than spreading ad hoc calls across the app.
+
+
+---
+
+Tests Required
+
+Add comprehensive tests.
+
+1. Registry Uniqueness Test
+
+Ensure all page and modal slugs are globally unique.
+
+expect(ALL_SLUGS.length).toBe(new Set(ALL_SLUGS).size);
+
+2. Format Test
+
+Ensure all slugs match the kebab-case regex.
+
+ALL_SLUGS.forEach(slug => {
+  expect(slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+});
+
+3. Coverage Test for Pages
+
+Automatically verify all discovered pages are represented in the slug registry.
+
+This can be done by:
+
+comparing route/page files against the registry
+
+or requiring each discovered page component to export or consume a slug
+
+
+Fail if a discovered page lacks a mapped slug.
+
+4. Coverage Test for Modals
+
+Automatically verify all discovered modals are represented in the slug registry.
+
+Fail if:
+
+a modal/dialog/sheet/drawer component exists without a slug
+
+or a visible workflow surface is missing tracking identity
+
+
+5. Page Tracking Test
+
+Confirm page tracking fires with the correct slug on page render or focus.
+
+6. Modal Tracking Test
+
+Confirm modal tracking fires when a modal actually opens.
+
+7. Duplicate Failure Test
+
+Intentionally validate that duplicate slugs throw the expected error.
+
+
+---
+
+Refactoring Guidance
+
+Preferred implementation order:
+
+1. discover all pages
+
+
+2. discover all modal-like surfaces
+
+
+3. create slug registry
+
+
+4. assign stable slugs
+
+
+5. wire components to registry
+
+
+6. add validation utility
+
+
+7. add tests
+
+
+8. run app and fix any collisions or missed surfaces
+
+
+
+Keep the refactor minimal and mechanical. Avoid broad UI rewrites.
+
+
+---
+
+Naming Heuristics
+
+Use these naming heuristics when generating slugs:
+
+For Pages
+
+Priority order:
+
+1. route path
+
+
+2. explicit screen title
+
+
+3. file name
+
+
+4. component name
+
+
+5. folder context
+
+
+
+Examples:
+
+/systems/:id → system-details
+
+/tasks → task-list
+
+/profile/settings → profile-settings
+
+
+For Modals
+
+Priority order:
+
+1. user action purpose
+
+
+2. file/component name
+
+
+3. parent feature context
+
+
+
+Examples:
+
+add system modal → modal-add-system
+
+edit roof details modal → modal-edit-roof-details
+
+upload inspection document modal → modal-file-upload
+
+document-to-task analysis flow → modal-document-analysis
+
+
+
+---
+
+Edge Cases
+
+Handle all of these:
+
+nested routes
+
+dynamic routes
+
+shared modal reused across contexts
+
+conditionally rendered overlays
+
+mobile bottom sheets
+
+confirmation prompts
+
+portal-based modals
+
+legacy components with inconsistent names
+
+feature-flagged pages/modals
+
+
+For shared reusable modals:
+
+use one slug if it is truly the same modal with the same purpose
+
+use separate slugs if behavior/purpose differs materially by context
+
+
+
+---
+
+Deliverables
+
+Return the full implementation with:
+
+1. central slug registry
+
+
+2. page slug integration
+
+
+3. modal slug integration
+
+
+4. validation utility
+
+
+5. test suite
+
+
+6. brief summary of discovered pages and modals
+
+
+7. note any ambiguous surfaces that required best-effort naming
+
+
+
+
+---
+
+Success Criteria
+
+The implementation is complete when:
+
+every page has a unique slug
+
+every modal has a unique slug
+
+all slugs are centrally defined
+
+all slugs are validated
+
+analytics can reference the slugs
+
+tests fail on duplicates or missing coverage
+
+app behavior remains unchanged
+
+
+
+---
+
+Final Instruction
+
+Be proactive. Do not stop at adding slugs to obvious pages only. Inspect the whole app and cover all routed screens and modal-like workflow surfaces. If anything behaves like a page or modal, it should get a slug.
+
+
+---
+
+If you want, I can also make this even sharper for your stack by turning it into a Replit-specific prompt for React/Next.js/Expo so the agent knows exactly where to look and how to test it.

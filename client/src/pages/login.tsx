@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Home, Shield, Mail } from "lucide-react";
 import { motion } from "framer-motion";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
@@ -41,6 +43,8 @@ const authProviders = [
 ];
 
 export default function Login() {
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.login); }, []);
+
   return (
     <div className="min-h-screen bg-background flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background items-center justify-center p-12">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { FieldTooltip } from "@/components/field-tooltip";
 import type { HomeDocument } from "@shared/schema";
 
@@ -170,6 +171,8 @@ export default function Documents() {
   const [previewDoc, setPreviewDoc] = useState<HomeDocument | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.documents); }, []);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 import { Button } from "@/components/ui/button";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,6 +82,8 @@ export function OnboardingTour({ onComplete, isOpen }: OnboardingTourProps) {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.onboardingTour); }, [isOpen]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);

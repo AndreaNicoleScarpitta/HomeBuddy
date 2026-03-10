@@ -21,7 +21,8 @@ import {
   type DefinitionTerm,
   type DefinitionCategory,
 } from "@/data/definitions";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 
 export function DefinitionsDrawer() {
   const { isOpen, focusedTerm, closeDefinitions, openDefinitions } = useDefinitions();
@@ -29,6 +30,8 @@ export function DefinitionsDrawer() {
   const [selectedCategory, setSelectedCategory] = useState<DefinitionCategory | null>(null);
   const [viewingTerm, setViewingTerm] = useState<DefinitionTerm | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.definitions); }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && focusedTerm) {

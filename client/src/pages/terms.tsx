@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Shield, Camera, Phone, Users, Scale, FileText } from "lucide-react";
+import { trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 
 export function TermsContent() {
   return (
@@ -216,6 +219,8 @@ export function TermsContent() {
 }
 
 export default function Terms() {
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.terms); }, []);
+
   return (
     <Layout>
       <TermsContent />

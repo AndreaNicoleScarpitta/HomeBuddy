@@ -15,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { PhotoConsentModal, usePhotoConsent } from "@/components/photo-consent-modal";
 import { Link } from "wouter";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function renderRichText(text: string): React.JSX.Element {
@@ -191,6 +192,8 @@ function SessionList({ sessions, activeSessionId, onSelectSession, onNewChat, is
 export default function Chat() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.chat); }, []);
   const [streamingMessage, setStreamingMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

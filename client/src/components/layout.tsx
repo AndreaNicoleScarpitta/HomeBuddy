@@ -2,11 +2,12 @@ import { Link, useLocation } from "wouter";
 import { Home, FileSearch, Mail, Menu, LogOut, ClipboardList, User, FolderOpen, HelpCircle, Settings2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useDefinitions } from "@/hooks/use-definitions";
 import logoImage from "@assets/generated_images/orange_house_logo_with_grey_gear..png";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Overview", sublabel: "What needs attention", tourId: "nav-overview" },
@@ -31,6 +32,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { openDefinitions } = useDefinitions();
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.mobileNav); }, [isOpen]);
 
   const handleLogout = () => {
     trackEvent('logout', 'auth', 'logout_button');

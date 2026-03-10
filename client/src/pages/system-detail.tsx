@@ -43,7 +43,8 @@ import type { V2System, V2Task } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { systemConditions } from "@shared/schema";
 import { CircuitMapDialog } from "@/components/circuit-map";
 
@@ -147,6 +148,8 @@ export default function SystemDetail() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.systemDetail); }, []);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [editNotes, setEditNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);

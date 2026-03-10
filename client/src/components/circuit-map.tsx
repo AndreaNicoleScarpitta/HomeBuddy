@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +49,8 @@ import {
 import type { Breaker, CircuitMap as CircuitMapType } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoConsentModal, usePhotoConsent } from "@/components/photo-consent-modal";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 
 type FlowState = "idle" | "capturing" | "analyzing" | "annotating" | "saved";
 
@@ -100,6 +101,8 @@ export function CircuitMapDialog({ homeId, systemId, isOpen, onClose }: CircuitM
   const [editingMapId, setEditingMapId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.circuitMap); }, [isOpen]);
 
   const { data: circuitMaps = [], isLoading } = useQuery({
     queryKey: ["circuitMaps", homeId],

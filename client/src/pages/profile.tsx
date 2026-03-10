@@ -11,7 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getNotificationPreferences, updateNotificationPreferences } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { useSearch } from "wouter";
 import { useEffect, useRef } from "react";
 import {
@@ -251,6 +252,8 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.profile); }, []);
 
   const { data: home, isLoading } = useQuery({
     queryKey: ["home"],

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { FieldTooltip } from "@/components/field-tooltip";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createHome } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA",
@@ -26,6 +27,8 @@ export default function Onboarding() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.onboarding); }, []);
 
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");

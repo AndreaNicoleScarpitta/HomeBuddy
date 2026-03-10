@@ -25,7 +25,8 @@ import type { TaskAnalysis } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS, PAGE_SLUGS } from "@/lib/slug-registry";
 import { format } from "date-fns";
 import type { V2Task } from "@/lib/api";
 
@@ -63,6 +64,8 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
   const [manualCost, setManualCost] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.addTask); }, [isOpen]);
 
   const { data: prefs } = useQuery({
     queryKey: ["notificationPreferences"],
@@ -392,6 +395,8 @@ function CompleteTaskDialog({ isOpen, onClose, task, homeId }: { isOpen: boolean
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
 
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.completeTask); }, [isOpen]);
+
   useEffect(() => {
     if (task) {
       setCost("");
@@ -481,6 +486,8 @@ export default function Dashboard() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.dashboard); }, []);
 
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],

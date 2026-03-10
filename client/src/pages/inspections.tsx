@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { V2Report } from "@/lib/api";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen, trackSlugPageView } from "@/lib/analytics";
+import { MODAL_SLUGS, PAGE_SLUGS } from "@/lib/slug-registry";
 
 interface InspectionFinding {
   id: string;
@@ -387,8 +388,11 @@ function ReportDetail({ reportId, onBack }: { reportId: string | number; onBack:
 export default function Inspections() {
   const [selectedReportId, setSelectedReportId] = useState<string | number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | number | null>(null);
+  useEffect(() => { if (deleteConfirmId) trackModalOpen(MODAL_SLUGS.deleteReport); }, [deleteConfirmId]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.inspections); }, []);
   
   const { data: home, isLoading: homeLoading } = useQuery({
     queryKey: ["home"],

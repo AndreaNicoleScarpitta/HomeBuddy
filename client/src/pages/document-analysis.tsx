@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Upload,
@@ -32,7 +32,8 @@ import type {
   SuggestedSystemV2,
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { useDisclaimer } from "@/hooks/use-disclaimer";
 
 const urgencyColors: Record<string, string> = {
@@ -266,6 +267,8 @@ export default function DocumentAnalysis() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { disclaimerAccepted, isLoading: disclaimerLoading } = useDisclaimer();
   const [, navigate] = useLocation();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.documentAnalysis); }, []);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);

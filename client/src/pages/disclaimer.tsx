@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
@@ -15,7 +15,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 
 async function acceptDisclaimer(): Promise<{ accepted: boolean; version: string; acceptedAt: string }> {
   const res = await fetch("/api/disclaimer/accept", {
@@ -32,6 +33,8 @@ export default function Disclaimer() {
   const [acknowledged, setAcknowledged] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.disclaimer); }, []);
 
   const acceptMutation = useMutation({
     mutationFn: acceptDisclaimer,

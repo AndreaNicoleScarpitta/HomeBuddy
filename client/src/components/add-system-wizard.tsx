@@ -41,7 +41,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSystem, identifySystemFromImage, createTasksBatch, suggestMaintenanceTasks } from "@/lib/api";
 import type { V2System, SuggestedTask } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 import { useLocation } from "wouter";
 import { systemCategories, systemConditions } from "@shared/schema";
 import { FieldTooltip } from "@/components/field-tooltip";
@@ -265,6 +266,8 @@ export function AddSystemWizard({ isOpen, onClose, homeId, existingSystems = [],
     treatmentType: "",
     recurrenceInterval: "",
   };
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.addSystem); }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {

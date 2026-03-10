@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { trackModalOpen } from "@/lib/analytics";
+import { MODAL_SLUGS } from "@/lib/slug-registry";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,8 @@ interface PhotoConsentModalProps {
 
 export function PhotoConsentModal({ isOpen, onAccept, onCancel }: PhotoConsentModalProps) {
   const [acknowledged, setAcknowledged] = useState(false);
+
+  useEffect(() => { if (isOpen) trackModalOpen(MODAL_SLUGS.photoConsent); }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>

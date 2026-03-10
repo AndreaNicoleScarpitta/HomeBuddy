@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Send, CheckCircle2 } from "lucide-react";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 
 async function submitContactForm(data: {
   name: string;
@@ -40,6 +41,8 @@ export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.contact); }, []);
 
   useEffect(() => {
     if (user && !prefilled) {

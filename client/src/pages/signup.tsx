@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Shield,
   CheckCircle2,
@@ -9,7 +10,8 @@ import {
   Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { buttonVariants } from "@/components/ui/button";
@@ -80,6 +82,8 @@ const socialProof = [
 ];
 
 export default function Signup() {
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.signup); }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-background to-background dark:from-orange-950/20 dark:via-background dark:to-background">
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40">

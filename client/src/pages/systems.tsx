@@ -40,7 +40,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getHome, getSystems, getTasks } from "@/lib/api";
 import type { V2System, V2Task } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackSlugPageView } from "@/lib/analytics";
+import { PAGE_SLUGS } from "@/lib/slug-registry";
 import { systemCategories } from "@shared/schema";
 
 const categoryIcons: Record<string, any> = {
@@ -303,6 +304,8 @@ export default function SystemsPage() {
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [activeType, setActiveType] = useState<string | null>(typeParam);
   const [showAddSystem, setShowAddSystem] = useState(false);
+
+  useEffect(() => { trackSlugPageView(PAGE_SLUGS.systems); }, []);
 
   useEffect(() => {
     if (typeParam) {
