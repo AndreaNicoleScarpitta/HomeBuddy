@@ -42,7 +42,7 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-background to-background dark:from-orange-950/20 dark:via-background dark:to-background">
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/40" role="banner">
         <nav className="container mx-auto px-6 h-16 flex justify-between items-center" aria-label="Main navigation">
-          <a href="/" className="flex items-center gap-2 no-underline" aria-label="Home Buddy - Home">
+          <Link href="/" className="flex items-center gap-2 no-underline" aria-label="Home Buddy - Home">
             <img
               src="/images/home-buddy-icon.png"
               alt="Home Buddy logo"
@@ -51,7 +51,7 @@ export default function Landing() {
               height="32"
             />
             <span className="text-xl font-heading font-bold text-foreground">Home Buddy</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-3">
             <Link
               href="/login"

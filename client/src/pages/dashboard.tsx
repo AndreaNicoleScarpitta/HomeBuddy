@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowRight, ListTodo, CheckCircle2, Loader2, Sparkles, Wrench, AlertTriangle, ShieldCheck, ShieldAlert, Shield } from "lucide-react";
+import { Plus, ArrowRight, ListTodo, CheckCircle, CheckCircle2, Loader2, Sparkles, Wrench, AlertTriangle, ShieldCheck, ShieldAlert, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FieldTooltip } from "@/components/field-tooltip";
 import { Link, useLocation } from "wouter";
@@ -783,6 +783,26 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+
+              {(() => {
+                const completedTasks = tasks.filter(t => t.status === "completed");
+                if (completedTasks.length === 0) return null;
+                return (
+                  <div className="space-y-3 pt-4 border-t" data-testid="completed-tasks-section">
+                    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3 text-green-500" />
+                      Completed ({completedTasks.length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {completedTasks.map((task) => (
+                        <div key={task.id} className="opacity-60" data-testid={`completed-task-${task.id}`}>
+                          <MaintenanceCard task={task} onComplete={() => {}} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </section>
