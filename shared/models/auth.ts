@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 export const sessions = pgTable(
   "sessions",
@@ -13,6 +13,7 @@ export const sessions = pgTable(
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  uuid: varchar("uuid").notNull().default(sql`gen_random_uuid()`),
   email: varchar("email"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
@@ -29,7 +30,9 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("users_uuid_idx").on(table.uuid),
+]);
 
 export const disclaimerAuditLog = pgTable("disclaimer_audit_log", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

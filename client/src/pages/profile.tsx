@@ -369,6 +369,19 @@ export default function Profile() {
                 </div>
               )}
 
+              {user?.uuid && (
+                <div className="space-y-2">
+                  <Label htmlFor="uuid">User ID</Label>
+                  <Input
+                    id="uuid"
+                    value={user.uuid}
+                    disabled
+                    className="bg-muted font-mono text-xs"
+                    data-testid="input-uuid"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="address" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
