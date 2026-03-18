@@ -67,6 +67,11 @@ Core features include:
 ## SEO
 - `client/index.html`: Title, meta description, keywords, canonical URL (`https://home-buddy.replit.app/`), Open Graph + Twitter Card tags, JSON-LD structured data (SoftwareApplication + WebApplication with free pricing).
 - `client/public/robots.txt`: Allows `/`, blocks `/api/`, `/v2/`, and authenticated routes. References sitemap.
-- `client/public/sitemap.xml`: Lists `/`, `/terms`, `/login` as crawlable pages.
-- Landing page (`client/src/pages/landing.tsx`): Semantic HTML (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`), aria-labels, dynamic `<title>` override, keyword-rich footer content.
+- `client/public/sitemap.xml`: Lists `/`, `/terms`, `/login`, `/contact`, and 3 guide pages as crawlable.
+- Landing page (`client/src/pages/landing.tsx`): Semantic HTML (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`), aria-labels, dynamic `<title>` override, keyword-rich footer with Guides section linking to SEO content pages.
+- **SEO Content Pages** (public, pre-login, in `client/src/pages/guides/`):
+  - `/guides/home-maintenance-checklist-by-month` — 12-month maintenance checklist targeting "home maintenance checklist by month"
+  - `/guides/annual-home-maintenance-schedule` — Seasonal schedule (Spring/Summer/Fall/Winter) targeting "annual home maintenance schedule"
+  - `/guides/what-to-maintain-in-a-new-house` — 10-system guide for first-time homeowners targeting "what to maintain in a new house"
+  - All use `SeoPageLayout` wrapper (`client/src/components/seo-page-layout.tsx`) with shared header, footer, CTA section, and dynamic meta tags.
 - Update canonical URL if domain changes.

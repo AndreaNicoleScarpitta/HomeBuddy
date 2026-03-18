@@ -397,26 +397,30 @@ export default function Landing() {
               </p>
             </div>
             <div>
-              <h4 className="font-heading font-semibold text-foreground mb-3">Features</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>AI document analysis</li>
-                <li>Personalized maintenance schedules</li>
-                <li>DIY safety ratings</li>
-                <li>Circuit breaker panel mapping</li>
-                <li>Home system tracking</li>
+              <h4 className="font-heading font-semibold text-foreground mb-3">Guides</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/guides/home-maintenance-checklist-by-month" onClick={() => trackEvent('click', 'landing', 'footer_guide_monthly')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-guide-monthly">Monthly Maintenance Checklist</Link>
+                </li>
+                <li>
+                  <Link href="/guides/annual-home-maintenance-schedule" onClick={() => trackEvent('click', 'landing', 'footer_guide_annual')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-guide-annual">Annual Maintenance Schedule</Link>
+                </li>
+                <li>
+                  <Link href="/guides/what-to-maintain-in-a-new-house" onClick={() => trackEvent('click', 'landing', 'footer_guide_new_homeowner')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-guide-new-homeowner">New Homeowner Guide</Link>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-heading font-semibold text-foreground mb-3">Links</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/signup" className="text-muted-foreground hover:text-foreground no-underline transition-colors">Sign Up Free</Link>
-                </li>
-                <li>
                   <Link href="/login" className="text-muted-foreground hover:text-foreground no-underline transition-colors">Sign In</Link>
                 </li>
                 <li>
                   <Link href="/terms" onClick={() => trackEvent('click', 'landing', 'footer_terms')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-footer-terms">Terms & Conditions</Link>
+                </li>
+                <li>
+                  <Link href="/contact" onClick={() => trackEvent('click', 'landing', 'footer_contact')} className="text-muted-foreground hover:text-foreground no-underline transition-colors" data-testid="link-footer-contact">Contact</Link>
                 </li>
               </ul>
             </div>

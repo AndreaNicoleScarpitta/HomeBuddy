@@ -30,6 +30,9 @@ import Documents from "@/pages/documents";
 import Systems from "@/pages/systems";
 import SystemDetail from "@/pages/system-detail";
 import Disclaimer from "@/pages/disclaimer";
+import MonthlyChecklist from "@/pages/guides/monthly-checklist";
+import AnnualSchedule from "@/pages/guides/annual-schedule";
+import NewHomeowner from "@/pages/guides/new-homeowner";
 
 function PublicTermsPage() {
   useEffect(() => {
@@ -104,6 +107,10 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/terms" component={PublicTermsPage} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/guides/home-maintenance-checklist-by-month" component={MonthlyChecklist} />
+        <Route path="/guides/annual-home-maintenance-schedule" component={AnnualSchedule} />
+        <Route path="/guides/what-to-maintain-in-a-new-house" component={NewHomeowner} />
         <Route component={Landing} />
       </Switch>
     );
