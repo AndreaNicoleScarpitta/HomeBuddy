@@ -21,11 +21,18 @@ import {
   CalendarCheck,
   CalendarX,
   UserCheck,
-  HardHat
+  HardHat,
+  ChevronDown,
+  DollarSign,
+  Shield,
+  Gauge,
+  Calendar,
+  Image
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getHome, getTasks, getSystems, getLogEntries, createLogEntry, updateTask, deleteTask } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -147,93 +154,249 @@ function diyColor(diy?: string | null) {
   }
 }
 
-function TaskRow({ task, systemsById, onComplete }: {
+function TaskRow({ task, systemsById, onComplete, isExpanded, onToggleExpand }: {
   task: V2Task;
   systemsById: Record<string, V2System>;
   onComplete: (task: V2Task) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }) {
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate);
   const isDueToday = dueDate && isToday(dueDate);
   const isCompleted = task.status === "completed" || task.state === "completed";
   const system = task.relatedSystemId ? systemsById[task.relatedSystemId] : null;
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const wasDragged = useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    wasDragged.current = false;
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!pointerStart.current) return;
+    const dx = Math.abs(e.clientX - pointerStart.current.x);
+    const dy = Math.abs(e.clientY - pointerStart.current.y);
+    if (dx > 8 || dy > 8) {
+      wasDragged.current = true;
+    }
+  };
+
+  const handleClick = () => {
+    if (wasDragged.current) {
+      wasDragged.current = false;
+      return;
+    }
+    onToggleExpand();
+  };
 
   return (
-    <div 
-      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-        isOverdue ? "border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20" :
-        isDueToday ? "border-orange-200 bg-orange-50/50 dark:border-orange-900/30 dark:bg-orange-950/20" :
-        isCompleted ? "border-green-200 bg-green-50/30 dark:border-green-900/30 dark:bg-green-950/20" :
-        "bg-muted/30 hover:bg-muted/50"
-      }`}
-      data-testid={`row-task-${task.id}`}
-    >
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isCompleted ? "bg-green-500/20" : isOverdue ? "bg-red-500/20" : "bg-muted"
-        }`}>
-          {isCompleted ? (
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          ) : isOverdue ? (
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-          ) : (
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className={`font-medium text-sm truncate ${isCompleted ? "line-through text-muted-foreground" : ""}`} data-testid={`text-task-title-${task.id}`}>
-            {task.title}
-          </p>
-          <div className="flex items-center gap-2 flex-wrap mt-0.5">
-            {task.category && (
-              <span className="text-xs text-muted-foreground">{task.category}</span>
-            )}
-            {system && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                {system.name}
-              </Badge>
-            )}
-            {dueDate && (
-              <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : isDueToday ? "text-orange-600 font-medium" : "text-muted-foreground"}`}>
-                {isOverdue ? `Overdue ${formatDistanceToNow(dueDate)}` : 
-                 isDueToday ? "Due today" : 
-                 `Due ${format(dueDate, "MMM d")}`}
-              </span>
-            )}
-            {!dueDate && !isCompleted && (
-              <span className="text-xs text-muted-foreground">No due date</span>
+    <div data-testid={`row-task-${task.id}`}>
+      <div 
+        className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
+          isOverdue ? "border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20" :
+          isDueToday ? "border-orange-200 bg-orange-50/50 dark:border-orange-900/30 dark:bg-orange-950/20" :
+          isCompleted ? "border-green-200 bg-green-50/30 dark:border-green-900/30 dark:bg-green-950/20" :
+          "bg-muted/30 hover:bg-muted/50"
+        } ${isExpanded ? "rounded-b-none border-b-0" : ""}`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onClick={handleClick}
+        data-testid={`button-expand-task-${task.id}`}
+      >
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+            isCompleted ? "bg-green-500/20" : isOverdue ? "bg-red-500/20" : "bg-muted"
+          }`}>
+            {isCompleted ? (
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            ) : isOverdue ? (
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            ) : (
+              <Wrench className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
+          <div className="min-w-0">
+            <p className={`font-medium text-sm truncate ${isCompleted ? "line-through text-muted-foreground" : ""}`} data-testid={`text-task-title-${task.id}`}>
+              {task.title}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+              {task.category && (
+                <span className="text-xs text-muted-foreground">{task.category}</span>
+              )}
+              {system && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                  {system.name}
+                </Badge>
+              )}
+              {dueDate && (
+                <span className={`text-xs ${isOverdue ? "text-red-600 font-medium" : isDueToday ? "text-orange-600 font-medium" : "text-muted-foreground"}`}>
+                  {isOverdue ? `Overdue ${formatDistanceToNow(dueDate)}` : 
+                   isDueToday ? "Due today" : 
+                   `Due ${format(dueDate, "MMM d")}`}
+                </span>
+              )}
+              {!dueDate && !isCompleted && (
+                <span className="text-xs text-muted-foreground">No due date</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+          {task.urgency && !isCompleted && (
+            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 hidden sm:flex ${urgencyColor(task.urgency)}`}>
+              {task.urgency}
+            </Badge>
+          )}
+          {task.diyLevel && !isCompleted && (
+            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 hidden sm:flex ${diyColor(task.diyLevel)}`}>
+              {task.diyLevel}
+            </Badge>
+          )}
+          {task.estimatedCost && !isCompleted && (
+            <span className="text-xs text-muted-foreground hidden md:block">{task.estimatedCost}</span>
+          )}
+          {!isCompleted && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={(e) => { e.stopPropagation(); onComplete(task); }}
+              data-testid={`button-complete-${task.id}`}
+            >
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Complete
+            </Button>
+          )}
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-        {task.urgency && !isCompleted && (
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 hidden sm:flex ${urgencyColor(task.urgency)}`}>
-            {task.urgency}
-          </Badge>
-        )}
-        {task.diyLevel && !isCompleted && (
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 hidden sm:flex ${diyColor(task.diyLevel)}`}>
-            {task.diyLevel}
-          </Badge>
-        )}
-        {task.estimatedCost && !isCompleted && (
-          <span className="text-xs text-muted-foreground hidden md:block">{task.estimatedCost}</span>
-        )}
-        {!isCompleted && (
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="h-7 text-xs"
-            onClick={() => onComplete(task)}
-            data-testid={`button-complete-${task.id}`}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
           >
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Complete
-          </Button>
+            <div 
+              className={`px-4 pb-4 pt-3 border border-t-0 rounded-b-lg ${
+                isOverdue ? "border-red-200 bg-red-50/30 dark:border-red-900/30 dark:bg-red-950/10" :
+                isDueToday ? "border-orange-200 bg-orange-50/30 dark:border-orange-900/30 dark:bg-orange-950/10" :
+                isCompleted ? "border-green-200 bg-green-50/20 dark:border-green-900/30 dark:bg-green-950/10" :
+                "border-border bg-muted/20"
+              }`}
+              data-testid={`panel-task-details-${task.id}`}
+            >
+              {task.description && (
+                <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+              )}
+              {task.safetyWarning && (
+                <div className="flex items-start gap-2 p-2 rounded-md bg-red-500/10 border border-red-200 dark:border-red-900/30 mb-3">
+                  <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{task.safetyWarning}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {task.urgency && (
+                  <div className="flex items-center gap-2">
+                    <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Urgency</p>
+                      <Badge variant="outline" className={`text-xs px-1.5 py-0 h-5 ${urgencyColor(task.urgency)}`}>
+                        {task.urgency}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                {task.diyLevel && (
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">DIY Level</p>
+                      <Badge variant="outline" className={`text-xs px-1.5 py-0 h-5 ${diyColor(task.diyLevel)}`}>
+                        {task.diyLevel}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                {task.estimatedCost && (
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Est. Cost</p>
+                      <p className="text-sm font-medium">{task.estimatedCost}</p>
+                    </div>
+                  </div>
+                )}
+                {task.category && (
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Category</p>
+                      <p className="text-sm font-medium">{task.category}</p>
+                    </div>
+                  </div>
+                )}
+                {system && (
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">System</p>
+                      <p className="text-sm font-medium">{system.name}</p>
+                    </div>
+                  </div>
+                )}
+                {dueDate && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Due Date</p>
+                      <p className="text-sm font-medium">{format(dueDate, "MMM d, yyyy")}</p>
+                    </div>
+                  </div>
+                )}
+                {task.difficulty && (
+                  <div className="flex items-center gap-2">
+                    <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Difficulty</p>
+                      <p className="text-sm font-medium">{task.difficulty}</p>
+                    </div>
+                  </div>
+                )}
+                {task.isRecurring && task.recurrenceCadence && (
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Recurrence</p>
+                      <p className="text-sm font-medium">{task.recurrenceCadence}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {!isCompleted && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="h-8 text-xs"
+                    onClick={(e) => { e.stopPropagation(); onComplete(task); }}
+                    data-testid={`button-complete-expanded-${task.id}`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                    Mark as Complete
+                  </Button>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -245,6 +408,8 @@ export default function MaintenanceLog() {
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [selectedTask, setSelectedTask] = useState<V2Task | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("upcoming");
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [expandedLogEntryId, setExpandedLogEntryId] = useState<number | null>(null);
 
   useEffect(() => { trackSlugPageView(PAGE_SLUGS.maintenanceLog); }, []);
 
@@ -472,7 +637,7 @@ export default function MaintenanceLog() {
             return (
               <button
                 key={key}
-                onClick={() => { setActiveFilter(key); trackEvent('click', 'maintenance_log', `filter_${key}`); }}
+                onClick={() => { setActiveFilter(key); setExpandedTaskId(null); setExpandedLogEntryId(null); trackEvent('click', 'maintenance_log', `filter_${key}`); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive 
                     ? "bg-background shadow-sm text-foreground" 
@@ -537,6 +702,8 @@ export default function MaintenanceLog() {
                       task={task}
                       systemsById={systemsById}
                       onComplete={handleCompleteTask}
+                      isExpanded={expandedTaskId === task.id}
+                      onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                     />
                   </SwipeableTask>
                 );
@@ -557,54 +724,146 @@ export default function MaintenanceLog() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
+              <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-4">
-                  {logEntries.map((entry, index) => (
-                    <div key={entry.id}>
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          </div>
-                          {index < logEntries.length - 1 && (
-                            <div className="w-px h-full bg-border mt-2"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium" data-testid={`text-entry-title-${entry.id}`}>
-                                {entry.title}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(entry.date), "MMM d, yyyy")} • {formatDistanceToNow(new Date(entry.date), { addSuffix: true })}
-                              </p>
+                  {logEntries.map((entry, index) => {
+                    const isEntryExpanded = expandedLogEntryId === entry.id;
+                    const photos = entry.photos ? (() => { try { return JSON.parse(entry.photos); } catch { return []; } })() : [];
+                    const hasExpandableContent = true;
+
+                    return (
+                      <div key={entry.id}>
+                        <div className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
                             </div>
-                            {entry.cost && (
-                              <Badge variant="secondary" className="ml-2">
-                                ${(entry.cost / 100).toLocaleString()}
-                              </Badge>
+                            {index < logEntries.length - 1 && (
+                              <div className="w-px h-full bg-border mt-2"></div>
                             )}
                           </div>
-                          {entry.notes && (
-                            <p className="text-sm text-muted-foreground mt-2">{entry.notes}</p>
-                          )}
-                          <div className="flex gap-2 mt-2">
-                            {entry.systemId && systemsById[entry.systemId] && (
-                              <Badge variant="outline" className="text-xs">
-                                {systemsById[entry.systemId].name}
-                              </Badge>
-                            )}
-                            {entry.provider && (
-                              <Badge variant="outline" className="text-xs">
-                                {entry.provider}
-                              </Badge>
+                          <div className="flex-1 pb-4">
+                            <div 
+                              className="flex items-start justify-between cursor-pointer group"
+                              onClick={() => setExpandedLogEntryId(isEntryExpanded ? null : entry.id)}
+                              data-testid={`button-expand-entry-${entry.id}`}
+                            >
+                              <div>
+                                <h4 className="font-medium group-hover:text-primary transition-colors" data-testid={`text-entry-title-${entry.id}`}>
+                                  {entry.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(entry.date), "MMM d, yyyy")} • {formatDistanceToNow(new Date(entry.date), { addSuffix: true })}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                {entry.cost != null && entry.cost > 0 && (
+                                  <Badge variant="secondary">
+                                    ${(entry.cost / 100).toLocaleString()}
+                                  </Badge>
+                                )}
+                                {hasExpandableContent && (
+                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isEntryExpanded ? "rotate-180" : ""}`} />
+                                )}
+                              </div>
+                            </div>
+
+                            <AnimatePresence>
+                              {isEntryExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                                  className="overflow-hidden"
+                                  data-testid={`panel-entry-details-${entry.id}`}
+                                >
+                                  <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50 space-y-3">
+                                    {entry.notes && (
+                                      <div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+                                        <p className="text-sm text-muted-foreground">{entry.notes}</p>
+                                      </div>
+                                    )}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                      {entry.cost != null && entry.cost > 0 && (
+                                        <div className="flex items-center gap-2">
+                                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                                          <div>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cost</p>
+                                            <p className="text-sm font-medium">${(entry.cost / 100).toLocaleString()}</p>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {entry.provider && (
+                                        <div className="flex items-center gap-2">
+                                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                                          <div>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Provider</p>
+                                            <p className="text-sm font-medium">{entry.provider}</p>
+                                          </div>
+                                        </div>
+                                      )}
+                                      {entry.systemId && systemsById[entry.systemId] && (
+                                        <div className="flex items-center gap-2">
+                                          <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
+                                          <div>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">System</p>
+                                            <p className="text-sm font-medium">{systemsById[entry.systemId].name}</p>
+                                          </div>
+                                        </div>
+                                      )}
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <div>
+                                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Date</p>
+                                          <p className="text-sm font-medium">{format(new Date(entry.date), "MMM d, yyyy")}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {photos.length > 0 && (
+                                      <div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                                          <Image className="h-3 w-3" />
+                                          Photos
+                                        </p>
+                                        <div className="flex gap-2 flex-wrap">
+                                          {photos.map((photo: string, i: number) => (
+                                            <img
+                                              key={i}
+                                              src={photo}
+                                              alt={`Work photo ${i + 1}`}
+                                              className="h-20 w-20 object-cover rounded-md border"
+                                              data-testid={`img-entry-photo-${entry.id}-${i}`}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
+                            {!isEntryExpanded && (
+                              <div className="flex gap-2 mt-2">
+                                {entry.systemId && systemsById[entry.systemId] && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {systemsById[entry.systemId].name}
+                                  </Badge>
+                                )}
+                                {entry.provider && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {entry.provider}
+                                  </Badge>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </CardContent>
