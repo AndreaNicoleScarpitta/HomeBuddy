@@ -224,6 +224,71 @@ Write in a calm, conversational tone — like Drew explaining something to a ner
     temperature: 50,
     isBuiltIn: true,
   },
+
+  // ── REVENUE / RETENTION ────────────────────────────────────────────────────
+  {
+    slug: "churn-save-agent",
+    name: "Churn Save Agent",
+    type: "engagement",
+    status: "active",
+    trigger: "scheduled",
+    schedule: "0 11 * * 2",  // Tuesdays at 11am — mid-week, high open rate
+    description: "Detects users 7-13 days dormant and sends a genuine, no-pressure save email asking if Home Buddy is still useful.",
+    purpose: "Save ~10% of would-be churn by reaching at-risk users before they fully disengage. Compounds directly into LTV.",
+    config: {
+      atRiskStart: 7,
+      atRiskEnd: 13,
+      maxUsersPerRun: 25,
+      tone: "genuine-curious-no-pressure",
+    },
+    modelId: "gpt-4o",
+    maxTokens: 300,
+    temperature: 75,
+    isBuiltIn: true,
+  },
+  {
+    slug: "dunning-agent",
+    name: "Failed Payment Recovery Agent",
+    type: "engagement",
+    status: "active",
+    trigger: "event",  // Triggered by Stripe webhook invoice.payment_failed
+    description: "Multi-stage (polite → helpful → last-chance) email sequence for recovering failed Stripe payments.",
+    purpose: "Recover 30-50% of involuntary churn. Most failed payments are expired cards, not intent to cancel — this gets them back.",
+    config: {
+      stages: 3,
+      stageDelaysDays: [1, 3, 7],
+      tone: "drew-personal-voice",
+    },
+    modelId: "gpt-4o",
+    maxTokens: 400,
+    temperature: 60,
+    isBuiltIn: true,
+  },
+
+  // ── SYSTEM / FOUNDER ───────────────────────────────────────────────────────
+  {
+    slug: "founder-brief-agent",
+    name: "Founder Morning Brief",
+    type: "system",
+    status: "active",
+    trigger: "scheduled",
+    schedule: "0 7 * * *",  // Daily at 7am
+    description: "Daily metrics digest sent to every email in ADMIN_EMAILS: active homes, signups, churn, agent health, anomalies.",
+    purpose: "Replace 'check 7 dashboards' with 'read one email.' Surfaces anomalies automatically so the founder only reacts to real signal.",
+    config: {
+      sendTime: "07:00",
+      includeAnomalies: true,
+      anomalyThresholds: {
+        signupDropPct: 40,
+        agentFailureRatePct: 20,
+        overduePerHome: 5,
+      },
+    },
+    modelId: "gpt-4o",
+    maxTokens: 100,  // No AI used currently — SQL only. Present for future AI narrative.
+    temperature: 50,
+    isBuiltIn: true,
+  },
 ];
 
 async function seedAgents() {

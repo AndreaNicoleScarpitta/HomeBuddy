@@ -11,7 +11,9 @@ import { logger } from "./lib/logger";
 import { bootstrapMigrationTracking } from "./lib/db-bootstrap";
 import { WebhookHandlers } from "./webhookHandlers";
 import { registerDonationRoutes } from "./donation-routes";
+import { registerBillingRoutes } from "./billing-routes";
 import { startNotificationScheduler, stopNotificationScheduler } from "./jobs/notificationScheduler";
+import { startAgentScheduler, stopAgentScheduler } from "./jobs/agentScheduler";
 import { pool } from "./db";
 import crypto from "crypto";
 import cookieParser from "cookie-parser";
@@ -183,6 +185,7 @@ app.use((req, res, next) => {
   app.use("/v2", csrfProtection);
 
   registerDonationRoutes(app);
+  registerBillingRoutes(app);
 
   const mutationLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -265,6 +268,7 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       startNotificationScheduler();
+      startAgentScheduler();
     },
   );
 
@@ -272,6 +276,7 @@ app.use((req, res, next) => {
   const shutdown = (signal: string) => {
     log(`${signal} received — shutting down gracefully`);
     stopNotificationScheduler();
+    stopAgentScheduler();
     httpServer.close(() => {
       log("HTTP server closed");
       pool.end().then(() => {

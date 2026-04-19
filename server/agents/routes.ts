@@ -10,11 +10,13 @@ import { eq, desc, sql } from "drizzle-orm";
 import { isAuthenticated } from "../replit_integrations/auth";
 import { AgentRunner, getRegisteredSlugs } from "./index";
 import { logInfo } from "../lib/logger";
+import { requireAdmin } from "../lib/admin";
 
 export const agentRouter = Router();
 
-// All agent routes require auth
+// All agent routes require auth AND admin. Agents are founder-only tooling.
 agentRouter.use(isAuthenticated);
+agentRouter.use(requireAdmin);
 
 // GET /api/agents — list all agents
 agentRouter.get("/", async (_req, res) => {

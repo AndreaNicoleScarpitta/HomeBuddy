@@ -34,6 +34,13 @@ import Disclaimer from "@/pages/disclaimer";
 import Timeline from "@/pages/timeline";
 import Intelligence from "@/pages/intelligence";
 
+// Lazy-loaded — hidden admin-only pages (not in nav)
+const AdminApprovals = lazy(() => import("@/pages/admin/approvals"));
+const AdminAgents = lazy(() => import("@/pages/agents"));
+
+// Lazy-loaded — marketing/billing pages
+const Pricing = lazy(() => import("@/pages/pricing"));
+
 // Lazy-loaded — guide/article pages (code splitting for SEO content)
 const MonthlyChecklist = lazy(() => import("@/pages/guides/monthly-checklist"));
 const AnnualSchedule = lazy(() => import("@/pages/guides/annual-schedule"));
@@ -131,6 +138,7 @@ function Router() {
         <Switch>
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Signup} />
+          <Route path="/pricing" component={Pricing} />
           <Route path="/terms" component={PublicTermsPage} />
           <Route path="/contact" component={Contact} />
           <Route path="/guides/home-maintenance-checklist-by-month" component={MonthlyChecklist} />
@@ -166,6 +174,11 @@ function Router() {
           <Route path="/terms" component={Terms} />
           <Route path="/timeline" component={Timeline} />
           <Route path="/intelligence" component={Intelligence} />
+          <Route path="/pricing" component={Pricing} />
+
+          {/* Hidden admin-only routes — not linked in nav, gated by ADMIN_EMAILS env */}
+          <Route path="/admin/approvals" component={AdminApprovals} />
+          <Route path="/admin/agents" component={AdminAgents} />
 
           {/* Public guides — accessible to authenticated users too */}
           <Route path="/guides/home-maintenance-checklist-by-month" component={MonthlyChecklist} />

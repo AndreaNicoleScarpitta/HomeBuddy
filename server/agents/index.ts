@@ -15,9 +15,14 @@ import "./engagement/reengagement-agent";
 import "./engagement/home-health-alert-agent";
 import "./engagement/seasonal-prep-agent";
 import "./engagement/onboarding-coach-agent";
+import "./engagement/churn-save-agent";
+import "./engagement/dunning-agent";
 
 // Maintenance agents
 import "./maintenance/task-suggestion-agent";
 import "./maintenance/home-report-agent";
+
+// System agents
+import "./system/founder-brief-agent";
 
 export { AgentRunner, registerAgent, getRegisteredSlugs } from "./runner";
