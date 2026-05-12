@@ -90,9 +90,35 @@ jobs:
       - run: npm run build
       - name: Start server & run E2E tests
         run: |
-          NODE_ENV=production node dist/index.cjs &
-          npx wait-on http://localhost:5000/api/health --timeout 30000
-          npx playwright test
+          set +e
+          NODE_ENV=production node dist/index.cjs > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Server started with PID: $SERVER_PID"
+
+          npx wait-on http://localhost:5000/api/health --timeout 60000
+          WAIT_ON_EXIT=$?
+          echo "--- wait-on exited with $WAIT_ON_EXIT ---"
+
+          echo "--- Server log (so far) ---"
+          cat server.log || echo "(no server.log)"
+
+          echo "--- Manual health probe ---"
+          curl -sS -i http://localhost:5000/api/health || echo "curl failed"
+
+          if [ "$WAIT_ON_EXIT" -ne 0 ]; then
+            echo "Server never became ready, bailing."
+            exit 1
+          fi
+
+          echo "--- Running playwright ---"
+          npx playwright test --reporter=list
+          PW_EXIT=$?
+          echo "--- playwright exited with $PW_EXIT ---"
+
+          echo "--- Final server log ---"
+          tail -100 server.log || true
+
+          exit $PW_EXIT
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
