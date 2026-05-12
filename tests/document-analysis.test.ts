@@ -59,6 +59,11 @@ describe("Document Analysis", () => {
   describe("extractTextFromDocument", () => {
     it("should extract text from a PDF buffer", async () => {
       vi.doMock("pdf-parse", () => ({
+        // Explicitly declare PDFParse as absent so vitest strict-mock doesn't
+        // throw when document-analysis.ts checks (mod as any).PDFParse.
+        // The code falls through to the `default` function fallback.
+        PDFParse: undefined,
+        VerbosityLevel: undefined,
         default: vi.fn().mockResolvedValue({ text: "Roof needs repair. Plumbing leak in basement." }),
       }));
 

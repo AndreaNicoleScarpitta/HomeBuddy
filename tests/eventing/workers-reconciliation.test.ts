@@ -11,9 +11,39 @@
  * unique aggregate IDs to avoid polluting other test suites.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import pg from "pg";
 import { db } from "../../server/db";
+
+// Mock OpenAI so handleReportAnalyze doesn't make real API calls in CI.
+// The mock returns a minimal valid completion that the analyzer can parse.
+vi.mock("openai", () => ({
+  default: vi.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                summary: "Mock analysis for CI test",
+                findings: [{
+                  title: "Test Finding",
+                  description: "CI mock finding",
+                  severity: "moderate",
+                  urgency: "soon",
+                  category: "Other",
+                  location: "General",
+                  estimatedCost: "$100-$200",
+                  diyLevel: "DIY-Safe",
+                }],
+              }),
+            },
+          }],
+        }),
+      },
+    },
+  })),
+}));
 import { sql } from "drizzle-orm";
 import { enqueue, lockJobs, completeJob, failJob, getJob } from "../../server/jobs/queue";
 import { handleReconcile } from "../../server/jobs/reconciler";

@@ -60,7 +60,6 @@ const taskTransitions: Record<string, Set<string>> = {
     EventTypes.TaskRejected,
     EventTypes.TaskSkipped,
     EventTypes.TaskUpdated,
-    EventTypes.TaskCompleted,
   ]),
   approved: new Set([
     EventTypes.TaskScheduled,
