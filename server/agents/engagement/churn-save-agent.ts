@@ -21,9 +21,8 @@ import { sendEmail } from "../../lib/email";
 import { logInfo, logWarn } from "../../lib/logger";
 import { getOpenAIClient } from "../../lib/openai-client";
 
-const openai = getOpenAIClient();
-
 registerAgent("churn-save-agent", async (ctx: AgentContext) => {
+  const openai = getOpenAIClient();
   const { maxUsersPerRun = 25, atRiskStart = 7, atRiskEnd = 13 } = ctx.input as {
     maxUsersPerRun?: number;
     atRiskStart?: number;
