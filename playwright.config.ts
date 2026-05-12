@@ -25,7 +25,11 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:5000/api/health",
-    reuseExistingServer: !process.env.CI,
+    // Always reuse an existing server if one is up.
+    // In CI the production server is started manually before playwright runs;
+    // reuseExistingServer: false would throw because the port is already taken.
+    // Locally, if no server is running playwright starts one via the command above.
+    reuseExistingServer: true,
     timeout: 30_000,
     env: {
       NODE_ENV: "development",
