@@ -47,8 +47,12 @@ if (
   v2Router.use((req, _res, next) => {
     const testUserId = req.headers["x-test-user-id"];
     if (testUserId && !(req as any).user) {
-      (req as any).user = { id: parseInt(String(testUserId), 10) || 1 };
+      const uid = parseInt(String(testUserId), 10) || 1;
+      (req as any).user = { id: uid };
       (req as any).isAuthenticated = () => true;
+      // isAuthenticated() checks req.session?.userId — populate it so the
+      // middleware passes without a real session cookie.
+      if (req.session) (req.session as any).userId = uid;
     }
     next();
   });
