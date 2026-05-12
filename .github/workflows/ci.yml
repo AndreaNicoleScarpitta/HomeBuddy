@@ -128,16 +128,17 @@ jobs:
             echo "$PW_OUT"
           } > /tmp/e2e-diag.txt
 
-          PASTE_URL=$(curl -sS -F'file=@/tmp/e2e-diag.txt' https://0x0.st 2>/dev/null || echo "")
-          if [ -z "$PASTE_URL" ]; then
-            PASTE_URL=$(curl -sS --upload-file /tmp/e2e-diag.txt https://transfer.sh/e2e-diag.txt 2>/dev/null || echo "")
-          fi
-          # Annotations are public via the check-runs annotations API
-          echo "::error title=E2E Diagnostic::Paste URL: $PASTE_URL  (wait-on=$WAIT_ON_EXIT pw=$PW_EXIT)"
+          # Dump playwright output as annotations (each ≤4KB, max 50 per run)
+          # Server log is mostly noise; playwright output is what we need.
+          echo "::error title=E2E Summary::wait-on=$WAIT_ON_EXIT pw=$PW_EXIT"
 
-          # Also dump the last 80 lines of the server log as annotations
-          # (each annotation max 4KB; we use a few)
-          tail -80 server.log 2>/dev/null | awk '{print "::warning::SRV "$0}' || true
+          # Strip ANSI color codes and split into chunks so we don't hit per-annotation limit
+          printf '%s' "$PW_OUT" | sed -r 's/\x1B\[[0-9;]*[mK]//g' | awk '
+            BEGIN { buf=""; n=0 }
+            { buf = buf $0 "\n"; n++ }
+            n == 30 { printf "::error title=PW chunk::%s\n", buf; buf=""; n=0 }
+            END { if (n > 0) printf "::error title=PW chunk::%s\n", buf }
+          '
 
           if [ "$WAIT_ON_EXIT" -ne 0 ]; then exit 1; fi
           exit $PW_EXIT
