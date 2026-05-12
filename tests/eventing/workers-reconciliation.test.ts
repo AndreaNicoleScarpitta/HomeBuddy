@@ -16,34 +16,36 @@ import pg from "pg";
 import { db } from "../../server/db";
 
 // Mock OpenAI so handleReportAnalyze doesn't make real API calls in CI.
-// The mock returns a minimal valid completion that the analyzer can parse.
-vi.mock("openai", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: vi.fn().mockResolvedValue({
-          choices: [{
-            message: {
-              content: JSON.stringify({
-                summary: "Mock analysis for CI test",
-                findings: [{
-                  title: "Test Finding",
-                  description: "CI mock finding",
-                  severity: "moderate",
-                  urgency: "soon",
-                  category: "Other",
-                  location: "General",
-                  estimatedCost: "$100-$200",
-                  diyLevel: "DIY-Safe",
-                }],
-              }),
-            },
+// Must use class syntax — vi.fn().mockImplementation() doesn't satisfy `new`
+// correctly in all Vitest versions and produces a "did not use function or class"
+// warning that can cause the mock to silently fail.
+vi.mock("openai", () => {
+  const mockCreate = vi.fn().mockResolvedValue({
+    choices: [{
+      message: {
+        content: JSON.stringify({
+          summary: "Mock analysis for CI test",
+          findings: [{
+            title: "Test Finding",
+            description: "CI mock finding",
+            severity: "moderate",
+            urgency: "soon",
+            category: "Other",
+            location: "General",
+            estimatedCost: "$100-$200",
+            diyLevel: "DIY-Safe",
           }],
         }),
       },
+    }],
+  });
+  return {
+    default: class MockOpenAI {
+      chat = { completions: { create: mockCreate } };
+      constructor(_opts?: unknown) {}
     },
-  })),
-}));
+  };
+});
 import { sql } from "drizzle-orm";
 import { enqueue, lockJobs, completeJob, failJob, getJob } from "../../server/jobs/queue";
 import { handleReconcile } from "../../server/jobs/reconciler";

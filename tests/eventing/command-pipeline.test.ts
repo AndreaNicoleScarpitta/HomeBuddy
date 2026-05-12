@@ -105,8 +105,8 @@ describe("optimistic concurrency", () => {
   it("should reject conflicting aggregate_version", async () => {
     const homeId = crypto.randomUUID();
 
-    // Create a home (version 0 → 1)
-    const create = await v2("POST", "/homes", { address: "123 Test St" }, `home-create-${crypto.randomUUID()}`);
+    // Create a home (version 0 → 1). ZIP code is required by the route.
+    const create = await v2("POST", "/homes", { zipCode: "12345", addressLine1: "123 Test St" }, `home-create-${crypto.randomUUID()}`);
     expect(create.status).toBe(201);
     const createdHomeId = (create.data.id ?? create.data.homeId) as string;
 
@@ -311,7 +311,17 @@ describe("assistant approval gating", () => {
 // =========================================================================
 describe("projection sync", () => {
   it("should update projection_task through task lifecycle", async () => {
-    const homeId = crypto.randomUUID();
+    // Create a real home first — the task ownership check joins projection_task →
+    // projection_home and requires a non-null user_id. Without a home, the task
+    // is treated as "orphaned" and all transition routes return 403.
+    const homeCreate = await v2(
+      "POST",
+      "/homes",
+      { zipCode: "12345" },
+      `lifecycle-home-${crypto.randomUUID()}`,
+    );
+    expect(homeCreate.status).toBe(201);
+    const homeId = homeCreate.data.id as string;
 
     // Create
     const create = await v2("POST", "/tasks", { homeId, title: "Lifecycle Test" }, `lifecycle-create-${crypto.randomUUID()}`);
@@ -342,8 +352,8 @@ describe("projection sync", () => {
   });
 
   it("should create and read chat sessions with messages", async () => {
-    // Create a home first so chat session ownership check passes
-    const homeCreate = await v2("POST", "/homes", { address: "Chat Test Home" }, `chat-home-${crypto.randomUUID()}`);
+    // Create a home first so chat session ownership check passes. ZIP is required.
+    const homeCreate = await v2("POST", "/homes", { zipCode: "12345" }, `chat-home-${crypto.randomUUID()}`);
     expect(homeCreate.status).toBe(201);
     const homeId = homeCreate.data.id as string;
 

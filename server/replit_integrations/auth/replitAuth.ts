@@ -271,6 +271,25 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Test bypass — double-gated: NODE_ENV≠production AND ALLOW_TEST_USER_HEADER=1.
+  // Reads X-Test-User-Id header and looks the user up directly in the DB.
+  // This sidesteps session cookie machinery, which is not available in integration tests.
+  if (process.env.NODE_ENV !== "production" && process.env.ALLOW_TEST_USER_HEADER === "1") {
+    const testUserIdHeader = req.headers["x-test-user-id"];
+    if (testUserIdHeader) {
+      const uid = String(Array.isArray(testUserIdHeader) ? testUserIdHeader[0] : testUserIdHeader);
+      try {
+        const user = await authStorage.getUser(uid);
+        if (user) {
+          (req as any).user = user;
+          return next();
+        }
+      } catch {
+        // fall through to normal session-based auth
+      }
+    }
+  }
+
   const userId = req.session?.userId;
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });

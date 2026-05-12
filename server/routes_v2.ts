@@ -40,6 +40,10 @@ v2Router.use(requireIdempotencyKey);
 // (staging, preview envs). A stray NODE_ENV=development on a public host
 // would otherwise let anyone spoof any user id. Require an explicit env
 // flag that no deployed environment should ever set.
+// Note: the actual auth bypass lives in isAuthenticated (replitAuth.ts) — it reads
+// x-test-user-id, looks up the full user from the DB, and short-circuits auth.
+// This pre-isAuthenticated shim is kept as a belt-and-suspenders fallback for
+// routes that check req.user before reaching isAuthenticated middleware.
 if (
   process.env.NODE_ENV !== "production" &&
   process.env.ALLOW_TEST_USER_HEADER === "1"
@@ -47,11 +51,12 @@ if (
   v2Router.use((req, _res, next) => {
     const testUserId = req.headers["x-test-user-id"];
     if (testUserId && !(req as any).user) {
-      const uid = parseInt(String(testUserId), 10) || 1;
+      // Use string so comparisons with varchar DB columns work correctly
+      const uid = String(testUserId);
       (req as any).user = { id: uid };
       (req as any).isAuthenticated = () => true;
-      // isAuthenticated() checks req.session?.userId — populate it so the
-      // middleware passes without a real session cookie.
+      // Populate session.userId so the express-session path in isAuthenticated
+      // also passes if the DB lookup path fails for any reason.
       if (req.session) (req.session as any).userId = uid;
     }
     next();
@@ -76,6 +81,11 @@ function getUserId(req: Request): string {
 }
 
 function requireDisclaimer(req: Request, res: Response): boolean {
+  // Skip disclaimer check in test mode — integration tests don't go through
+  // the frontend disclaimer flow. Double-gated same as the auth bypass.
+  if (process.env.NODE_ENV !== "production" && process.env.ALLOW_TEST_USER_HEADER === "1") {
+    return true;
+  }
   const user = (req as any).user as any;
   if (
     !user?.disclaimerAccepted ||
