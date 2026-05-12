@@ -99,25 +99,44 @@ jobs:
           WAIT_ON_EXIT=$?
           echo "--- wait-on exited with $WAIT_ON_EXIT ---"
 
-          echo "--- Server log (so far) ---"
-          cat server.log || echo "(no server.log)"
-
           echo "--- Manual health probe ---"
-          curl -sS -i http://localhost:5000/api/health || echo "curl failed"
+          HEALTH_OUT=$(curl -sS -i http://localhost:5000/api/health 2>&1 || echo "curl failed")
+          echo "$HEALTH_OUT"
 
-          if [ "$WAIT_ON_EXIT" -ne 0 ]; then
-            echo "Server never became ready, bailing."
-            exit 1
+          # Capture playwright output regardless of wait-on result
+          PW_OUT=""
+          PW_EXIT=99
+          if [ "$WAIT_ON_EXIT" -eq 0 ]; then
+            echo "--- Running playwright ---"
+            PW_OUT=$(npx playwright test --reporter=list 2>&1)
+            PW_EXIT=$?
+            echo "$PW_OUT"
           fi
 
-          echo "--- Running playwright ---"
-          npx playwright test --reporter=list
-          PW_EXIT=$?
-          echo "--- playwright exited with $PW_EXIT ---"
+          # Write a publicly-visible summary so we can see logs without GitHub auth
+          {
+            echo "## E2E diagnostic"
+            echo ""
+            echo "- wait-on exit: $WAIT_ON_EXIT"
+            echo "- playwright exit: $PW_EXIT"
+            echo ""
+            echo "### Health probe"
+            echo '```'
+            echo "$HEALTH_OUT"
+            echo '```'
+            echo ""
+            echo "### Server log (full)"
+            echo '```'
+            cat server.log 2>/dev/null || echo "(no server.log)"
+            echo '```'
+            echo ""
+            echo "### Playwright output"
+            echo '```'
+            echo "$PW_OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          echo "--- Final server log ---"
-          tail -100 server.log || true
-
+          if [ "$WAIT_ON_EXIT" -ne 0 ]; then exit 1; fi
           exit $PW_EXIT
       - name: Upload server log
         if: always()
