@@ -393,7 +393,7 @@ export default function Chat() {
 
       const response = await fetch(`/v2/homes/${home.id}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
         body: JSON.stringify({ 
           content: userMessage || "What can you tell me about this?",
           image: imageBase64,
