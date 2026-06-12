@@ -558,6 +558,7 @@ export default function SystemDetail() {
                     <Input
                       id="edit-install-year"
                       type="number"
+                      inputMode="numeric"
                       value={editData.installYear}
                       onChange={(e) => setEditData({ ...editData, installYear: e.target.value })}
                       placeholder="2015"

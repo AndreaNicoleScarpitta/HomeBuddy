@@ -81,6 +81,7 @@ export function StepHouseBasics({ value, onChange, onNext }: StepHouseBasicsProp
             <Input
               id="year"
               type="number"
+              inputMode="numeric"
               min={1600}
               max={new Date().getFullYear()}
               placeholder="e.g., 1985"
@@ -102,6 +103,7 @@ export function StepHouseBasics({ value, onChange, onNext }: StepHouseBasicsProp
             <Input
               id="sqft"
               type="number"
+              inputMode="numeric"
               min={100}
               max={100000}
               placeholder="e.g., 2400"

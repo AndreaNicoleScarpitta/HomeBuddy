@@ -68,7 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <PlanBadge compact />
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" data-testid="button-menu">
+            <Button variant="ghost" size="icon" className="h-11 w-11" data-testid="button-menu">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>

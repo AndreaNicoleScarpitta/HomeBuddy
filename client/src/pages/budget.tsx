@@ -282,6 +282,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number | null | undefine
               <Input
                 id="fund-balance"
                 type="number"
+                inputMode="decimal"
                 placeholder="500"
                 className="pl-9"
                 value={balance}
@@ -299,6 +300,7 @@ function AddFundDialog({ homeId, onSuccess }: { homeId: number | null | undefine
               <Input
                 id="fund-contribution"
                 type="number"
+                inputMode="decimal"
                 placeholder="100"
                 className="pl-9"
                 value={monthlyContribution}
@@ -471,6 +473,7 @@ function EditFundDialog({
               <Input
                 id="edit-fund-balance"
                 type="number"
+                inputMode="decimal"
                 placeholder="500"
                 className="pl-9"
                 value={balance}
@@ -487,6 +490,7 @@ function EditFundDialog({
               <Input
                 id="edit-fund-contribution"
                 type="number"
+                inputMode="decimal"
                 placeholder="100"
                 className="pl-9"
                 value={monthlyContribution}

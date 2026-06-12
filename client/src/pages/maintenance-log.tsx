@@ -1078,6 +1078,7 @@ function AddLogEntryDialog({ isOpen, onClose, homeId, legacyHomeId, task, system
                 id="cost"
                 type="number"
                 step="0.01"
+                inputMode="decimal"
                 placeholder="0.00"
                 value={formData.cost}
                 onChange={(e) => setFormData({ ...formData, cost: e.target.value })}

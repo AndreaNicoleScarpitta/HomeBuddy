@@ -77,7 +77,7 @@ export function RecordActionDialog({ homeId, systemId, systemName, onRecorded }:
             })}
           </div>
           {(actionType === "completed_task" || actionType === "hired_contractor") && (
-            <div><Label>Cost ($)</Label><Input type="number" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" /></div>
+            <div><Label>Cost ($)</Label><Input type="number" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" /></div>
           )}
           <div><Label>Notes (optional)</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="What happened?" rows={2} /></div>
           <Button onClick={() => mutation.mutate()} disabled={!actionType || mutation.isPending} className="w-full">
@@ -165,7 +165,7 @@ export function RecordOutcomeDialog({ homeId, systemId, systemName, onRecorded }
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Cost impact ($)</Label><Input type="number" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" /></div>
+              <div><Label>Cost impact ($)</Label><Input type="number" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" /></div>
             </>
           )}
           <div><Label>Description (optional)</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Tell us more..." rows={2} /></div>

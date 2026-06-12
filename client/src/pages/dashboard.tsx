@@ -438,6 +438,7 @@ function CompleteTaskDialog({ isOpen, onClose, task, homeId }: { isOpen: boolean
               id="complete-cost"
               type="number"
               step="0.01"
+              inputMode="decimal"
               placeholder="0.00"
               value={cost}
               onChange={(e) => setCost(e.target.value)}

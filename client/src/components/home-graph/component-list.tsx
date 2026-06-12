@@ -82,7 +82,7 @@ export function ComponentList({ systemId, homeId }: { systemId: number | string;
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Install Year</Label><Input type="number" value={installYear} onChange={(e) => setInstallYear(e.target.value)} placeholder="2020" /></div>
+              <div><Label>Install Year</Label><Input type="number" inputMode="numeric" value={installYear} onChange={(e) => setInstallYear(e.target.value)} placeholder="2020" /></div>
               <Button onClick={() => createMutation.mutate({ name, componentType, material, condition, installYear: installYear ? parseInt(installYear) : undefined, homeId: Number(homeId) })} disabled={!name || createMutation.isPending}>
                 {createMutation.isPending ? "Adding..." : "Add Component"}
               </Button>
@@ -109,7 +109,7 @@ export function ComponentList({ systemId, homeId }: { systemId: number | string;
                   </div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
+              <Button variant="ghost" size="icon" className="h-11 w-11 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>

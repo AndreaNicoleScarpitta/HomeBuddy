@@ -180,7 +180,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
           </CardTitle>
           <Dialog open={isEditing} onOpenChange={setIsEditing}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="button-edit-home">
+              <Button variant="ghost" size="icon" className="h-11 w-11" data-testid="button-edit-home">
                 <Pencil className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -196,6 +196,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="builtYear"
                         type="number"
+                        inputMode="numeric"
                         min={1600}
                         max={2026}
                         placeholder="1990"
@@ -209,6 +210,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="sqFt"
                         type="number"
+                        inputMode="numeric"
                         min={100}
                         max={100000}
                         placeholder="2000"
@@ -224,6 +226,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="beds"
                         type="number"
+                        inputMode="numeric"
                         min={1}
                         max={50}
                         step={1}
@@ -238,6 +241,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="baths"
                         type="number"
+                        inputMode="decimal"
                         min={1}
                         max={50}
                         step={1}
@@ -254,6 +258,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="lotSize"
                         type="number"
+                        inputMode="numeric"
                         min={0}
                         max={10000000}
                         placeholder="5000"
@@ -267,6 +272,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                       <Input
                         id="lastSaleYear"
                         type="number"
+                        inputMode="numeric"
                         min={1600}
                         max={2026}
                         placeholder="2020"
@@ -309,6 +315,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
                     <Input
                       id="homeValueEstimate"
                       type="number"
+                      inputMode="decimal"
                       min={0}
                       placeholder="350000"
                       value={editData.homeValueEstimate}

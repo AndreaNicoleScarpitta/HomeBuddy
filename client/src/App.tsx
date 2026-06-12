@@ -11,6 +11,7 @@ import { DefinitionsProvider } from "@/hooks/use-definitions";
 import { DefinitionsDrawer } from "@/components/definitions-drawer";
 import { useAuth } from "@/hooks/use-auth";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useKeyboardScroll } from "@/hooks/use-keyboard-scroll";
 import { initGA, trackSlugPageView } from "@/lib/analytics";
 import { validateUniqueSlugs, PAGE_SLUGS } from "@/lib/slug-registry";
 import { initSentry } from "@/lib/sentry";
@@ -217,6 +218,7 @@ function Router() {
 }
 
 function App() {
+  useKeyboardScroll();
   useEffect(() => {
     if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
       initGA();

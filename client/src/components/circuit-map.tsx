@@ -717,6 +717,7 @@ function AnnotatingView({
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Amps</Label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     value={breaker.amperage ?? ""}
                     onChange={(e) => onUpdateBreaker(index, "amperage", e.target.value ? parseInt(e.target.value) : 0)}
                     placeholder="15"
