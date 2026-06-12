@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Camera, Loader2, AlertCircle, X, Info, Plus, PanelLeftClose, PanelLeftOpen, MessageSquare, Clock } from "lucide-react";
+import { Send, Bot, User, Camera, Loader2, AlertCircle, X, Info, Plus, PanelLeftClose, PanelLeftOpen, MessageSquare, Clock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -136,12 +136,18 @@ interface SessionListProps {
   onSelectSession: (id: string) => void;
   onNewChat: () => void;
   isCreating: boolean;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
 }
 
-function SessionList({ sessions, activeSessionId, onSelectSession, onNewChat, isCreating }: SessionListProps) {
+function SessionList({ sessions, activeSessionId, onSelectSession, onNewChat, isCreating, searchQuery, onSearchChange }: SessionListProps) {
+  const filtered = searchQuery.trim()
+    ? sessions.filter(s => (s.title || "New conversation").toLowerCase().includes(searchQuery.toLowerCase()))
+    : sessions;
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b">
+      <div className="p-3 border-b space-y-2">
         <Button
           onClick={onNewChat}
           disabled={isCreating}
@@ -151,16 +157,27 @@ function SessionList({ sessions, activeSessionId, onSelectSession, onNewChat, is
           {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           New Chat
         </Button>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            data-testid="input-chat-search"
+          />
+        </div>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
-          {sessions.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p>No conversations yet</p>
+              <p>{searchQuery ? "No matches" : "No conversations yet"}</p>
             </div>
           ) : (
-            sessions.map((session) => (
+            filtered.map((session) => (
               <button
                 key={session.id}
                 onClick={() => onSelectSession(session.id)}
@@ -171,7 +188,7 @@ function SessionList({ sessions, activeSessionId, onSelectSession, onNewChat, is
                 }`}
                 data-testid={`button-session-${session.id}`}
               >
-                <div className="font-medium truncate">
+                <div className="font-medium line-clamp-2 break-words">
                   {session.title || "New conversation"}
                 </div>
                 <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
@@ -206,6 +223,7 @@ export default function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [hasAutoTitled, setHasAutoTitled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -492,6 +510,8 @@ export default function Chat() {
       onSelectSession={handleSelectSession}
       onNewChat={handleNewChat}
       isCreating={isCreatingSession}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     />
   );
 
@@ -505,7 +525,7 @@ export default function Chat() {
       
       <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] flex pb-16 md:pb-0">
         {!isMobile && sidebarOpen && (
-          <div className="w-[250px] shrink-0 border-r bg-card/50 flex flex-col" data-testid="sidebar-sessions">
+          <div className="w-[300px] shrink-0 border-r bg-card/50 flex flex-col" data-testid="sidebar-sessions">
             {sidebarContent}
           </div>
         )}

@@ -1887,16 +1887,44 @@ v2Router.post("/homes/:homeId/chat", isAuthenticated, async (req: Request, res: 
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
-    await streamAIResponse(
+    const actor = getActor(req);
+    const meta = await streamAIResponse(
       legacyId,
       content || "What can you tell me about this?",
       conversationHistory,
       (chunk) => res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`),
-      () => res.write(`data: ${JSON.stringify({ done: true })}\n\n`),
+      () => {},
       image,
       imageType,
     );
 
+    // Persist both messages so the session history survives page reload
+    if (sessionId) {
+      const saveMsg = async (role: "user" | "assistant", text: string, keySuffix: string) => {
+        const messageId = crypto.randomUUID();
+        await db.transaction(async (tx) => {
+          const ver = await getCurrentVersion(tx, "chat_session", sessionId);
+          const cnt = await tx.execute(sql`SELECT COUNT(*)::int AS cnt FROM projection_chat_message WHERE session_id = ${sessionId}`);
+          const seq = Number((cnt.rows[0] as { cnt: number }).cnt) + 1;
+          await appendAndApply(tx, {
+            aggregateType: "chat_session",
+            aggregateId: sessionId,
+            expectedVersion: ver,
+            eventType: EventTypes.ChatMessageSent,
+            data: { messageId, seq, role, content: text },
+            meta: {},
+            actor,
+            idempotencyKey: `${req.idempotencyKey}-${keySuffix}`,
+            sessionId,
+          });
+        });
+      };
+      await saveMsg("user", content || "What can you tell me about this?", "u");
+      if (meta.fullResponse) await saveMsg("assistant", meta.fullResponse, "a");
+    }
+
+    // Send done AFTER persistence so client query-invalidation sees the new message count
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
   } catch (err) {
     if (!res.headersSent) {
