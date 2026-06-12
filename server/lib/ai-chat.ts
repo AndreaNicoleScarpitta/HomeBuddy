@@ -2,13 +2,21 @@ import OpenAI from "openai";
 import { storage } from "../storage";
 import { logInfo, logError } from "./logger";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  // 60s ceiling so a hung upstream can't hold a request worker indefinitely.
-  timeout: 60_000,
-  maxRetries: 1,
-});
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+      throw new Error("AI_INTEGRATIONS_OPENAI_API_KEY is not set");
+    }
+    _openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      timeout: 60_000,
+      maxRetries: 1,
+    });
+  }
+  return _openai;
+}
 
 const SYSTEM_PROMPT = `You are "Home Buddy Assistant," a calm, trustworthy home-repair planning helper for homeowners age 27-45.
 Your job is to reduce anxiety, increase clarity, and help users make confident decisions about home maintenance, repairs, and budgeting.
@@ -327,7 +335,7 @@ export async function getAIResponse(
 
     logInfo("ai-chat", "Sending request to OpenAI", { homeId, messageCount: messages.length });
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages,
       max_completion_tokens: 1024,
@@ -408,7 +416,7 @@ export async function streamAIResponse(
     });
 
     const modelName = "gpt-4o";
-    const stream = await openai.chat.completions.create({
+    const stream = await getOpenAI().chat.completions.create({
       model: modelName,
       messages,
       max_completion_tokens: 1024,
