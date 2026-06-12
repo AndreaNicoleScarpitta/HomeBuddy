@@ -23,6 +23,7 @@ import { db } from "../../db";
 import { users } from "@shared/models/auth";
 import { and, eq, gt } from "drizzle-orm";
 import { sendWelcomeEmail, sendPasswordResetEmail } from "../../lib/email";
+import { sanitizeUser as sanitize } from "./sanitize";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -387,10 +388,4 @@ export function registerLocalAuthRoutes(app: Express) {
       res.redirect("/login?error=auth_failed");
     }
   });
-}
-
-function sanitize(u: any) {
-  if (!u) return u;
-  const { passwordHash, passwordResetToken, passwordResetTokenExpiresAt, ...rest } = u;
-  return rest;
 }

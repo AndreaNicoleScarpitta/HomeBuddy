@@ -3,6 +3,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { sanitizeUser } from "./sanitize";
 
 declare module "express-session" {
   interface SessionData {
@@ -252,7 +253,7 @@ export async function setupAuth(app: Express) {
           console.error("Session save error after test login:", err);
           return res.status(500).json({ message: "Failed to save session" });
         }
-        res.json({ success: true, user });
+        res.json({ success: true, user: sanitizeUser(user) });
       });
     } catch (error) {
       console.error("Test login error:", error);
