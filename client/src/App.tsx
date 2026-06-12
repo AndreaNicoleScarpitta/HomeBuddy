@@ -46,6 +46,7 @@ import CalendarPage from "@/pages/calendar";
 import Warranties from "@/pages/warranties";
 import Utilities from "@/pages/utilities";
 import Insurance from "@/pages/insurance";
+import Chat from "@/pages/chat";
 
 // Lazy-loaded — hidden admin-only pages (not in nav)
 const AdminApprovals = lazy(() => import("@/pages/admin/approvals"));
@@ -201,6 +202,7 @@ function Router() {
             <Route path="/warranties" component={Warranties} />
             <Route path="/utilities" component={Utilities} />
             <Route path="/insurance" component={Insurance} />
+            <Route path="/chat" component={Chat} />
             <Route path="/pricing" component={Pricing} />
 
             {/* Hidden admin-only routes — not linked in nav, gated by ADMIN_EMAILS env */}

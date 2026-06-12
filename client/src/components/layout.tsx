@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ChevronDown, FileSearch, ClipboardList, Brain, Calendar, Shield, Zap, ShieldCheck } from "lucide-react";
+import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ClipboardList, Brain, Shield, Zap, ShieldCheck, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -12,29 +12,29 @@ import { PlanBadge } from "@/components/plan-badge";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineBanner } from "@/components/offline-banner";
 
-// Primary surfaces — the core of what homeowners need
+// Primary surfaces — the core of what homeowners need daily
 const primaryNav = [
   { href: "/dashboard", icon: Home, label: "Home", match: ["/dashboard", "/"] },
   { href: "/systems", icon: Layers, label: "Systems", match: ["/systems"] },
-  { href: "/maintenance-log", icon: ClipboardList, label: "Maintenance", match: ["/maintenance-log"] },
-  { href: "/timeline", icon: Clock, label: "Timeline", match: ["/timeline"] },
+  { href: "/maintenance-log", icon: ClipboardList, label: "Plan", match: ["/maintenance-log"] },
+  { href: "/chat", icon: MessageSquare, label: "Ask AI", match: ["/chat"] },
   { href: "/intelligence", icon: Brain, label: "Insights", match: ["/intelligence"] },
 ];
 
+// Records — reference data homeowners look up occasionally
 const secondaryNav = [
   { href: "/warranties", icon: Shield, label: "Warranties" },
   { href: "/utilities", icon: Zap, label: "Utilities" },
   { href: "/insurance", icon: ShieldCheck, label: "Insurance" },
-  { href: "/calendar", icon: Calendar, label: "Calendar Sync" },
   { href: "/documents", icon: FileText, label: "Documents" },
-  { href: "/document-analysis", icon: FileSearch, label: "Analyze Files" },
+  { href: "/timeline", icon: Clock, label: "Timeline" },
 ];
 
 const bottomNavItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/systems", icon: Layers, label: "Systems" },
   { href: "/maintenance-log", icon: ClipboardList, label: "Plan" },
-  { href: "/timeline", icon: Clock, label: "Timeline" },
+  { href: "/chat", icon: MessageSquare, label: "Ask AI" },
   { href: "/intelligence", icon: Brain, label: "Insights" },
 ];
 
@@ -46,7 +46,6 @@ function isNavActive(location: string, item: { href: string; match?: string[] })
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const { user } = useAuth();
   const { openDefinitions } = useDefinitions();
 
@@ -204,36 +203,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
             })}
           </div>
 
-          {/* Secondary — collapsible "More" */}
+          {/* Records — always visible */}
           <div className="mt-4 pt-4 border-t">
-            <button
-              onClick={() => setMoreOpen(!moreOpen)}
-              className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider hover:text-muted-foreground transition-colors"
-            >
-              <span>More</span>
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
-            </button>
-            {moreOpen && (
-              <div className="mt-1 space-y-0.5">
-                {secondaryNav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => trackEvent('navigate', 'sidebar', item.label.toLowerCase())}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      location === item.href
-                        ? "bg-primary/8 text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center w-8 h-8">
-                      <item.icon className={`h-[18px] w-[18px] ${location === item.href ? "text-primary" : ""}`} />
-                    </div>
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">Records</p>
+            <div className="mt-1 space-y-0.5">
+              {secondaryNav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => trackEvent('navigate', 'sidebar', item.label.toLowerCase())}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    location === item.href
+                      ? "bg-primary/8 text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-center w-8 h-8">
+                    <item.icon className={`h-[18px] w-[18px] ${location === item.href ? "text-primary" : ""}`} />
+                  </div>
+                  <span className="text-sm">{item.label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </nav>
 
