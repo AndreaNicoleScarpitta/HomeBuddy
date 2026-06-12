@@ -29,6 +29,8 @@ import { CURRENT_DISCLAIMER_VERSION } from "./replit_integrations/auth/routes";
 
 export const v2Router = Router();
 
+import { streamAIResponse } from "./lib/ai-chat";
+
 v2Router.use(requireIdempotencyKey);
 
 // Test-user header bypass: lets integration tests inject a user via
@@ -1825,6 +1827,84 @@ v2Router.get("/chat/sessions/:sessionId", async (req: Request, res: Response) =>
     res.json({ session: session.rows[0], messages: messages.rows });
   } catch (err) {
     handleError(res, err);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// AI Chat — streaming endpoint called by the chat UI
+// ---------------------------------------------------------------------------
+
+v2Router.post("/homes/:homeId/chat", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { homeId } = req.params;
+
+    // Verify ownership and get legacyId in one query
+    const ownership = await db.execute(sql`
+      SELECT user_id, legacy_id FROM projection_home WHERE home_id = ${homeId}
+    `);
+    if (ownership.rows.length === 0) {
+      res.status(404).json({ error: "Home not found" });
+      return;
+    }
+    if ((ownership.rows[0] as any).user_id !== userId) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+    const legacyId = (ownership.rows[0] as any).legacy_id as number | null;
+    if (!legacyId) {
+      res.status(422).json({ error: "Home has no legacy record; please contact support" });
+      return;
+    }
+
+    const { content, image, imageType, sessionId } = req.body as {
+      content: string;
+      image?: string;
+      imageType?: string;
+      sessionId?: string;
+    };
+
+    if (!content && !image) {
+      res.status(400).json({ error: "content or image required" });
+      return;
+    }
+
+    // Load conversation history for this session
+    let conversationHistory: Array<{ role: string; content: string }> = [];
+    if (sessionId) {
+      const msgs = await db.execute(sql`
+        SELECT role, content FROM projection_chat_message
+        WHERE session_id = ${sessionId}
+        ORDER BY seq ASC
+        LIMIT 40
+      `);
+      conversationHistory = (msgs.rows as Array<{ role: string; content: string }>);
+    }
+
+    // SSE headers
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    await streamAIResponse(
+      legacyId,
+      content || "What can you tell me about this?",
+      conversationHistory,
+      (chunk) => res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`),
+      () => res.write(`data: ${JSON.stringify({ done: true })}\n\n`),
+      image,
+      imageType,
+    );
+
+    res.end();
+  } catch (err) {
+    if (!res.headersSent) {
+      handleError(res, err);
+    } else {
+      res.write(`data: ${JSON.stringify({ error: "Stream failed" })}\n\n`);
+      res.end();
+    }
   }
 });
 

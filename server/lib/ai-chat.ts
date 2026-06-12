@@ -201,6 +201,108 @@ ${topic.charAt(0).toUpperCase() + topic.slice(1)} issues should be evaluated by 
 I can help you understand what questions to ask the professional, or provide general information about the repair process. What would be most helpful?`;
 }
 
+async function buildHomeContext(homeId: number): Promise<string> {
+  try {
+    const [home, systems, tasks, warranties, utilities, insurance] = await Promise.all([
+      storage.getHomeById(homeId),
+      storage.getSystemsByHomeId(homeId).catch(() => [] as import("../../shared/schema").System[]),
+      storage.getTasksByHomeId(homeId).catch(() => [] as import("../../shared/schema").MaintenanceTask[]),
+      storage.getWarrantiesByHomeId(homeId).catch(() => [] as import("../../shared/schema").Warranty[]),
+      storage.getUtilityAccountsByHomeId(homeId).catch(() => [] as import("../../shared/schema").UtilityAccount[]),
+      storage.getInsurancePoliciesByHomeId(homeId).catch(() => [] as import("../../shared/schema").InsurancePolicy[]),
+    ]);
+
+    if (!home) return "";
+
+    const currentYear = new Date().getFullYear();
+    let ctx = `\n\n=== THIS HOMEOWNER'S SPECIFIC HOME ===\n`;
+    ctx += `Use this data to give PERSONALIZED advice, not generic guidance. Reference specific system ages, flag aging equipment, mention their actual open tasks.\n\n`;
+
+    ctx += `HOME: ${[home.city, home.state].filter(Boolean).join(", ") || "location unknown"}`;
+    if (home.builtYear) ctx += ` | Built ${home.builtYear} (${currentYear - home.builtYear} years old)`;
+    if (home.sqFt) ctx += ` | ${home.sqFt} sq ft`;
+    if (home.type) ctx += ` | ${home.type}`;
+    ctx += `\n`;
+
+    if (systems.length > 0) {
+      ctx += `\nSYSTEMS (${systems.length} tracked):\n`;
+      for (const s of systems) {
+        ctx += `• ${s.name}`;
+        if (s.make || s.model) ctx += ` (${[s.make, s.model].filter(Boolean).join(" ")})`;
+        if (s.installYear) {
+          const age = currentYear - s.installYear;
+          ctx += ` — installed ${s.installYear}, age ${age}yr`;
+        }
+        if (s.condition && s.condition !== "Unknown") ctx += ` [${s.condition}]`;
+        if (s.notes) ctx += ` — ${s.notes}`;
+        ctx += `\n`;
+      }
+    }
+
+    const openTasks = tasks.filter(t => !t.completedAt).slice(0, 15);
+    if (openTasks.length > 0) {
+      ctx += `\nOPEN MAINTENANCE TASKS (${openTasks.length}):\n`;
+      for (const t of openTasks) {
+        ctx += `• ${t.title}`;
+        if (t.urgency) ctx += ` [${t.urgency}]`;
+        if (t.dueDate) {
+          const due = new Date(t.dueDate);
+          const overdue = due < new Date();
+          ctx += ` — due ${due.toLocaleDateString()}${overdue ? " ⚠️ OVERDUE" : ""}`;
+        }
+        if (t.diyLevel) ctx += ` (${t.diyLevel})`;
+        ctx += `\n`;
+      }
+    }
+
+    if (warranties.length > 0) {
+      ctx += `\nWARRANTIES:\n`;
+      for (const w of warranties) {
+        ctx += `• ${w.warrantyProvider || "Warranty"} (${w.warrantyType || "other"})`;
+        if (w.expiryDate) {
+          const expired = new Date(w.expiryDate) < new Date();
+          ctx += ` — expires ${new Date(w.expiryDate).toLocaleDateString()}${expired ? " [EXPIRED]" : ""}`;
+        }
+        if (w.coverageSummary) ctx += ` — ${w.coverageSummary}`;
+        ctx += `\n`;
+      }
+    }
+
+    const shutoffs = [
+      home.waterShutoffLocation && `Main Water: ${home.waterShutoffLocation}`,
+      home.gasShutoffLocation && `Gas Meter: ${home.gasShutoffLocation}`,
+      home.electricalPanelLocation && `Electrical Panel: ${home.electricalPanelLocation}`,
+    ].filter(Boolean);
+    if (shutoffs.length > 0) {
+      ctx += `\nEMERGENCY SHUTOFFS:\n`;
+      shutoffs.forEach(s => ctx += `• ${s}\n`);
+    }
+
+    if (utilities.length > 0) {
+      ctx += `\nUTILITIES:\n`;
+      for (const u of utilities) {
+        ctx += `• ${u.utilityType}: ${u.provider || "unknown provider"}`;
+        if (u.averageMonthlyBill) ctx += ` (~$${u.averageMonthlyBill}/mo)`;
+        ctx += `\n`;
+      }
+    }
+
+    if (insurance.length > 0) {
+      ctx += `\nINSURANCE:\n`;
+      for (const ins of insurance) {
+        ctx += `• ${ins.policyType}: ${ins.carrier || "unknown"}`;
+        if (ins.premiumAmount) ctx += ` ($${ins.premiumAmount}/${ins.premiumFrequency || "yr"})`;
+        ctx += `\n`;
+      }
+    }
+
+    ctx += `\n=== END HOME DATA ===\n`;
+    return ctx;
+  } catch {
+    return "";
+  }
+}
+
 export async function getAIResponse(
   homeId: number,
   userMessage: string,
@@ -212,16 +314,7 @@ export async function getAIResponse(
       return getHighRiskResponse(highRiskCheck.topic);
     }
 
-    const home = await storage.getHomeById(homeId);
-    
-    let contextMessage = "";
-    if (home) {
-      contextMessage = `\n\nContext about this user's home:
-- Address: ${home.city || "Unknown"}, ${home.state || "Unknown area"}
-- Year Built: ${home.builtYear || "Unknown"}
-- Square Footage: ${home.sqFt || "Unknown"} sq ft
-- Type: ${home.type || "Unknown"}`;
-    }
+    const contextMessage = await buildHomeContext(homeId);
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: SYSTEM_PROMPT + contextMessage },
@@ -277,16 +370,7 @@ export async function streamAIResponse(
       return { fullResponse: response, model: "safety-filter" };
     }
 
-    const home = await storage.getHomeById(homeId);
-    
-    let contextMessage = "";
-    if (home) {
-      contextMessage = `\n\nContext about this user's home:
-- Address: ${home.city || "Unknown"}, ${home.state || "Unknown area"}
-- Year Built: ${home.builtYear || "Unknown"}
-- Square Footage: ${home.sqFt || "Unknown"} sq ft
-- Type: ${home.type || "Unknown"}`;
-    }
+    const contextMessage = await buildHomeContext(homeId);
 
     let userContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] | string;
     

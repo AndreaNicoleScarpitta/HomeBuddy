@@ -17,6 +17,7 @@ export const PAGE_SLUGS = {
   resetPassword: "reset-password",
   budget: "budget",
   chat: "chat",
+  transferKit: "transfer-kit",
   inspections: "inspections",
   notFound: "not-found",
   calendar: "calendar",

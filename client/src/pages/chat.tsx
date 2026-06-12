@@ -391,7 +391,7 @@ export default function Chat() {
         imageBase64 = imagePreviewToSend.split(",")[1];
       }
 
-      const response = await fetch(`/api/home/${home.id}/chat`, {
+      const response = await fetch(`/v2/homes/${home.id}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ClipboardList, Brain, Shield, Zap, ShieldCheck, MessageSquare } from "lucide-react";
+import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ClipboardList, Brain, Shield, Zap, ShieldCheck, MessageSquare, PackageOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -27,6 +27,7 @@ const secondaryNav = [
   { href: "/utilities", icon: Zap, label: "Utilities" },
   { href: "/insurance", icon: ShieldCheck, label: "Insurance" },
   { href: "/documents", icon: FileText, label: "Documents" },
+  { href: "/transfer-kit", icon: PackageOpen, label: "Transfer Kit" },
   { href: "/timeline", icon: Clock, label: "Timeline" },
 ];
 
