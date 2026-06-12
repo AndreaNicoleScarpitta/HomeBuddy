@@ -256,26 +256,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
               <span className="text-sm">Help</span>
             </button>
-          </div>
-
-          {/* User + Logout */}
-          <div className="flex items-center justify-between mt-3 px-3 py-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                {userInitial}
-              </div>
-              <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
-            </div>
             <a
               href="/api/logout"
               target="_top"
               onClick={handleLogout}
-              className="text-muted-foreground/60 hover:text-foreground transition-colors flex-shrink-0 ml-2"
-              title="Sign out"
+              className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
               data-testid="button-logout"
             >
-              <LogOut className="h-4 w-4" />
+              <div className="flex items-center justify-center w-8 h-8">
+                <LogOut className="h-[18px] w-[18px]" />
+              </div>
+              <span className="text-sm">Sign out</span>
             </a>
+          </div>
+
+          {/* User identity */}
+          <div className="flex items-center gap-2.5 mt-3 px-3 py-2 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
+              {userInitial}
+            </div>
+            <span className="text-xs text-muted-foreground truncate">{user?.email || ""}</span>
           </div>
         </div>
       </aside>
