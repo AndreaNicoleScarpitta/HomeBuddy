@@ -5,6 +5,15 @@ import {
   systems,
   type System,
   type InsertSystem,
+  warranties,
+  type Warranty,
+  type InsertWarranty,
+  utilityAccounts,
+  type UtilityAccount,
+  type InsertUtilityAccount,
+  insurancePolicies,
+  type InsurancePolicy,
+  type InsertInsurancePolicy,
   maintenanceTasks,
   type MaintenanceTask,
   type InsertMaintenanceTask,
@@ -144,6 +153,27 @@ export interface IStorage {
   createDocument(doc: InsertHomeDocument): Promise<HomeDocument>;
   deleteDocument(id: number): Promise<void>;
   verifyDocumentOwnership(documentId: number, userId: string): Promise<boolean>;
+
+  // Warranties
+  getWarrantiesByHomeId(homeId: number): Promise<Warranty[]>;
+  createWarranty(warranty: InsertWarranty): Promise<Warranty>;
+  updateWarranty(id: number, data: Partial<InsertWarranty>): Promise<Warranty>;
+  deleteWarranty(id: number): Promise<void>;
+  verifyWarrantyOwnership(warrantyId: number, userId: string): Promise<boolean>;
+
+  // Utility Accounts
+  getUtilityAccountsByHomeId(homeId: number): Promise<UtilityAccount[]>;
+  createUtilityAccount(account: InsertUtilityAccount): Promise<UtilityAccount>;
+  updateUtilityAccount(id: number, data: Partial<InsertUtilityAccount>): Promise<UtilityAccount>;
+  deleteUtilityAccount(id: number): Promise<void>;
+  verifyUtilityAccountOwnership(accountId: number, userId: string): Promise<boolean>;
+
+  // Insurance Policies
+  getInsurancePoliciesByHomeId(homeId: number): Promise<InsurancePolicy[]>;
+  createInsurancePolicy(policy: InsertInsurancePolicy): Promise<InsurancePolicy>;
+  updateInsurancePolicy(id: number, data: Partial<InsertInsurancePolicy>): Promise<InsurancePolicy>;
+  deleteInsurancePolicy(id: number): Promise<void>;
+  verifyInsurancePolicyOwnership(policyId: number, userId: string): Promise<boolean>;
 
   // Data Management
   deleteAllUserData(userId: string): Promise<void>;
@@ -697,6 +727,81 @@ export class DatabaseStorage implements IStorage {
       await tx.delete(homes).where(eq(homes.userId, uid));
       await safeExec(() => tx.delete(notificationPreferences).where(eq(notificationPreferences.userId, uid)));
     });
+  }
+
+  // Warranties
+  async getWarrantiesByHomeId(homeId: number): Promise<Warranty[]> {
+    return db.select().from(warranties).where(eq(warranties.homeId, homeId));
+  }
+  async createWarranty(data: InsertWarranty): Promise<Warranty> {
+    const [w] = await db.insert(warranties).values(data as any).returning();
+    return w;
+  }
+  async updateWarranty(id: number, data: Partial<InsertWarranty>): Promise<Warranty> {
+    const [w] = await db.update(warranties).set({ ...data, updatedAt: new Date() }).where(eq(warranties.id, id)).returning();
+    if (!w) throw new Error("Warranty not found");
+    return w;
+  }
+  async deleteWarranty(id: number): Promise<void> {
+    await db.delete(warranties).where(eq(warranties.id, id));
+  }
+  async verifyWarrantyOwnership(warrantyId: number, userId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: warranties.id })
+      .from(warranties)
+      .innerJoin(homes, eq(warranties.homeId, homes.id))
+      .where(and(eq(warranties.id, warrantyId), eq(homes.userId, userId)));
+    return !!row;
+  }
+
+  // Utility Accounts
+  async getUtilityAccountsByHomeId(homeId: number): Promise<UtilityAccount[]> {
+    return db.select().from(utilityAccounts).where(eq(utilityAccounts.homeId, homeId));
+  }
+  async createUtilityAccount(data: InsertUtilityAccount): Promise<UtilityAccount> {
+    const [a] = await db.insert(utilityAccounts).values(data as any).returning();
+    return a;
+  }
+  async updateUtilityAccount(id: number, data: Partial<InsertUtilityAccount>): Promise<UtilityAccount> {
+    const [a] = await db.update(utilityAccounts).set({ ...data, updatedAt: new Date() }).where(eq(utilityAccounts.id, id)).returning();
+    if (!a) throw new Error("Utility account not found");
+    return a;
+  }
+  async deleteUtilityAccount(id: number): Promise<void> {
+    await db.delete(utilityAccounts).where(eq(utilityAccounts.id, id));
+  }
+  async verifyUtilityAccountOwnership(accountId: number, userId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: utilityAccounts.id })
+      .from(utilityAccounts)
+      .innerJoin(homes, eq(utilityAccounts.homeId, homes.id))
+      .where(and(eq(utilityAccounts.id, accountId), eq(homes.userId, userId)));
+    return !!row;
+  }
+
+  // Insurance Policies
+  async getInsurancePoliciesByHomeId(homeId: number): Promise<InsurancePolicy[]> {
+    return db.select().from(insurancePolicies).where(eq(insurancePolicies.homeId, homeId));
+  }
+  async createInsurancePolicy(data: InsertInsurancePolicy): Promise<InsurancePolicy> {
+    const [p] = await db.insert(insurancePolicies).values(data as any).returning();
+    return p;
+  }
+  async updateInsurancePolicy(id: number, data: Partial<InsertInsurancePolicy>): Promise<InsurancePolicy> {
+    const [p] = await db.update(insurancePolicies).set({ ...data, updatedAt: new Date() }).where(eq(insurancePolicies.id, id)).returning();
+    if (!p) throw new Error("Insurance policy not found");
+    return p;
+  }
+  async deleteInsurancePolicy(id: number): Promise<void> {
+    await db.delete(insurancePolicies).where(eq(insurancePolicies.id, id));
+  }
+  async verifyInsurancePolicyOwnership(policyId: number, userId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: insurancePolicies.id })
+      .from(insurancePolicies)
+      .innerJoin(homes, eq(insurancePolicies.homeId, homes.id))
+      .where(and(eq(insurancePolicies.id, policyId), eq(homes.userId, userId)));
+    return !!row;
   }
 }
 

@@ -34,6 +34,12 @@ import {
   insertContractorAppointmentSchema,
   type InsertContractorAppointment,
   insertNotificationPreferencesSchema,
+  insertWarrantySchema,
+  type InsertWarranty,
+  insertUtilityAccountSchema,
+  type InsertUtilityAccount,
+  insertInsurancePolicySchema,
+  type InsertInsurancePolicy,
 } from "@shared/schema";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
@@ -1296,6 +1302,123 @@ IMPORTANT:
     } catch (error) {
       return handleApiError(res, "ai.circuit-panel", error, 500);
     }
+  });
+
+  // ── Warranty routes ────────────────────────────────────────────────────────
+  app.get("/api/home/:homeId/warranties", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.getWarrantiesByHomeId(homeId));
+    } catch (error) { return handleApiError(res, "warranties.get", error, 500); }
+  });
+
+  app.post("/api/home/:homeId/warranties", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      const data = insertWarrantySchema.parse({ ...req.body, homeId }) as unknown as InsertWarranty;
+      res.json(await storage.createWarranty(data));
+    } catch (error) { return handleApiError(res, "warranties.create", error); }
+  });
+
+  app.patch("/api/warranties/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyWarrantyOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.updateWarranty(id, req.body));
+    } catch (error) { return handleApiError(res, "warranties.update", error); }
+  });
+
+  app.delete("/api/warranties/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyWarrantyOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      await storage.deleteWarranty(id);
+      res.json({ success: true });
+    } catch (error) { return handleApiError(res, "warranties.delete", error, 500); }
+  });
+
+  // ── Utility account routes ─────────────────────────────────────────────────
+  app.get("/api/home/:homeId/utilities", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.getUtilityAccountsByHomeId(homeId));
+    } catch (error) { return handleApiError(res, "utilities.get", error, 500); }
+  });
+
+  app.post("/api/home/:homeId/utilities", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      const data = insertUtilityAccountSchema.parse({ ...req.body, homeId }) as unknown as InsertUtilityAccount;
+      res.json(await storage.createUtilityAccount(data));
+    } catch (error) { return handleApiError(res, "utilities.create", error); }
+  });
+
+  app.patch("/api/utilities/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyUtilityAccountOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.updateUtilityAccount(id, req.body));
+    } catch (error) { return handleApiError(res, "utilities.update", error); }
+  });
+
+  app.delete("/api/utilities/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyUtilityAccountOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      await storage.deleteUtilityAccount(id);
+      res.json({ success: true });
+    } catch (error) { return handleApiError(res, "utilities.delete", error, 500); }
+  });
+
+  // ── Insurance policy routes ────────────────────────────────────────────────
+  app.get("/api/home/:homeId/insurance", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.getInsurancePoliciesByHomeId(homeId));
+    } catch (error) { return handleApiError(res, "insurance.get", error, 500); }
+  });
+
+  app.post("/api/home/:homeId/insurance", isAuthenticated, async (req: any, res) => {
+    try {
+      const homeId = validateIntParam(req.params.homeId);
+      if (homeId === null) return res.status(400).json({ message: "Invalid home ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyHomeOwnership(homeId, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      const data = insertInsurancePolicySchema.parse({ ...req.body, homeId }) as unknown as InsertInsurancePolicy;
+      res.json(await storage.createInsurancePolicy(data));
+    } catch (error) { return handleApiError(res, "insurance.create", error); }
+  });
+
+  app.patch("/api/insurance/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyInsurancePolicyOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      res.json(await storage.updateInsurancePolicy(id, req.body));
+    } catch (error) { return handleApiError(res, "insurance.update", error); }
+  });
+
+  app.delete("/api/insurance/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = validateIntParam(req.params.id);
+      if (id === null) return res.status(400).json({ message: "Invalid ID", code: "VALIDATION_ERROR" });
+      if (!await storage.verifyInsurancePolicyOwnership(id, req.user.id)) return res.status(403).json({ message: "Access denied", code: "FORBIDDEN" });
+      await storage.deleteInsurancePolicy(id);
+      res.json({ success: true });
+    } catch (error) { return handleApiError(res, "insurance.delete", error, 500); }
   });
 
   return httpServer;

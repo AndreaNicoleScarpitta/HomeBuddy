@@ -231,19 +231,21 @@ export function ContractorSchedule({ homeId }: ContractorScheduleProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Mark appointment complete"
+                    className="h-11 w-11"
                     onClick={() => updateMutation.mutate({ id: apt.id, data: { status: "completed" } })}
                     data-testid={`button-complete-${apt.id}`}
                   >
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 text-destructive"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Delete appointment"
+                    className="h-11 w-11 text-destructive"
                     onClick={() => deleteMutation.mutate(apt.id)}
                     data-testid={`button-delete-${apt.id}`}
                   >

@@ -516,7 +516,7 @@ export default function Chat() {
               {isMobile ? (
                 <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="shrink-0" data-testid="button-mobile-sidebar">
+                    <Button variant="ghost" size="icon" aria-label="Open chat sessions" className="shrink-0" data-testid="button-mobile-sidebar">
                       <PanelLeftOpen className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
@@ -528,6 +528,7 @@ export default function Chat() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label={sidebarOpen ? "Close sidebar" : "Open chat sessions"}
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="shrink-0"
                   data-testid="button-toggle-sidebar"

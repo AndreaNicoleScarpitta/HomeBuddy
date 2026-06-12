@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ChevronDown, FileSearch, ClipboardList, Brain, Calendar } from "lucide-react";
+import { Home, Clock, FileText, Settings, Menu, LogOut, HelpCircle, Layers, ChevronDown, FileSearch, ClipboardList, Brain, Calendar, Shield, Zap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -22,6 +22,9 @@ const primaryNav = [
 ];
 
 const secondaryNav = [
+  { href: "/warranties", icon: Shield, label: "Warranties" },
+  { href: "/utilities", icon: Zap, label: "Utilities" },
+  { href: "/insurance", icon: ShieldCheck, label: "Insurance" },
   { href: "/calendar", icon: Calendar, label: "Calendar Sync" },
   { href: "/documents", icon: FileText, label: "Documents" },
   { href: "/document-analysis", icon: FileSearch, label: "Analyze Files" },
@@ -68,7 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <PlanBadge compact />
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-11 w-11" data-testid="button-menu">
+            <Button variant="ghost" size="icon" aria-label="Open menu" className="h-11 w-11" data-testid="button-menu">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>

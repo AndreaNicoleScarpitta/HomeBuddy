@@ -112,8 +112,8 @@ export function WarrantySection({ homeId, systemId }: { homeId: number | string;
                     {w.coverageSummary && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{w.coverageSummary}</p>}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(w.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" aria-label="Delete warranty" className="h-11 w-11 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(w.id)}>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             );

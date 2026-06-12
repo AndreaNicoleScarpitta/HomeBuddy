@@ -51,6 +51,9 @@ export interface V2Home {
   dataSource?: string | null;
   zillowUrl?: string | null;
   healthScore?: number | null;
+  waterShutoffLocation?: string | null;
+  gasShutoffLocation?: string | null;
+  electricalPanelLocation?: string | null;
 }
 
 export interface V2System {

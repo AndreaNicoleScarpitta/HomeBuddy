@@ -39,6 +39,9 @@ export const homes = pgTable("homes", {
   dataSource: varchar("data_source", { length: 50 }).default("manual"),
   zillowUrl: text("zillow_url"),
   healthScore: integer("health_score").default(0),
+  waterShutoffLocation: text("water_shutoff_location"),
+  gasShutoffLocation: text("gas_shutoff_location"),
+  electricalPanelLocation: text("electrical_panel_location"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -111,6 +114,9 @@ export const systems = pgTable("systems", {
   name: varchar("name", { length: 100 }).notNull(),
   make: varchar("make", { length: 100 }),
   model: varchar("model", { length: 100 }),
+  serialNumber: varchar("serial_number", { length: 100 }),
+  purchaseDate: timestamp("purchase_date"),
+  manualUrl: text("manual_url"),
   installYear: integer("install_year"), // ASSET only
   lastServiceDate: timestamp("last_service_date"), // both: last maintenance for asset, last visit for service
   nextServiceDate: timestamp("next_service_date"),
@@ -718,6 +724,69 @@ export const insertLearningAdjustmentSchema = createInsertSchema(learningAdjustm
 export type InsertLearningAdjustment = Omit<typeof learningAdjustments.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>;
 export type LearningAdjustment = typeof learningAdjustments.$inferSelect;
 
+// Utility account types
+export const utilityTypes = ["electricity", "gas", "water", "sewer", "internet", "trash", "phone", "other"] as const;
+export type UtilityType = typeof utilityTypes[number];
+
+// Utility accounts table - providers, account numbers, billing info
+export const utilityAccounts = pgTable("utility_accounts", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  utilityType: varchar("utility_type", { length: 50 }).notNull(),
+  provider: varchar("provider", { length: 255 }),
+  accountNumber: varchar("account_number", { length: 100 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  website: varchar("website", { length: 255 }),
+  autoPayEnabled: boolean("auto_pay_enabled").default(false),
+  billingDayOfMonth: integer("billing_day_of_month"),
+  averageMonthlyBill: integer("average_monthly_bill"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("utility_accounts_home_id_idx").on(table.homeId),
+]);
+
+// @ts-expect-error drizzle-zod omit type inference
+export const insertUtilityAccountSchema = createInsertSchema(utilityAccounts).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertUtilityAccount = Omit<typeof utilityAccounts.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>;
+export type UtilityAccount = typeof utilityAccounts.$inferSelect;
+
+// Insurance policy types
+export const insurancePolicyTypes = ["homeowners", "flood", "earthquake", "umbrella", "other"] as const;
+export type InsurancePolicyType = typeof insurancePolicyTypes[number];
+
+export const insurancePremiumFrequencies = ["monthly", "quarterly", "semi-annual", "annual"] as const;
+export type InsurancePremiumFrequency = typeof insurancePremiumFrequencies[number];
+
+// Insurance policies table
+export const insurancePolicies = pgTable("insurance_policies", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  homeId: integer("home_id").notNull().references(() => homes.id, { onDelete: "cascade" }),
+  policyType: varchar("policy_type", { length: 50 }).notNull(),
+  carrier: varchar("carrier", { length: 255 }),
+  policyNumber: varchar("policy_number", { length: 100 }),
+  agentName: varchar("agent_name", { length: 255 }),
+  agentPhone: varchar("agent_phone", { length: 50 }),
+  agentEmail: varchar("agent_email", { length: 255 }),
+  premiumAmount: integer("premium_amount"),
+  premiumFrequency: varchar("premium_frequency", { length: 50 }).default("annual"),
+  renewalDate: timestamp("renewal_date"),
+  coverageSummary: text("coverage_summary"),
+  documentId: integer("document_id").references(() => homeDocuments.id, { onDelete: "set null" }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("insurance_policies_home_id_idx").on(table.homeId),
+  index("insurance_policies_renewal_idx").on(table.renewalDate),
+]);
+
+// @ts-expect-error drizzle-zod omit type inference
+export const insertInsurancePolicySchema = createInsertSchema(insurancePolicies).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertInsurancePolicy = Omit<typeof insurancePolicies.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>;
+export type InsurancePolicy = typeof insurancePolicies.$inferSelect;
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   homes: many(homes),
@@ -744,6 +813,8 @@ export const homesRelations = relations(homes, ({ one, many }) => ({
   userActions: many(userActions),
   outcomeEvents: many(outcomeEvents),
   learningAdjustments: many(learningAdjustments),
+  utilityAccounts: many(utilityAccounts),
+  insurancePolicies: many(insurancePolicies),
 }));
 
 export const systemsRelations = relations(systems, ({ one, many }) => ({

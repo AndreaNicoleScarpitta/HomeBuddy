@@ -180,7 +180,7 @@ export function HomeInfoCard({ home, systems }: HomeInfoCardProps) {
           </CardTitle>
           <Dialog open={isEditing} onOpenChange={setIsEditing}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-11 w-11" data-testid="button-edit-home">
+              <Button variant="ghost" size="icon" aria-label="Edit home details" className="h-11 w-11" data-testid="button-edit-home">
                 <Pencil className="h-4 w-4" />
               </Button>
             </DialogTrigger>

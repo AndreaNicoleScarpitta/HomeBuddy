@@ -43,6 +43,9 @@ import Disclaimer from "@/pages/disclaimer";
 import Timeline from "@/pages/timeline";
 import Intelligence from "@/pages/intelligence";
 import CalendarPage from "@/pages/calendar";
+import Warranties from "@/pages/warranties";
+import Utilities from "@/pages/utilities";
+import Insurance from "@/pages/insurance";
 
 // Lazy-loaded — hidden admin-only pages (not in nav)
 const AdminApprovals = lazy(() => import("@/pages/admin/approvals"));
@@ -195,6 +198,9 @@ function Router() {
             <Route path="/timeline" component={Timeline} />
             <Route path="/intelligence" component={Intelligence} />
             <Route path="/calendar" component={CalendarPage} />
+            <Route path="/warranties" component={Warranties} />
+            <Route path="/utilities" component={Utilities} />
+            <Route path="/insurance" component={Insurance} />
             <Route path="/pricing" component={Pricing} />
 
             {/* Hidden admin-only routes — not linked in nav, gated by ADMIN_EMAILS env */}

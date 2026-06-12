@@ -486,6 +486,7 @@ v2Router.patch("/homes/:homeId", async (req: Request, res: Response) => {
           "addressVerified", "builtYear", "sqFt", "beds", "baths", "type",
           "lotSize", "exteriorType", "roofType", "lastSaleYear",
           "homeValueEstimate", "dataSource", "zillowUrl", "healthScore",
+          "waterShutoffLocation", "gasShutoffLocation", "electricalPanelLocation",
         ]);
         let updateSql = sql`UPDATE homes SET updated_at = now()`;
         for (const [key, value] of Object.entries(attrs)) {

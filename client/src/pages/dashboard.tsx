@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout";
+import { EmergencyShutoffs } from "@/components/emergency-shutoffs";
 import { HomeHealth } from "@/components/home-health";
 import { HomeInfoCard } from "@/components/home-info-card";
 import { MaintenanceCard } from "@/components/maintenance-card";
@@ -717,9 +718,10 @@ export default function Dashboard() {
             />
             <HomeInfoCard home={home} systems={systems} />
           </div>
-          
+          {home && <EmergencyShutoffs home={home} />}
+
         </section>
-        
+
         {/* Systems Summary */}
         <section data-tour="systems-section">
           <SystemsSummary systems={systems} onAddSystem={() => setShowAddSystem(true)} />
