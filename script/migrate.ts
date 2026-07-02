@@ -9,27 +9,52 @@
  * Usage:
  *   npm run db:migrate
  *
- * Why this exists (instead of continuing to use `db:push`):
+ * Why this exists (instead of `db:push`):
  *   `drizzle-kit push` diffs the schema file against the live DB and
- *   emits destructive DDL for renames (drop column, add column). That's
- *   fine in dev where we nuke and repave, but on a deploy it can lose
- *   data without warning. `migrate` applies reviewed SQL files — if a
- *   migration would drop data, we see it in the generated file before
- *   it hits prod.
+ *   emits destructive DDL for renames (drop column, add column). It also
+ *   prompts interactively on destructive diffs, which hangs or silently
+ *   fails in a non-TTY deploy container. `migrate` applies reviewed SQL
+ *   files — if a migration would drop data, we see it in the generated
+ *   file before it hits prod.
  *
- * NOTE — the `migrations/` folder currently has a journal mismatch
- * (journal lists 0000 only, but 0001_add_check_constraints.sql and
- * 0001_event_log_immutability_trigger.sql both exist on disk). That
- * needs to be reconciled before switching the Dockerfile CMD to run
- * this script. Until then, the Dockerfile still runs `db:push` on
- * startup and this script is a no-op opt-in for local testing.
+ * Baselining:
+ *   Databases that predate migration tracking (built up by `db:push`)
+ *   already have every table in 0000_baseline.sql, so running that file
+ *   would fail on the first CREATE TABLE. When we detect an existing,
+ *   untracked database we record the baseline as applied without running
+ *   it, then let the migrator apply everything after it. Fresh databases
+ *   (CI, new environments) run the full chain from 0000.
  */
 
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { sql } from "drizzle-orm";
 import pg from "pg";
 
 const { Pool } = pg;
+
+const MIGRATIONS_FOLDER = "./migrations";
+
+interface JournalEntry {
+  idx: number;
+  when: number;
+  tag: string;
+}
+
+function readJournal(): JournalEntry[] {
+  const journal = JSON.parse(
+    readFileSync(`${MIGRATIONS_FOLDER}/meta/_journal.json`, "utf8"),
+  );
+  return journal.entries as JournalEntry[];
+}
+
+/** Hash exactly the way drizzle-orm's migrator does: sha256 of the file. */
+function hashMigration(tag: string): string {
+  const content = readFileSync(`${MIGRATIONS_FOLDER}/${tag}.sql`, "utf8");
+  return createHash("sha256").update(content).digest("hex");
+}
 
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -49,9 +74,45 @@ async function main() {
   const db = drizzle(pool);
 
   try {
+    const [baseline] = readJournal();
+    if (!baseline) throw new Error("migrations/meta/_journal.json has no entries");
+
+    await db.execute(sql`CREATE SCHEMA IF NOT EXISTS drizzle`);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
+        id SERIAL PRIMARY KEY,
+        hash TEXT NOT NULL,
+        created_at BIGINT
+      )
+    `);
+
+    // The migrator applies every journal entry whose `when` is newer than
+    // the last recorded created_at, so "is the baseline tracked" reduces to
+    // a timestamp comparison.
+    const tracked = await db.execute(sql`
+      SELECT MAX(created_at)::bigint AS latest FROM drizzle.__drizzle_migrations
+    `);
+    const latest = Number((tracked.rows[0] as any)?.latest || 0);
+
+    if (latest < baseline.when) {
+      const existing = await db.execute(sql`SELECT to_regclass('public.users') AS t`);
+      const hasAppTables = Boolean((existing.rows[0] as any)?.t);
+
+      if (hasAppTables) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `[migrate] existing untracked database detected — recording ${baseline.tag} as applied (baselining)`,
+        );
+        await db.execute(sql`
+          INSERT INTO drizzle.__drizzle_migrations (hash, created_at)
+          VALUES (${hashMigration(baseline.tag)}, ${baseline.when})
+        `);
+      }
+    }
+
     // eslint-disable-next-line no-console
     console.log("[migrate] applying migrations from ./migrations ...");
-    await migrate(db, { migrationsFolder: "./migrations" });
+    await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
     // eslint-disable-next-line no-console
     console.log("[migrate] complete");
   } catch (err) {

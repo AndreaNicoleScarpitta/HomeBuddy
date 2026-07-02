@@ -11,7 +11,6 @@ import { createServer } from "http";
 import { setupAuth, registerAuthRoutes, registerLocalAuthRoutes } from "./replit_integrations/auth";
 import { logEnvironmentStatus } from "./lib/env-validation";
 import { logger } from "./lib/logger";
-import { bootstrapMigrationTracking } from "./lib/db-bootstrap";
 import { WebhookHandlers } from "./webhookHandlers";
 import { registerDonationRoutes } from "./donation-routes";
 import { registerBillingRoutes } from "./billing-routes";
@@ -153,10 +152,7 @@ app.use((req, res, next) => {
 
 (async () => {
   logEnvironmentStatus();
-  
-  // Bootstrap migration tracking for deployments
-  await bootstrapMigrationTracking();
-  
+
   try {
     const { runMigrations } = await import('stripe-replit-sync');
     const { getStripeSync } = await import('./stripeClient');

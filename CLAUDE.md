@@ -41,8 +41,16 @@ App runs at http://localhost:5000. Login with test/password123.
 - `npm run dev` — Full-stack dev (requires NODE_ENV=development set separately on Windows)
 - `npm run build` — Production build (client to dist/public, server to dist/index.cjs)
 - `npm run start` — Run production build
-- `npm run db:push` — Push schema changes to DB
+- `npm run db:migrate` — Apply migration files (the deploy path: CI and the Dockerfile CMD both use this; self-baselines existing databases)
+- `npm run db:push` — Dev-only schema sync. WARNING: push DROPS anything not in shared/schema.ts, including the hand-written CHECK/FK constraints and it can't create the event_log trigger — after a local push, run `npm run db:migrate` to restore them. Never use push in prod/CI.
 - `npm run check` — TypeScript check
+
+## Schema Changes
+
+1. Edit `shared/schema.ts` (or `shared/models/*`)
+2. `npx drizzle-kit generate --name <description>` — creates a reviewed SQL file in `migrations/`
+3. Review the generated SQL, commit it; deploys apply it via `db:migrate`
+For constraints/triggers drizzle can't model, use `npx drizzle-kit generate --custom --name <description>` and write idempotent SQL (see migrations/0001–0003 for the pattern; use `NOT VALID` on constraints so legacy prod rows can't block a deploy).
 
 ## Windows-Specific Notes
 
@@ -52,8 +60,10 @@ App runs at http://localhost:5000. Login with test/password123.
 
 ## Environment Variables
 
-Required: `DATABASE_URL`
-Optional: `AI_INTEGRATIONS_OPENAI_API_KEY`, `VITE_GOOGLE_PLACES_API_KEY`, `RESEND_API_KEY`, `STRIPE_API_KEY`, `SESSION_SECRET`
+Required: `DATABASE_URL` (+ `SESSION_SECRET` in production)
+Optional: `AI_INTEGRATIONS_OPENAI_API_KEY`, `VITE_GOOGLE_PLACES_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM` (verified Resend sender — without it emails only reach the Resend account owner), `STRIPE_SECRET_KEY`, `STRIPE_PRICE_PLUS`/`STRIPE_PRICE_PREMIUM`, `R2_ENDPOINT`/`R2_BUCKET`/`R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, `APP_URL`, `ADMIN_EMAILS`, `SENTRY_DSN`
+
+Server boot logs a `[on ]/[OFF]` config report per integration (`server/lib/env-validation.ts`) — read the deploy logs to audit what's live.
 
 ## Design System
 
