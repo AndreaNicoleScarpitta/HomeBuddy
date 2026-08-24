@@ -780,11 +780,6 @@ export default function Dashboard() {
                     <ListTodo className="h-4 w-4 mr-2" />
                     Add Task
                   </Button>
-                  <Link href="/inspections">
-                    <Button variant="outline" data-testid="button-upload-inspection">
-                      Upload Report
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </Card>

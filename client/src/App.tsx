@@ -18,9 +18,6 @@ import { initSentry } from "@/lib/sentry";
 
 // Init Sentry before any render so it can capture errors from the first paint.
 initSentry();
-// Donation modal temporarily disabled — was firing too eagerly on first session.
-// Re-enable by restoring this import + the <DonationModal /> render below.
-// import { DonationModal } from "@/components/donation-modal";
 
 // Eagerly loaded — core app pages
 import NotFound from "@/pages/not-found";
@@ -178,7 +175,6 @@ function Router() {
 
   return (
     <>
-      {/* <DonationModal /> — disabled, see import above */}
       <ErrorBoundary scope="authed-routes" inline>
         <Suspense fallback={<PageSkeleton />}>
           <Switch>
