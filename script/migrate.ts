@@ -30,8 +30,10 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { sql } from "drizzle-orm";
+import { is, sql } from "drizzle-orm";
+import { PgTable, getTableConfig } from "drizzle-orm/pg-core";
 import pg from "pg";
+import * as appSchema from "../shared/schema";
 
 const { Pool } = pg;
 
@@ -54,6 +56,63 @@ function readJournal(): JournalEntry[] {
 function hashMigration(tag: string): string {
   const content = readFileSync(`${MIGRATIONS_FOLDER}/${tag}.sql`, "utf8");
   return createHash("sha256").update(content).digest("hex");
+}
+
+/**
+ * Schema drift check — compares shared/schema.ts against the live database.
+ *
+ * Baselining trusts that an existing untracked database matches
+ * 0000_baseline.sql. When it doesn't (the DB predates columns in the
+ * baseline), the difference is never applied and the app crashes at runtime
+ * with "column ... does not exist" — this is what caused the June 2026 auth
+ * outage and a local dev breakage on the users table. Missing tables or
+ * columns fail the migration run loudly instead.
+ *
+ * Extra tables/columns in the DB that the schema doesn't know about are
+ * ignored — they're harmless to the app. Escape hatch: SKIP_DRIFT_CHECK=1.
+ */
+async function checkSchemaDrift(db: ReturnType<typeof drizzle>): Promise<void> {
+  if (process.env.SKIP_DRIFT_CHECK === "1") {
+    // eslint-disable-next-line no-console
+    console.warn("[migrate] SKIP_DRIFT_CHECK=1 — skipping schema drift check");
+    return;
+  }
+
+  const live = await db.execute(sql`
+    SELECT table_name, column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+  `);
+  const liveColumns = new Set(
+    (live.rows as Array<{ table_name: string; column_name: string }>).map(
+      (r) => `${r.table_name}.${r.column_name}`,
+    ),
+  );
+
+  const missing: string[] = [];
+  for (const exported of Object.values(appSchema)) {
+    if (!is(exported, PgTable)) continue;
+    const { name: tableName, columns } = getTableConfig(exported);
+    for (const column of columns) {
+      if (!liveColumns.has(`${tableName}.${column.name}`)) {
+        missing.push(`${tableName}.${column.name}`);
+      }
+    }
+  }
+
+  if (missing.length > 0) {
+    // eslint-disable-next-line no-console
+    console.error(
+      `[migrate] SCHEMA DRIFT: the database is missing ${missing.length} column(s) the app expects:\n` +
+        missing.map((m) => `  - ${m}`).join("\n") +
+        `\nThe app would crash at runtime on these. Generate a migration for the difference\n` +
+        `(npx drizzle-kit generate --name <description>) or, for local dev only, run\n` +
+        `"npm run db:push" then "npm run db:migrate" to re-sync.`,
+    );
+    process.exit(1);
+  }
+  // eslint-disable-next-line no-console
+  console.log("[migrate] schema drift check passed — database matches shared/schema.ts");
 }
 
 async function main() {
@@ -113,6 +172,7 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log("[migrate] applying migrations from ./migrations ...");
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+    await checkSchemaDrift(db);
     // eslint-disable-next-line no-console
     console.log("[migrate] complete");
   } catch (err) {
