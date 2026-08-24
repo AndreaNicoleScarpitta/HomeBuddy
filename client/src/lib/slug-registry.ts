@@ -38,7 +38,6 @@ export const MODAL_SLUGS = {
   deleteAccount: "modal-delete-account",
   circuitMap: "modal-circuit-map",
   photoConsent: "modal-photo-consent",
-  donation: "modal-donation",
   definitions: "modal-definitions",
   mobileNav: "modal-mobile-nav",
   onboardingTour: "modal-onboarding-tour",

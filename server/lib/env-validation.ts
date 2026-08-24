@@ -62,10 +62,15 @@ export function validateEnvironment(): EnvValidationResult {
   }
 
   if (!process.env.STRIPE_SECRET_KEY) {
-    result.warnings.push("STRIPE_SECRET_KEY not set - checkout, donations, and billing portal will fail");
+    result.warnings.push("STRIPE_SECRET_KEY not set - checkout and billing portal will fail");
   }
-  if (!process.env.STRIPE_PRICE_PLUS || !process.env.STRIPE_PRICE_PREMIUM) {
-    result.warnings.push("STRIPE_PRICE_PLUS / STRIPE_PRICE_PREMIUM not set - paid plan checkout will be unavailable");
+  if (!process.env.STRIPE_PRICE_PLUS) {
+    result.warnings.push("STRIPE_PRICE_PLUS not set - paid plan checkout will be unavailable");
+  }
+  if (!process.env.STRIPE_PRICE_PREMIUM) {
+    // Premium is unlisted, but the webhook still needs this price id to map
+    // existing subscribers onto the premium plan.
+    result.warnings.push("STRIPE_PRICE_PREMIUM not set - existing Premium subscribers will be treated as free");
   }
 
   const hasGoogleId = !!process.env.GOOGLE_CLIENT_ID;

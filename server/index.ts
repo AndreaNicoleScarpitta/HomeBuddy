@@ -13,7 +13,6 @@ import { logEnvironmentStatus } from "./lib/env-validation";
 import { verifyDatabaseConnection } from "./lib/db-check";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./webhookHandlers";
-import { registerDonationRoutes } from "./donation-routes";
 import { registerBillingRoutes } from "./billing-routes";
 import { registerMeRoutes } from "./me-routes";
 import { registerCalendarRoutes } from "./calendar-routes";
@@ -243,7 +242,6 @@ app.use((req, res, next) => {
   app.use("/api", csrfProtection);
   app.use("/v2", csrfProtection);
 
-  registerDonationRoutes(app);
   registerBillingRoutes(app);
   registerMeRoutes(app);
   registerCalendarRoutes(app);
