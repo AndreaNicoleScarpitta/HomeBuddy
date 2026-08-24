@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowRight, ListTodo, CheckCircle, CheckCircle2, Loader2, Sparkles, Wrench, AlertTriangle, ShieldCheck, ShieldAlert, Shield, RefreshCw, X } from "lucide-react";
+import { Plus, ArrowRight, FileSearch, ListTodo, CheckCircle, CheckCircle2, Loader2, Sparkles, Wrench, AlertTriangle, ShieldCheck, ShieldAlert, Shield, RefreshCw, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FieldTooltip } from "@/components/field-tooltip";
 import { Link, useLocation } from "wouter";
@@ -696,17 +696,27 @@ export default function Dashboard() {
       )}
 
       <div className="space-y-8">
-        {/* Header */}
-        <header>
-          <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">
-            Your Home
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {activeTasks.length > 0 
-              ? `${activeTasks.length} task${activeTasks.length > 1 ? 's' : ''} need${activeTasks.length === 1 ? 's' : ''} attention`
-              : "Everything looks good"
-            }
-          </p>
+        {/* Header. Document analysis lives here rather than in the nav: it is
+            the fastest way to turn a report you already own into a real plan,
+            so it belongs where the plan is, as an action. */}
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-heading">
+              Your Home
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {activeTasks.length > 0
+                ? `${activeTasks.length} task${activeTasks.length > 1 ? 's' : ''} need${activeTasks.length === 1 ? 's' : ''} attention`
+                : "Everything looks good"
+              }
+            </p>
+          </div>
+          <Link href="/document-analysis">
+            <Button variant="outline" className="shrink-0" data-testid="button-analyze-document-header">
+              <FileSearch className="h-4 w-4 mr-2" />
+              Analyze a document
+            </Button>
+          </Link>
         </header>
 
         {/* At a Glance */}

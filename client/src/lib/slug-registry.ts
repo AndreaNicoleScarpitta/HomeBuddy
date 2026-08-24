@@ -6,7 +6,7 @@ export const PAGE_SLUGS = {
   maintenanceLog: "maintenance-log",
   systemDetail: "system-detail",
   systems: "systems",
-  documents: "documents",
+  records: "records",
   profile: "profile",
   contact: "contact",
   terms: "terms",

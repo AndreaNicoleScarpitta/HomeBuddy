@@ -969,7 +969,7 @@ export default function SystemDetail() {
           <CardContent>
             <p className="text-sm text-muted-foreground" data-testid="text-no-documents">
               No documents linked to this system yet. Upload documents from the{" "}
-              <Link href="/documents" className="text-primary hover:underline" data-testid="link-documents">
+              <Link href="/records" className="text-primary hover:underline" data-testid="link-documents">
                 Documents
               </Link>{" "}
               page.
