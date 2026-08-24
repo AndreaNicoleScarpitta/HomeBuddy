@@ -10,6 +10,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth, registerAuthRoutes, registerLocalAuthRoutes } from "./replit_integrations/auth";
 import { logEnvironmentStatus } from "./lib/env-validation";
+import { verifyDatabaseConnection } from "./lib/db-check";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./webhookHandlers";
 import { registerDonationRoutes } from "./donation-routes";
@@ -152,6 +153,11 @@ app.use((req, res, next) => {
 
 (async () => {
   logEnvironmentStatus();
+
+  // Fail the boot loudly if the database is unreachable or rejects our
+  // credentials — otherwise the server comes up "healthy-looking" and every
+  // request 500s. Exits the process on failure.
+  await verifyDatabaseConnection();
 
   try {
     const { runMigrations } = await import('stripe-replit-sync');

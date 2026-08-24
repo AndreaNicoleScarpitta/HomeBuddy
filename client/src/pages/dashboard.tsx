@@ -146,8 +146,12 @@ function QuickAddTaskDialog({ isOpen, onClose, homeId }: { isOpen: boolean; onCl
       setManualDiy("Caution");
       setManualCost("");
     },
-    onError: () => {
-      toast({ title: "Error", description: "Could not create task.", variant: "destructive" });
+    onError: (err: Error) => {
+      toast({
+        title: "Couldn't add task",
+        description: err.message && err.message !== "Request failed" ? err.message : "Could not create task. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -747,11 +751,16 @@ export default function Dashboard() {
         <section className="space-y-6" data-tour="maintenance-plan">
           <div className="flex justify-between items-baseline">
             <h2 className="text-lg font-heading font-semibold">Maintenance Plan</h2>
-            <Link href="/maintenance-log">
-              <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid="button-view-plan">
-                View all <ArrowRight className="h-3 w-3 ml-1" />
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setShowAddTask(true)} data-testid="button-add-task">
+                <Plus className="h-3 w-3 mr-1" /> Add Task
               </Button>
-            </Link>
+              <Link href="/maintenance-log">
+                <Button variant="ghost" size="sm" className="text-muted-foreground" data-testid="button-view-plan">
+                  View all <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
           
           {tasks.length === 0 ? (

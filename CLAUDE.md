@@ -5,10 +5,13 @@
 ```bash
 # Start PostgreSQL (Docker)
 docker start homebuddy-postgres
-# Or create fresh: docker run -d --name homebuddy-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=home_buddy -p 5432:5432 postgres:16
+# Or create fresh: docker run -d --name homebuddy-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=home_buddy -p 5433:5432 postgres:16
+# NOTE: host port 5433 on purpose — another project (afarensis-db) claims 5432 on this
+# machine. When something else owns the port, `docker start` binds NOTHING silently and
+# the app connects to the wrong postgres ("password authentication failed").
 
 # Set env vars and run
-export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/home_buddy"
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5433/home_buddy"
 export PORT=5000
 export NODE_ENV=development
 npx tsx server/index.ts
