@@ -17,16 +17,12 @@ import { registerBillingRoutes } from "./billing-routes";
 import { registerMeRoutes } from "./me-routes";
 import { registerCalendarRoutes } from "./calendar-routes";
 import { startNotificationScheduler, stopNotificationScheduler } from "./jobs/notificationScheduler";
-import { startAgentScheduler, stopAgentScheduler } from "./jobs/agentScheduler";
 import { pool } from "./db";
 import crypto from "crypto";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import { csrfProtection, registerCsrfRoute } from "./lib/csrf";
 import { registerOpenApiRoute } from "./openapi";
-import { agentRouter } from "./agents/routes";
-// Register all agent handlers at startup
-import "./agents/index";
 
 const app = express();
 const httpServer = createServer(app);
@@ -247,7 +243,6 @@ app.use((req, res, next) => {
   registerCalendarRoutes(app);
 
   app.use("/v2", v2Router);
-  app.use("/api/agents", agentRouter);
   await registerRoutes(httpServer, app);
 
   // Sentry error handler — must come BEFORE our own error handler so Sentry
@@ -303,7 +298,6 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       startNotificationScheduler();
-      startAgentScheduler();
     },
   );
 
@@ -311,7 +305,6 @@ app.use((req, res, next) => {
   const shutdown = (signal: string) => {
     log(`${signal} received — shutting down gracefully`);
     stopNotificationScheduler();
-    stopAgentScheduler();
     httpServer.close(() => {
       log("HTTP server closed");
       pool.end().then(() => {

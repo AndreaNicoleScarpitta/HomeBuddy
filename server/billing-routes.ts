@@ -42,7 +42,6 @@ const PLANS = {
       "Unlimited systems per home",
       "AI task suggestions",
       "Document analysis (10/mo)",
-      "AI home reports (2/mo)",
       "Smart reminders",
       "Email support",
     ],

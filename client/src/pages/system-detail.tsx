@@ -54,7 +54,6 @@ import { ComponentList } from "@/components/home-graph/component-list";
 import { WarrantySection } from "@/components/home-graph/warranty-card";
 import { RecommendationCard } from "@/components/home-graph/recommendation-card";
 import { getRepairs, getRecommendations, getSystemInsight, type V2Repair, type V2Recommendation, type SystemInsightResponse } from "@/lib/api";
-import { RecordActionDialog, RecordOutcomeDialog } from "@/components/learning/outcome-prompt";
 
 const categoryIcons: Record<string, any> = {
   "Roof": Home,
@@ -1032,12 +1031,6 @@ export default function SystemDetail() {
                   {systemInsight.insight.missingDataSignals.map((s, i) => (
                     <p key={i} className="text-xs text-blue-600">· {s}</p>
                   ))}
-                </div>
-              )}
-              {homeId && (
-                <div className="flex gap-2 mt-3">
-                  <RecordActionDialog homeId={homeId} systemId={system?.legacyId || Number(id)} systemName={system?.name} />
-                  <RecordOutcomeDialog homeId={homeId} systemId={system?.legacyId || Number(id)} systemName={system?.name} />
                 </div>
               )}
             </CardContent>

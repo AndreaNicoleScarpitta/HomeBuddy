@@ -43,10 +43,6 @@ import CalendarPage from "@/pages/calendar";
 import Chat from "@/pages/chat";
 import TransferKit from "@/pages/transfer-kit";
 
-// Lazy-loaded — hidden admin-only pages (not in nav)
-const AdminApprovals = lazy(() => import("@/pages/admin/approvals"));
-const AdminAgents = lazy(() => import("@/pages/agents"));
-
 // Lazy-loaded — marketing/billing pages
 const Pricing = lazy(() => import("@/pages/pricing"));
 
@@ -202,10 +198,6 @@ function Router() {
             <Route path="/chat" component={Chat} />
             <Route path="/transfer-kit" component={TransferKit} />
             <Route path="/pricing" component={Pricing} />
-
-            {/* Hidden admin-only routes — not linked in nav, gated by ADMIN_EMAILS env */}
-            <Route path="/admin/approvals" component={AdminApprovals} />
-            <Route path="/admin/agents" component={AdminAgents} />
 
             {/* Public guides — accessible to authenticated users too */}
             <Route path="/guides/home-maintenance-checklist-by-month" component={MonthlyChecklist} />
